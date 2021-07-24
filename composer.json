@@ -1,0 +1,26 @@
+{
+    "name": "lagdo/jaxon-adminer-drivers",
+    "type": "application",
+    "description": "Database drivers for Jaxon Adminer",
+    "authors": [
+        {
+            "name": "Thierry Feuzeu",
+            "email": "thierry.feuzeu@gmail.com"
+        }
+    ],
+    "homepage": "https://github.com/lagdo/jaxon-adminer-drivers",
+    "license": "BSD-3-Clause",
+    "keywords": ["Adminer", "PostgreSQL", "MySQL", "Oracle", "MsSQL", "Sqlite",
+        "MondoDb", "ElasticSearch", "Sql", "Dashboard", "Jaxon", "Ajax"],
+    "support": {
+        "issues": "https://github.com/lagdo/jaxon-adminer-drivers/issues",
+        "source": "https://github.com/lagdo/jaxon-adminer-drivers"
+    },
+    "require": {
+    },
+    "autoload": {
+        "psr-4": {
+            "Lagdo\\Adminer\\Drivers": "src/"
+        }
+    }
+}
