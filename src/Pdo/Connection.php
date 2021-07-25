@@ -8,7 +8,7 @@ use Exception;
 class Connection {
     var $_result, $server_info, $affected_rows, $errno, $error, $pdo;
 
-    function __construct() {
+    public function __construct() {
         global $adminer;
         $pos = array_search("SQL", $adminer->operators);
         if ($pos !== false) {
@@ -16,7 +16,7 @@ class Connection {
         }
     }
 
-    function dsn($dsn, $username, $password, $options = array()) {
+    public function dsn($dsn, $username, $password, $options = array()) {
         try {
             $this->pdo = new PDO($dsn, $username, $password, $options);
         } catch (Exception $ex) {
@@ -29,11 +29,11 @@ class Connection {
 
     /*abstract function select_db($database);*/
 
-    function quote($string) {
+    public function quote($string) {
         return $this->pdo->quote($string);
     }
 
-    function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false) {
         $result = $this->pdo->query($query);
         $this->error = "";
         if (!$result) {
@@ -47,11 +47,11 @@ class Connection {
         return $result;
     }
 
-    function multi_query($query) {
+    public function multi_query($query) {
         return $this->_result = $this->query($query);
     }
 
-    function store_result($result = null) {
+    public function store_result($result = null) {
         if (!$result) {
             $result = $this->_result;
             if (!$result) {
@@ -66,7 +66,7 @@ class Connection {
         return true;
     }
 
-    function next_result() {
+    public function next_result() {
         if (!$this->_result) {
             return false;
         }
@@ -74,7 +74,7 @@ class Connection {
         return @$this->_result->nextRowset(); // @ - PDO_PgSQL doesn't support it
     }
 
-    function result($query, $field = 0) {
+    public function result($query, $field = 0) {
         $result = $this->query($query);
         if (!$result) {
             return false;

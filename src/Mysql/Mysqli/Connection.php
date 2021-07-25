@@ -2,19 +2,21 @@
 
 namespace Lagdo\Adminer\Drivers\Mysql\Mysqli;
 
+use Lagdo\Adminer\Drivers\ConnectionInterface;
 use MySQLi;
 
 /**
  * MySQL driver to be used with the mysqli PHP extension.
  */
-class Connection extends MySQLi {
+class Connection extends MySQLi implements ConnectionInterface
+{
     var $extension = "MySQLi";
 
-    function __construct() {
+    public function __construct() {
         parent::init();
     }
 
-    function connect($server = "", $username = "", $password = "", $database = null, $port = null, $socket = null) {
+    public function connect($server = "", $username = "", $password = "", $database = null, $port = null, $socket = null) {
         global $adminer;
         mysqli_report(MYSQLI_REPORT_OFF); // stays between requests, not required since PHP 5.3.4
         list($host, $port) = explode(":", $server, 2); // part after : is used for port or socket
@@ -35,7 +37,7 @@ class Connection extends MySQLi {
         return $return;
     }
 
-    function set_charset($charset) {
+    public function set_charset($charset) {
         if (parent::set_charset($charset)) {
             return true;
         }
@@ -44,7 +46,7 @@ class Connection extends MySQLi {
         return $this->query("SET NAMES $charset");
     }
 
-    function result($query, $field = 0) {
+    public function result($query, $field = 0) {
         $result = $this->query($query);
         if (!$result) {
             return false;
@@ -53,7 +55,7 @@ class Connection extends MySQLi {
         return $row[$field];
     }
 
-    function quote($string) {
+    public function quote($string) {
         return "'" . $this->escape_string($string) . "'";
     }
 }

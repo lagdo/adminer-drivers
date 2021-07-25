@@ -5,7 +5,7 @@ namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
 class Driver extends \Lagdo\Adminer\Drivers\Driver {
     public $primary = "_id";
 
-    function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
+    public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
         global $connection;
         $select = ($select == array("*")
             ? array()
@@ -34,7 +34,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         }
     }
 
-    function update($table, $set, $queryWhere, $limit = 0, $separator = "\n") {
+    public function update($table, $set, $queryWhere, $limit = 0, $separator = "\n") {
         global $connection;
         $db = $connection->_db_name;
         $where = sql_query_where_parser($queryWhere);
@@ -58,7 +58,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         return $connection->executeBulkWrite("$db.$table", $bulk, 'getModifiedCount');
     }
 
-    function delete($table, $queryWhere, $limit = 0) {
+    public function delete($table, $queryWhere, $limit = 0) {
         global $connection;
         $db = $connection->_db_name;
         $where = sql_query_where_parser($queryWhere);
@@ -68,7 +68,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         return $connection->executeBulkWrite("$db.$table", $bulk, 'getDeletedCount');
     }
 
-    function insert($table, $set) {
+    public function insert($table, $set) {
         global $connection;
         $db = $connection->_db_name;
         $class = 'MongoDB\Driver\BulkWrite';

@@ -2,13 +2,16 @@
 
 namespace Lagdo\Adminer\Drivers\Mysql\Pdo;
 
+use Lagdo\Adminer\Drivers\ConnectionInterface;
+
 /**
  * MySQL driver to be used with the pdo_mysql PHP extension.
  */
-class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection {
+class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements ConnectionInterface
+{
     var $extension = "PDO_MySQL";
 
-    function connect($server, $username, $password) {
+    public function connect($server, $username, $password) {
         global $adminer;
         $options = array(PDO::MYSQL_ATTR_LOCAL_INFILE => false);
         $ssl = $adminer->connectSsl();
@@ -32,16 +35,16 @@ class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection {
         return true;
     }
 
-    function set_charset($charset) {
+    public function set_charset($charset) {
         $this->query("SET NAMES $charset"); // charset in DSN is ignored before PHP 5.3.6
     }
 
-    function select_db($database) {
+    public function select_db($database) {
         // database selection is separated from the connection so dbname in DSN can't be used
         return $this->query("USE " . idf_escape($database));
     }
 
-    function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false) {
         $this->pdo->setAttribute(1000, !$unbuffered); // 1000 - PDO::MYSQL_ATTR_USE_BUFFERED_QUERY
         return parent::query($query, $unbuffered);
     }

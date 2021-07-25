@@ -4,11 +4,11 @@ namespace Lagdo\Adminer\Drivers\Mysql;
 
 class Driver extends \Lagdo\Adminer\Drivers\Driver {
 
-    function insert($table, $set) {
+    public function insert($table, $set) {
         return ($set ? parent::insert($table, $set) : queries("INSERT INTO " . table($table) . " ()\nVALUES ()"));
     }
 
-    function insertUpdate($table, $rows, $primary) {
+    public function insertUpdate($table, $rows, $primary) {
         $columns = array_keys(reset($rows));
         $prefix = "INSERT INTO " . table($table) . " (" . implode(", ", $columns) . ") VALUES\n";
         $values = array();
@@ -33,7 +33,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         return queries($prefix . implode(",\n", $values) . $suffix);
     }
 
-    function slowQuery($query, $timeout) {
+    public function slowQuery($query, $timeout) {
         if (min_version('5.7.8', '10.1.2')) {
             if (preg_match('~MariaDB~', $this->_conn->server_info)) {
                 return "SET STATEMENT max_statement_time=$timeout FOR $query";
@@ -43,14 +43,14 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         }
     }
 
-    function convertSearch($idf, $val, $field) {
+    public function convertSearch($idf, $val, $field) {
         return (preg_match('~char|text|enum|set~', $field["type"]) && !preg_match("~^utf8~", $field["collation"]) && preg_match('~[\x80-\xFF]~', $val['val'])
             ? "CONVERT($idf USING " . charset($this->_conn) . ")"
             : $idf
         );
     }
 
-    function warnings() {
+    public function warnings() {
         $result = $this->_conn->query("SHOW WARNINGS");
         if ($result && $result->num_rows) {
             ob_start();
@@ -59,7 +59,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         }
     }
 
-    function tableHelp($name) {
+    public function tableHelp($name) {
         $maria = preg_match('~MariaDB~', $this->_conn->server_info);
         if (information_schema(DB)) {
             return strtolower(($maria ? "information-schema-$name-table/" : str_replace("_", "-", $name) . "-table.html"));

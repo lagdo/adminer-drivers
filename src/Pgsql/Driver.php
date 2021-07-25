@@ -4,7 +4,7 @@ namespace Lagdo\Adminer\Drivers\Pgsql;
 
 class Driver extends \Lagdo\Adminer\Drivers\Driver {
 
-    function insertUpdate($table, $rows, $primary) {
+    public function insertUpdate($table, $rows, $primary) {
         global $connection;
         foreach ($rows as $set) {
             $update = array();
@@ -24,13 +24,13 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         return true;
     }
 
-    function slowQuery($query, $timeout) {
+    public function slowQuery($query, $timeout) {
         $this->_conn->query("SET statement_timeout = " . (1000 * $timeout));
         $this->_conn->timeout = 1000 * $timeout;
         return $query;
     }
 
-    function convertSearch($idf, $val, $field) {
+    public function convertSearch($idf, $val, $field) {
         return (preg_match('~char|text'
                 . (!preg_match('~LIKE~', $val["op"]) ? '|date|time(stamp)?|boolean|uuid|' . number_type() : '')
                 . '~', $field["type"])
@@ -39,15 +39,15 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         );
     }
 
-    function quoteBinary($s) {
+    public function quoteBinary($s) {
         return $this->_conn->quoteBinary($s);
     }
 
-    function warnings() {
+    public function warnings() {
         return $this->_conn->warnings();
     }
 
-    function tableHelp($name) {
+    public function tableHelp($name) {
         $links = array(
             "information_schema" => "infoschema",
             "pg_catalog" => "catalog",

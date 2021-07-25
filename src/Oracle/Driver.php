@@ -6,11 +6,11 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
 
     //! support empty $set in insert()
 
-    function begin() {
+    public function begin() {
         return true; // automatic start
     }
 
-    function insertUpdate($table, $rows, $primary) {
+    public function insertUpdate($table, $rows, $primary) {
         global $connection;
         foreach ($rows as $set) {
             $update = array();

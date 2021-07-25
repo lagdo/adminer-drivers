@@ -5,7 +5,7 @@ namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
 class Result {
     var $num_rows, $_rows = array(), $_offset = 0, $_charset = array();
 
-    function __construct($result) {
+    public function __construct($result) {
         foreach ($result as $item) {
             $row = array();
             foreach ($item as $key => $val) {
@@ -31,7 +31,7 @@ class Result {
         $this->num_rows = count($this->_rows);
     }
 
-    function fetch_assoc() {
+    public function fetch_assoc() {
         $row = current($this->_rows);
         if (!$row) {
             return $row;
@@ -44,7 +44,7 @@ class Result {
         return $return;
     }
 
-    function fetch_row() {
+    public function fetch_row() {
         $return = $this->fetch_assoc();
         if (!$return) {
             return $return;
@@ -52,7 +52,7 @@ class Result {
         return array_values($return);
     }
 
-    function fetch_field() {
+    public function fetch_field() {
         $keys = array_keys($this->_rows[0]);
         $name = $keys[$this->_offset++];
         return (object) array(

@@ -2,17 +2,30 @@
 
 namespace Lagdo\Adminer\Drivers\Mongo;
 
-$drivers["mongo"] = "MongoDB (alpha)";
+use Lagdo\Adminer\Drivers\Mongo as MongoDriver;
+use Lagdo\Adminer\Drivers\ServerInterface;
 
-if (isset($_GET["mongo"])) {
-    define("DRIVER", "mongo");
-}
-
-class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
-
+class Mongo extends MongoDriver implements ServerInterface
+{
     var $operators = array("=");
 
-    function get_databases($flush) {
+    /**
+     * @inheritDoc
+     */
+    public function getDriver()
+    {
+        return "mongo";
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getName()
+    {
+        return "MongoDB (alpha)";
+    }
+
+    public function get_databases($flush) {
         global $connection;
         $return = array();
         $dbs = $connection->_link->listDBs();
@@ -22,7 +35,7 @@ class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
         return $return;
     }
 
-    function count_tables($databases) {
+    public function count_tables($databases) {
         global $connection;
         $return = array();
         foreach ($databases as $db) {
@@ -31,12 +44,12 @@ class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
         return $return;
     }
 
-    function tables_list() {
+    public function tables_list() {
         global $connection;
         return array_fill_keys($connection->_db->getCollectionNames(true), 'table');
     }
 
-    function drop_databases($databases) {
+    public function drop_databases($databases) {
         global $connection;
         foreach ($databases as $db) {
             $response = $connection->_link->selectDB($db)->drop();
@@ -47,7 +60,7 @@ class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
         return true;
     }
 
-    function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null) {
         global $connection;
         $return = array();
         foreach ($connection->_db->selectCollection($table)->getIndexInfo() as $index) {
@@ -65,11 +78,11 @@ class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
         return $return;
     }
 
-    function fields($table) {
+    public function fields($table) {
         return fields_from_edit();
     }
 
-    function found_rows($table_status, $where) {
+    public function found_rows($table_status, $where) {
         global $connection;
         //! don't call count_rows()
         return $connection->_db->selectCollection($_GET["select"])->count($where);

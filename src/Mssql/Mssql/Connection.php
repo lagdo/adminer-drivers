@@ -7,10 +7,13 @@
 
 namespace Lagdo\Adminer\Drivers\Mssql\Mssql;
 
-class Connection {
+use Lagdo\Adminer\Drivers\ConnectionInterface;
+
+class Connection implements ConnectionInterface
+{
     var $extension = "MSSQL", $_link, $_result, $server_info, $affected_rows, $error;
 
-    function connect($server, $username, $password) {
+    public function connect($server, $username, $password) {
         $this->_link = @mssql_connect($server, $username, $password);
         if ($this->_link) {
             $result = $this->query("SELECT SERVERPROPERTY('ProductLevel'), SERVERPROPERTY('Edition')");
@@ -24,15 +27,15 @@ class Connection {
         return (bool) $this->_link;
     }
 
-    function quote($string) {
+    public function quote($string) {
         return "'" . str_replace("'", "''", $string) . "'";
     }
 
-    function select_db($database) {
+    public function select_db($database) {
         return mssql_select_db($database);
     }
 
-    function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false) {
         $result = @mssql_query($query, $this->_link); //! $unbuffered
         $this->error = "";
         if (!$result) {
@@ -46,19 +49,19 @@ class Connection {
         return new Result($result);
     }
 
-    function multi_query($query) {
+    public function multi_query($query) {
         return $this->_result = $this->query($query);
     }
 
-    function store_result() {
+    public function store_result() {
         return $this->_result;
     }
 
-    function next_result() {
+    public function next_result() {
         return mssql_next_result($this->_result->_result);
     }
 
-    function result($query, $field = 0) {
+    public function result($query, $field = 0) {
         $result = $this->query($query);
         if (!is_object($result)) {
             return false;

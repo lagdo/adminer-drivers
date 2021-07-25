@@ -2,13 +2,16 @@
 
 namespace Lagdo\Adminer\Drivers\Pgsql\Pgsql;
 
+use Lagdo\Adminer\Drivers\ConnectionInterface;
+
 /**
  * PostgreSQL driver to be used with the pgsql PHP extension.
  */
-class Connection {
+class Connection implements ConnectionInterface
+{
     var $extension = "PgSQL", $_link, $_result, $_string, $_database = true, $server_info, $affected_rows, $error, $timeout;
 
-    function _error($errno, $error) {
+    public function _error($errno, $error) {
         if (ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));
         }
@@ -16,7 +19,7 @@ class Connection {
         $this->error = $error;
     }
 
-    function connect($server, $username, $password) {
+    public function connect($server, $username, $password) {
         global $adminer;
         $db = $adminer->database();
         set_error_handler(array($this, '_error'));
@@ -36,19 +39,19 @@ class Connection {
         return (bool) $this->_link;
     }
 
-    function quote($string) {
+    public function quote($string) {
         return "'" . pg_escape_string($this->_link, $string) . "'";
     }
 
-    function value($val, $field) {
+    public function value($val, $field) {
         return ($field["type"] == "bytea" && $val !== null ? pg_unescape_bytea($val) : $val);
     }
 
-    function quoteBinary($string) {
+    public function quoteBinary($string) {
         return "'" . pg_escape_bytea($this->_link, $string) . "'";
     }
 
-    function select_db($database) {
+    public function select_db($database) {
         global $adminer;
         if ($database == $adminer->database()) {
             return $this->_database;
@@ -60,11 +63,11 @@ class Connection {
         return $return;
     }
 
-    function close() {
+    public function close() {
         $this->_link = @pg_connect("$this->_string dbname='postgres'");
     }
 
-    function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false) {
         $result = @pg_query($this->_link, $query);
         $this->error = "";
         if (!$result) {
@@ -83,20 +86,20 @@ class Connection {
         return $return;
     }
 
-    function multi_query($query) {
+    public function multi_query($query) {
         return $this->_result = $this->query($query);
     }
 
-    function store_result() {
+    public function store_result() {
         return $this->_result;
     }
 
-    function next_result() {
+    public function next_result() {
         // PgSQL extension doesn't support multiple results
         return false;
     }
 
-    function result($query, $field = 0) {
+    public function result($query, $field = 0) {
         $result = $this->query($query);
         if (!$result || !$result->num_rows) {
             return false;
@@ -104,7 +107,7 @@ class Connection {
         return pg_fetch_result($result->_result, 0, $field);
     }
 
-    function warnings() {
+    public function warnings() {
         return h(pg_last_notice($this->_link)); // second parameter is available since PHP 7.1.0
     }
 }

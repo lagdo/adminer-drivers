@@ -2,16 +2,29 @@
 
 namespace Lagdo\Adminer\Drivers\Mongo;
 
-class Mongo {
-    function table($idf) {
+class Mongo
+{
+    /**
+     * @inheritDoc
+     */
+    public function idf_escape($idf)
+    {
         return $idf;
     }
 
-    function idf_escape($idf) {
+    public function table($idf) {
         return $idf;
     }
 
-    function table_status($name = "", $fast = false) {
+    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
+        return "";
+    }
+
+    public function limit1($table, $query, $where, $separator = "\n") {
+        return "";
+    }
+
+    public function table_status($name = "", $fast = false) {
         $return = array();
         foreach (tables_list() as $table => $type) {
             $return[$table] = array("Name" => $table);
@@ -22,31 +35,39 @@ class Mongo {
         return $return;
     }
 
-    function create_database($db, $collation) {
+    public function create_database($db, $collation) {
         return true;
     }
 
-    function last_id() {
+    public function rename_database($name, $collation) {
+        return false;
+    }
+
+    public function auto_increment() {
+        return "";
+    }
+
+    public function last_id() {
         global $connection;
         return $connection->last_id;
     }
 
-    function error() {
+    public function error() {
         global $connection;
         return h($connection->error);
     }
 
-    function collations() {
+    public function collations() {
         return array();
     }
 
-    function logged_user() {
+    public function logged_user() {
         global $adminer;
         $credentials = $adminer->credentials();
         return $credentials[1];
     }
 
-    function connect() {
+    public function connect() {
         global $adminer;
         $connection = new Min_DB;
         list($server, $username, $password) = $adminer->credentials();
@@ -69,7 +90,7 @@ class Mongo {
         return $connection;
     }
 
-    function alter_indexes($table, $alter) {
+    public function alter_indexes($table, $alter) {
         global $connection;
         foreach ($alter as $val) {
             list($type, $name, $set) = $val;
@@ -95,38 +116,49 @@ class Mongo {
         return true;
     }
 
-    function support($feature) {
+    public function drop_views($views) {
+        return false;
+    }
+
+    public function support($feature) {
         return preg_match("~database|indexes|descidx~", $feature);
     }
 
-    function db_collation($db, $collations) {
+    public function db_collation($db, $collations) {
     }
 
-    function information_schema() {
+    public function information_schema($db) {
+        return null;
     }
 
-    function is_view($table_status) {
+    public function is_view($table_status) {
+        return false;
     }
 
-    function convert_field($field) {
+    public function convert_field($field) {
     }
 
-    function unconvert_field($field, $return) {
+    public function unconvert_field($field, $return) {
         return $return;
     }
 
-    function foreign_keys($table) {
+    public function foreign_keys($table) {
         return array();
     }
 
-    function fk_support($table_status) {
+    public function fk_support($table_status) {
+        return false;
     }
 
-    function engines() {
+    public function view($name) {
         return array();
     }
 
-    function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+    public function engines() {
+        return array();
+    }
+
+    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
         global $connection;
         if ($table == "") {
             $connection->_db->createCollection($name);
@@ -134,7 +166,7 @@ class Mongo {
         }
     }
 
-    function drop_tables($tables) {
+    public function drop_tables($tables) {
         global $connection;
         foreach ($tables as $table) {
             $response = $connection->_db->selectCollection($table)->drop();
@@ -145,7 +177,7 @@ class Mongo {
         return true;
     }
 
-    function truncate_tables($tables) {
+    public function truncate_tables($tables) {
         global $connection;
         foreach ($tables as $table) {
             $response = $connection->_db->selectCollection($table)->remove();
@@ -156,7 +188,7 @@ class Mongo {
         return true;
     }
 
-    function driver_config() {
+    public function driver_config() {
         global $operators;
         return array(
             'possible_drivers' => array("mongo", "mongodb"),
@@ -166,5 +198,29 @@ class Mongo {
             'grouping' => array(),
             'edit_functions' => array(array("json")),
         );
+    }
+
+    public function explain($connection, $query) {
+        return null;
+    }
+
+    public function schemas() {
+        return array();
+    }
+
+    public function get_schema() {
+        return "";
+    }
+
+    public function set_schema($schema, $connection2 = null) {
+        return true;
+    }
+
+    public function show_variables() {
+        return array();
+    }
+
+    public function show_status() {
+        return array();
     }
 }

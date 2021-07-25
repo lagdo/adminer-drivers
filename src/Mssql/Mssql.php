@@ -7,22 +7,39 @@
 
 namespace Lagdo\Adminer\Drivers\Mssql;
 
-$drivers["mssql"] = "MS SQL (beta)";
+use Lagdo\Adminer\Drivers\ServerInterface;
 
-if (isset($_GET["mssql"])) {
-    define("DRIVER", "mssql");
-}
+class Mssql implements ServerInterface
+{
+    /**
+     * @inheritDoc
+     */
+    public function getDriver()
+    {
+        return "mssql";
+    }
 
-class Mssql {
-    function idf_escape($idf) {
+    /**
+     * @inheritDoc
+     */
+    public function getName()
+    {
+        return "MS SQL (beta)";
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function idf_escape($idf)
+    {
         return "[" . str_replace("]", "]]", $idf) . "]";
     }
 
-    function table($idf) {
+    public function table($idf) {
         return ($_GET["ns"] != "" ? idf_escape($_GET["ns"]) . "." : "") . idf_escape($idf);
     }
 
-    function connect() {
+    public function connect() {
         global $adminer;
         $connection = new Min_DB;
         $credentials = $adminer->credentials();
@@ -32,37 +49,37 @@ class Mssql {
         return $connection->error;
     }
 
-    function get_databases() {
+    public function get_databases($flush) {
         return get_vals("SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')");
     }
 
-    function limit($query, $where, $limit, $offset = 0, $separator = " ") {
+    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
         return ($limit !== null ? " TOP (" . ($limit + $offset) . ")" : "") . " $query$where"; // seek later
     }
 
-    function limit1($table, $query, $where, $separator = "\n") {
+    public function limit1($table, $query, $where, $separator = "\n") {
         return limit($query, $where, 1, 0, $separator);
     }
 
-    function db_collation($db, $collations) {
+    public function db_collation($db, $collations) {
         global $connection;
         return $connection->result("SELECT collation_name FROM sys.databases WHERE name = " . q($db));
     }
 
-    function engines() {
+    public function engines() {
         return array();
     }
 
-    function logged_user() {
+    public function logged_user() {
         global $connection;
         return $connection->result("SELECT SUSER_NAME()");
     }
 
-    function tables_list() {
+    public function tables_list() {
         return get_key_vals("SELECT name, type_desc FROM sys.all_objects WHERE schema_id = SCHEMA_ID(" . q(get_schema()) . ") AND type IN ('S', 'U', 'V') ORDER BY name");
     }
 
-    function count_tables($databases) {
+    public function count_tables($databases) {
         global $connection;
         $return = array();
         foreach ($databases as $db) {
@@ -72,7 +89,7 @@ class Mssql {
         return $return;
     }
 
-    function table_status($name = "") {
+    public function table_status($name = "", $fast = false) {
         $return = array();
         foreach (get_rows("SELECT ao.name AS Name, ao.type_desc AS Engine, (SELECT value FROM fn_listextendedproperty(default, 'SCHEMA', schema_name(schema_id), 'TABLE', ao.name, null, null)) AS Comment FROM sys.all_objects AS ao WHERE schema_id = SCHEMA_ID(" . q(get_schema()) . ") AND type IN ('S', 'U', 'V') " . ($name != "" ? "AND name = " . q($name) : "ORDER BY name")) as $row) {
             if ($name != "") {
@@ -83,15 +100,15 @@ class Mssql {
         return $return;
     }
 
-    function is_view($table_status) {
+    public function is_view($table_status) {
         return $table_status["Engine"] == "VIEW";
     }
 
-    function fk_support($table_status) {
+    public function fk_support($table_status) {
         return true;
     }
 
-    function fields($table) {
+    public function fields($table) {
         $comments = get_key_vals("SELECT objname, cast(value as varchar(max)) FROM fn_listextendedproperty('MS_DESCRIPTION', 'schema', " . q(get_schema()) . ", 'table', " . q($table) . ", 'column', NULL)");
         $return = array();
         foreach (get_rows("SELECT c.max_length, c.precision, c.scale, c.name, c.is_nullable, c.is_identity, c.collation_name, t.name type, CAST(d.definition as text) [default]
@@ -120,7 +137,7 @@ WHERE o.schema_id = SCHEMA_ID(" . q(get_schema()) . ") AND o.type IN ('S', 'U', 
         return $return;
     }
 
-    function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null) {
         $return = array();
         // sp_statistics doesn't return information about primary key
         foreach (get_rows("SELECT i.name, key_ordinal, is_unique, is_primary_key, c.name AS column_name, is_descending_key
@@ -138,12 +155,12 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
         return $return;
     }
 
-    function view($name) {
+    public function view($name) {
         global $connection;
         return array("select" => preg_replace('~^(?:[^[]|\[[^]]*])*\s+AS\s+~isU', '', $connection->result("SELECT VIEW_DEFINITION FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_SCHEMA = SCHEMA_NAME() AND TABLE_NAME = " . q($name))));
     }
 
-    function collations() {
+    public function collations() {
         $return = array();
         foreach (get_vals("SELECT name FROM fn_helpcollations()") as $collation) {
             $return[preg_replace('~_.*~', '', $collation)][] = $collation;
@@ -151,24 +168,24 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
         return $return;
     }
 
-    function information_schema($db) {
+    public function information_schema($db) {
         return false;
     }
 
-    function error() {
+    public function error() {
         global $connection;
         return nl_br(h(preg_replace('~^(\[[^]]*])+~m', '', $connection->error)));
     }
 
-    function create_database($db, $collation) {
+    public function create_database($db, $collation) {
         return queries("CREATE DATABASE " . idf_escape($db) . (preg_match('~^[a-z0-9_]+$~i', $collation) ? " COLLATE $collation" : ""));
     }
 
-    function drop_databases($databases) {
+    public function drop_databases($databases) {
         return queries("DROP DATABASE " . implode(", ", array_map('idf_escape', $databases)));
     }
 
-    function rename_database($name, $collation) {
+    public function rename_database($name, $collation) {
         if (preg_match('~^[a-z0-9_]+$~i', $collation)) {
             queries("ALTER DATABASE " . idf_escape(DB) . " COLLATE $collation");
         }
@@ -176,11 +193,11 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
         return true; //! false negative "The database name 'test2' has been set."
     }
 
-    function auto_increment() {
+    public function auto_increment() {
         return " IDENTITY" . ($_POST["Auto_increment"] != "" ? "(" . number($_POST["Auto_increment"]) . ",1)" : "") . " PRIMARY KEY";
     }
 
-    function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
         $alter = array();
         $comments = array();
         foreach ($fields as $field) {
@@ -225,7 +242,7 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
         return true;
     }
 
-    function alter_indexes($table, $alter) {
+    public function alter_indexes($table, $alter) {
         $index = array();
         $drop = array();
         foreach ($alter as $val) {
@@ -247,22 +264,22 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
         ;
     }
 
-    function last_id() {
+    public function last_id() {
         global $connection;
         return $connection->result("SELECT SCOPE_IDENTITY()"); // @@IDENTITY can return trigger INSERT
     }
 
-    function explain($connection, $query) {
+    public function explain($connection, $query) {
         $connection->query("SET SHOWPLAN_ALL ON");
         $return = $connection->query($query);
         $connection->query("SET SHOWPLAN_ALL OFF"); // connection is used also for indexes
         return $return;
     }
 
-    function found_rows($table_status, $where) {
+    public function found_rows($table_status, $where) {
     }
 
-    function foreign_keys($table) {
+    public function foreign_keys($table) {
         $return = array();
         foreach (get_rows("EXEC sp_fkeys @fktable_name = " . q($table)) as $row) {
             $foreign_key = &$return[$row["FK_NAME"]];
@@ -274,23 +291,23 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
         return $return;
     }
 
-    function truncate_tables($tables) {
+    public function truncate_tables($tables) {
         return apply_queries("TRUNCATE TABLE", $tables);
     }
 
-    function drop_views($views) {
+    public function drop_views($views) {
         return queries("DROP VIEW " . implode(", ", array_map('table', $views)));
     }
 
-    function drop_tables($tables) {
+    public function drop_tables($tables) {
         return queries("DROP TABLE " . implode(", ", array_map('table', $tables)));
     }
 
-    function move_tables($tables, $views, $target) {
+    public function move_tables($tables, $views, $target) {
         return apply_queries("ALTER SCHEMA " . idf_escape($target) . " TRANSFER", array_merge($tables, $views));
     }
 
-    function trigger($name) {
+    public function trigger($name) {
         if ($name == "") {
             return array();
         }
@@ -309,7 +326,7 @@ WHERE s.xtype = 'TR' AND s.name = " . q($name)
         return $return;
     }
 
-    function triggers($table) {
+    public function triggers($table) {
         $return = array();
         foreach (get_rows("SELECT sys1.name,
 CASE WHEN OBJECTPROPERTY(sys1.id, 'ExecIsInsertTrigger') = 1 THEN 'INSERT' WHEN OBJECTPROPERTY(sys1.id, 'ExecIsUpdateTrigger') = 1 THEN 'UPDATE' WHEN OBJECTPROPERTY(sys1.id, 'ExecIsDeleteTrigger') = 1 THEN 'DELETE' END [Event],
@@ -323,7 +340,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
         return $return;
     }
 
-    function trigger_options() {
+    public function trigger_options() {
         return array(
             "Timing" => array("AFTER", "INSTEAD OF"),
             "Event" => array("INSERT", "UPDATE", "DELETE"),
@@ -331,11 +348,11 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
         );
     }
 
-    function schemas() {
+    public function schemas() {
         return get_vals("SELECT name FROM sys.schemas");
     }
 
-    function get_schema() {
+    public function get_schema() {
         global $connection;
         if ($_GET["ns"] != "") {
             return $_GET["ns"];
@@ -343,34 +360,34 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
         return $connection->result("SELECT SCHEMA_NAME()");
     }
 
-    function set_schema($schema) {
+    public function set_schema($schema, $connection2 = null) {
         return true; // ALTER USER is permanent
     }
 
-    function use_sql($database) {
+    public function use_sql($database) {
         return "USE " . idf_escape($database);
     }
 
-    function show_variables() {
+    public function show_variables() {
         return array();
     }
 
-    function show_status() {
+    public function show_status() {
         return array();
     }
 
-    function convert_field($field) {
+    public function convert_field($field) {
     }
 
-    function unconvert_field($field, $return) {
+    public function unconvert_field($field, $return) {
         return $return;
     }
 
-    function support($feature) {
+    public function support($feature) {
         return preg_match('~^(comment|columns|database|drop_col|indexes|descidx|scheme|sql|table|trigger|view|view_trigger)$~', $feature); //! routine|
     }
 
-    function driver_config() {
+    public function driver_config() {
         $types = array();
         $structured_types = array();
         foreach (array( //! use sys.types

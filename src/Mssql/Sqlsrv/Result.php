@@ -10,12 +10,12 @@ namespace Lagdo\Adminer\Drivers\Mssql\Sqlsrv;
 class Result {
     var $_result, $_offset = 0, $_fields, $num_rows;
 
-    function __construct($result) {
+    public function __construct($result) {
         $this->_result = $result;
         // $this->num_rows = sqlsrv_num_rows($result); // available only in scrollable results
     }
 
-    function _convert($row) {
+    public function _convert($row) {
         foreach ((array) $row as $key => $val) {
             if (is_a($val, 'DateTime')) {
                 $row[$key] = $val->format("Y-m-d H:i:s");
@@ -25,15 +25,15 @@ class Result {
         return $row;
     }
 
-    function fetch_assoc() {
+    public function fetch_assoc() {
         return $this->_convert(sqlsrv_fetch_array($this->_result, SQLSRV_FETCH_ASSOC));
     }
 
-    function fetch_row() {
+    public function fetch_row() {
         return $this->_convert(sqlsrv_fetch_array($this->_result, SQLSRV_FETCH_NUMERIC));
     }
 
-    function fetch_field() {
+    public function fetch_field() {
         if (!$this->_fields) {
             $this->_fields = sqlsrv_field_metadata($this->_result);
         }
@@ -45,13 +45,13 @@ class Result {
         return $return;
     }
 
-    function seek($offset) {
+    public function seek($offset) {
         for ($i=0; $i < $offset; $i++) {
             sqlsrv_fetch($this->_result); // SQLSRV_SCROLL_ABSOLUTE added in sqlsrv 1.1
         }
     }
 
-    function __destruct() {
+    public function __destruct() {
         sqlsrv_free_stmt($this->_result);
     }
 }

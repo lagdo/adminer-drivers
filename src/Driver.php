@@ -14,13 +14,14 @@ function add_driver($id, $name) {
     $drivers[$id] = $name;
 }
 
-class Driver {
+class Driver implements DriverInterface
+{
     var $_conn;
 
     /** Create object for performing database operations
     * @param Min_DB
     */
-    function __construct($connection) {
+    public function __construct($connection) {
         $this->_conn = $connection;
     }
 
@@ -35,7 +36,7 @@ class Driver {
     * @param bool whether to print the query
     * @return Result
     */
-    function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
+    public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
         global $adminer, $jush;
         $is_group = (count($group) < count($select));
         $query = $adminer->selectQueryBuild($select, $where, $group, $order, $limit, $page);
@@ -62,7 +63,7 @@ class Driver {
     * @param int 0 or 1
     * @return bool
     */
-    function delete($table, $queryWhere, $limit = 0) {
+    public function delete($table, $queryWhere, $limit = 0) {
         $query = "FROM " . table($table);
         return queries("DELETE" . ($limit ? limit1($table, $query, $queryWhere) : " $query$queryWhere"));
     }
@@ -75,7 +76,7 @@ class Driver {
     * @param string
     * @return bool
     */
-    function update($table, $set, $queryWhere, $limit = 0, $separator = "\n") {
+    public function update($table, $set, $queryWhere, $limit = 0, $separator = "\n") {
         $values = array();
         foreach ($set as $key => $val) {
             $values[] = "$key = $val";
@@ -89,7 +90,7 @@ class Driver {
     * @param array escaped columns in keys, quoted data in values
     * @return bool
     */
-    function insert($table, $set) {
+    public function insert($table, $set) {
         return queries("INSERT INTO " . table($table) . ($set
             ? " (" . implode(", ", array_keys($set)) . ")\nVALUES (" . implode(", ", $set) . ")"
             : " DEFAULT VALUES"
@@ -109,21 +110,21 @@ class Driver {
     /** Begin transaction
     * @return bool
     */
-    function begin() {
+    public function begin() {
         return queries("BEGIN");
     }
 
     /** Commit transaction
     * @return bool
     */
-    function commit() {
+    public function commit() {
         return queries("COMMIT");
     }
 
     /** Rollback transaction
     * @return bool
     */
-    function rollback() {
+    public function rollback() {
         return queries("ROLLBACK");
     }
 
@@ -132,7 +133,7 @@ class Driver {
     * @param int seconds
     * @return string or null if the driver doesn't support query timeouts
     */
-    function slowQuery($query, $timeout) {
+    public function slowQuery($query, $timeout) {
     }
 
     /** Convert column to be searchable
@@ -141,7 +142,7 @@ class Driver {
     * @param array
     * @return string
     */
-    function convertSearch($idf, $val, $field) {
+    public function convertSearch($idf, $val, $field) {
         return $idf;
     }
 
@@ -150,7 +151,7 @@ class Driver {
     * @param array
     * @return string
     */
-    function value($val, $field) {
+    public function value($val, $field) {
         return (method_exists($this->_conn, 'value')
             ? $this->_conn->value($val, $field)
             : (is_resource($val) ? stream_get_contents($val) : $val)
@@ -161,14 +162,14 @@ class Driver {
     * @param string
     * @return string
     */
-    function quoteBinary($s) {
+    public function quoteBinary($s) {
         return q($s);
     }
 
     /** Get warnings about the last command
     * @return string HTML
     */
-    function warnings() {
+    public function warnings() {
         return '';
     }
 
@@ -176,7 +177,7 @@ class Driver {
     * @param string
     * @return string relative URL or null
     */
-    function tableHelp($name) {
+    public function tableHelp($name) {
     }
 
 }

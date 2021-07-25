@@ -2,22 +2,39 @@
 
 namespace Lagdo\Adminer\Drivers\Oracle;
 
-$drivers["oracle"] = "Oracle (beta)";
+use Lagdo\Adminer\Drivers\ServerInterface;
 
-if (isset($_GET["oracle"])) {
-    define("DRIVER", "oracle");
-}
+class Oracle implements ServerInterface
+{
+    /**
+     * @inheritDoc
+     */
+    public function getDriver()
+    {
+        return "oracle";
+    }
 
-class Oracle {
-    function idf_escape($idf) {
+    /**
+     * @inheritDoc
+     */
+    public function getName()
+    {
+        return "Oracle (beta)";
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function idf_escape($idf)
+    {
         return '"' . str_replace('"', '""', $idf) . '"';
     }
 
-    function table($idf) {
+    public function table($idf) {
         return idf_escape($idf);
     }
 
-    function connect() {
+    public function connect() {
         global $adminer;
         $connection = new Min_DB;
         $credentials = $adminer->credentials();
@@ -27,55 +44,55 @@ class Oracle {
         return $connection->error;
     }
 
-    function get_databases() {
+    public function get_databases($flush) {
         return get_vals("SELECT tablespace_name FROM user_tablespaces ORDER BY 1");
     }
 
-    function limit($query, $where, $limit, $offset = 0, $separator = " ") {
+    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
         return ($offset ? " * FROM (SELECT t.*, rownum AS rnum FROM (SELECT $query$where) t WHERE rownum <= " . ($limit + $offset) . ") WHERE rnum > $offset"
             : ($limit !== null ? " * FROM (SELECT $query$where) WHERE rownum <= " . ($limit + $offset)
             : " $query$where"
         ));
     }
 
-    function limit1($table, $query, $where, $separator = "\n") {
+    public function limit1($table, $query, $where, $separator = "\n") {
         return " $query$where"; //! limit
     }
 
-    function db_collation($db, $collations) {
+    public function db_collation($db, $collations) {
         global $connection;
         return $connection->result("SELECT value FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'"); //! respect $db
     }
 
-    function engines() {
+    public function engines() {
         return array();
     }
 
-    function logged_user() {
+    public function logged_user() {
         global $connection;
         return $connection->result("SELECT USER FROM DUAL");
     }
 
-    function get_current_db() {
+    public function get_current_db() {
         global $connection;
         $db = $connection->_current_db ? $connection->_current_db : DB;
         unset($connection->_current_db);
         return $db;
     }
 
-    function where_owner($prefix, $owner = "owner") {
+    public function where_owner($prefix, $owner = "owner") {
         if (!$_GET["ns"]) {
             return '';
         }
         return "$prefix$owner = sys_context('USERENV', 'CURRENT_SCHEMA')";
     }
 
-    function views_table($columns) {
+    public function views_table($columns) {
         $owner = where_owner('');
         return "(SELECT $columns FROM all_views WHERE " . ($owner ? $owner : "rownum < 0") . ")";
     }
 
-    function tables_list() {
+    public function tables_list() {
         $view = views_table("view_name");
         $owner = where_owner(" AND ");
         return get_key_vals("SELECT table_name, 'table' FROM all_tables WHERE tablespace_name = " . q(DB) . "$owner
@@ -84,7 +101,7 @@ ORDER BY 1"
         ); //! views don't have schema
     }
 
-    function count_tables($databases) {
+    public function count_tables($databases) {
         global $connection;
         $return = array();
         foreach ($databases as $db) {
@@ -93,7 +110,7 @@ ORDER BY 1"
         return $return;
     }
 
-    function table_status($name = "") {
+    public function table_status($name = "", $fast = false) {
         $return = array();
         $search = q($name);
         $db = get_current_db();
@@ -111,15 +128,15 @@ ORDER BY 1"
         return $return;
     }
 
-    function is_view($table_status) {
+    public function is_view($table_status) {
         return $table_status["Engine"] == "view";
     }
 
-    function fk_support($table_status) {
+    public function fk_support($table_status) {
         return true;
     }
 
-    function fields($table) {
+    public function fields($table) {
         $return = array();
         $owner = where_owner(" AND ");
         foreach (get_rows("SELECT * FROM all_tab_columns WHERE table_name = " . q($table) . "$owner ORDER BY column_id") as $row) {
@@ -145,7 +162,7 @@ ORDER BY 1"
         return $return;
     }
 
-    function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null) {
         $return = array();
         $owner = where_owner(" AND ", "aic.table_owner");
         foreach (get_rows("SELECT aic.*, ac.constraint_type, atc.data_default
@@ -169,38 +186,50 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
         return $return;
     }
 
-    function view($name) {
+    public function view($name) {
         $view = views_table("view_name, text");
         $rows = get_rows('SELECT text "select" FROM ' . $view . ' WHERE view_name = ' . q($name));
         return reset($rows);
     }
 
-    function collations() {
+    public function collations() {
         return array(); //!
     }
 
-    function information_schema($db) {
+    public function information_schema($db) {
         return false;
     }
 
-    function error() {
+    public function error() {
         global $connection;
         return h($connection->error); //! highlight sqltext from offset
     }
 
-    function explain($connection, $query) {
+    public function create_database($db, $collation) {
+        return false;
+    }
+
+    public function drop_databases($databases) {
+        return false;
+    }
+
+    public function rename_database($name, $collation) {
+        return false;
+    }
+
+    public function explain($connection, $query) {
         $connection->query("EXPLAIN PLAN FOR $query");
         return $connection->query("SELECT * FROM plan_table");
     }
 
-    function found_rows($table_status, $where) {
+    public function found_rows($table_status, $where) {
     }
 
-    function auto_increment() {
+    public function auto_increment() {
         return "";
     }
 
-    function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
         $alter = $drop = array();
         $orig_fields = ($table ? fields($table) : array());
         foreach ($fields as $field) {
@@ -230,7 +259,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
         ;
     }
 
-    function alter_indexes($table, $alter) {
+    public function alter_indexes($table, $alter) {
         $drop = array();
         $queries = array();
         foreach ($alter as $val) {
@@ -259,7 +288,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
         return true;
     }
 
-    function foreign_keys($table) {
+    public function foreign_keys($table) {
         $return = array();
         $query = "SELECT c_list.CONSTRAINT_NAME as NAME,
 c_src.COLUMN_NAME as SRC_COLUMN,
@@ -285,33 +314,33 @@ AND c_src.TABLE_NAME = " . q($table);
         return $return;
     }
 
-    function truncate_tables($tables) {
+    public function truncate_tables($tables) {
         return apply_queries("TRUNCATE TABLE", $tables);
     }
 
-    function drop_views($views) {
+    public function drop_views($views) {
         return apply_queries("DROP VIEW", $views);
     }
 
-    function drop_tables($tables) {
+    public function drop_tables($tables) {
         return apply_queries("DROP TABLE", $tables);
     }
 
-    function last_id() {
+    public function last_id() {
         return 0; //!
     }
 
-    function schemas() {
+    public function schemas() {
         $return = get_vals("SELECT DISTINCT owner FROM dba_segments WHERE owner IN (SELECT username FROM dba_users WHERE default_tablespace NOT IN ('SYSTEM','SYSAUX')) ORDER BY 1");
         return ($return ? $return : get_vals("SELECT DISTINCT owner FROM all_tables WHERE tablespace_name = " . q(DB) . " ORDER BY 1"));
     }
 
-    function get_schema() {
+    public function get_schema() {
         global $connection;
         return $connection->result("SELECT sys_context('USERENV', 'SESSION_USER') FROM dual");
     }
 
-    function set_schema($scheme, $connection2 = null) {
+    public function set_schema($scheme, $connection2 = null) {
         global $connection;
         if (!$connection2) {
             $connection2 = $connection;
@@ -319,11 +348,11 @@ AND c_src.TABLE_NAME = " . q($table);
         return $connection2->query("ALTER SESSION SET CURRENT_SCHEMA = " . idf_escape($scheme));
     }
 
-    function show_variables() {
+    public function show_variables() {
         return get_key_vals('SELECT name, display_value FROM v$parameter');
     }
 
-    function process_list() {
+    public function process_list() {
         return get_rows('SELECT sess.process AS "process", sess.username AS "user", sess.schemaname AS "schema", sess.status AS "status", sess.wait_class AS "wait_class", sess.seconds_in_wait AS "seconds_in_wait", sql.sql_text AS "sql_text", sess.machine AS "machine", sess.port AS "port"
 FROM v$session sess LEFT OUTER JOIN v$sql sql
 ON sql.sql_id = sess.sql_id
@@ -332,23 +361,23 @@ ORDER BY PROCESS
 ');
     }
 
-    function show_status() {
+    public function show_status() {
         $rows = get_rows('SELECT * FROM v$instance');
         return reset($rows);
     }
 
-    function convert_field($field) {
+    public function convert_field($field) {
     }
 
-    function unconvert_field($field, $return) {
+    public function unconvert_field($field, $return) {
         return $return;
     }
 
-    function support($feature) {
+    public function support($feature) {
         return preg_match('~^(columns|database|drop_col|indexes|descidx|processlist|scheme|sql|status|table|variables|view)$~', $feature); //!
     }
 
-    function driver_config() {
+    public function driver_config() {
         $types = array();
         $structured_types = array();
         foreach (array(

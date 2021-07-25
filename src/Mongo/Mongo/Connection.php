@@ -2,10 +2,13 @@
 
 namespace Lagdo\Adminer\Drivers\Mongo\Mongo;
 
-class Connection {
+use Lagdo\Adminer\Drivers\ConnectionInterface;
+
+class Connection implements ConnectionInterface
+{
     var $extension = "Mongo", $server_info = MongoClient::VERSION, $error, $last_id, $_link, $_db;
 
-    function connect($uri, $options) {
+    public function connect($uri, $options) {
         try {
             $this->_link = new MongoClient($uri, $options);
             if ($options["password"] != "") {
@@ -22,11 +25,11 @@ class Connection {
         }
     }
 
-    function query($query) {
+    public function query($query) {
         return false;
     }
 
-    function select_db($database) {
+    public function select_db($database) {
         try {
             $this->_db = $this->_link->selectDB($database);
             return true;
@@ -36,7 +39,7 @@ class Connection {
         }
     }
 
-    function quote($string) {
+    public function quote($string) {
         return $string;
     }
 }

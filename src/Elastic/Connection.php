@@ -2,7 +2,10 @@
 
 namespace Lagdo\Adminer\Drivers\Elastic;
 
-class Connection {
+use Lagdo\Adminer\Drivers\ConnectionInterface;
+
+class Connection implements ConnectionInterface
+{
     var $extension = "JSON", $server_info, $errno, $error, $_url, $_db;
 
     /** Performs query
@@ -11,7 +14,7 @@ class Connection {
      * @param string
      * @return mixed
      */
-    function rootQuery($path, $content = array(), $method = 'GET') {
+    public function rootQuery($path, $content = array(), $method = 'GET') {
         @ini_set('track_errors', 1); // @ - may be disabled
         $file = @file_get_contents("$this->_url/" . ltrim($path, '/'), false, stream_context_create(array('http' => array(
             'method' => $method,
@@ -51,11 +54,11 @@ class Connection {
      * @param string
      * @return mixed
      */
-    function query($path, $content = array(), $method = 'GET') {
+    public function query($path, $content = array(), $method = 'GET') {
         return $this->rootQuery(($this->_db != "" ? "$this->_db/" : "/") . ltrim($path, '/'), $content, $method);
     }
 
-    function connect($server, $username, $password) {
+    public function connect($server, $username, $password) {
         preg_match('~^(https?://)?(.*)~', $server, $match);
         $this->_url = ($match[1] ? $match[1] : "http://") . "$username:$password@$match[2]";
         $return = $this->query('');
@@ -65,12 +68,12 @@ class Connection {
         return (bool) $return;
     }
 
-    function select_db($database) {
+    public function select_db($database) {
         $this->_db = $database;
         return true;
     }
 
-    function quote($string) {
+    public function quote($string) {
         return $string;
     }
 

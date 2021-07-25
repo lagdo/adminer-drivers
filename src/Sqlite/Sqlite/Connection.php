@@ -2,18 +2,20 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite\Sqlite;
 
+use Lagdo\Adminer\Drivers\ConnectionInterface;
 use SQLite3;
 
-class Connection extends \Lagdo\Adminer\Drivers\Sqlite\Connection {
+class Connection extends \Lagdo\Adminer\Drivers\Sqlite\Connection implements ConnectionInterface
+{
     var $extension = "SQLite3", $server_info, $affected_rows, $errno, $error, $_link;
 
-    function __construct($filename) {
+    public function __construct($filename) {
         $this->_link = new SQLite3($filename);
         $version = $this->_link->version();
         $this->server_info = $version["versionString"];
     }
 
-    function query($query) {
+    public function query($query) {
         $result = @$this->_link->query($query);
         $this->error = "";
         if (!$result) {
@@ -27,18 +29,18 @@ class Connection extends \Lagdo\Adminer\Drivers\Sqlite\Connection {
         return true;
     }
 
-    function quote($string) {
+    public function quote($string) {
         return (is_utf8($string)
             ? "'" . $this->_link->escapeString($string) . "'"
             : "x'" . reset(unpack('H*', $string)) . "'"
         );
     }
 
-    function store_result() {
+    public function store_result() {
         return $this->_result;
     }
 
-    function result($query, $field = 0) {
+    public function result($query, $field = 0) {
         $result = $this->query($query);
         if (!is_object($result)) {
             return false;

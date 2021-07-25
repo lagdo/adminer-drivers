@@ -7,10 +7,13 @@
 
 namespace Lagdo\Adminer\Drivers\Mssql\Sqlsrv;
 
-class Connection {
+use Lagdo\Adminer\Drivers\ConnectionInterface;
+
+class Connection implements ConnectionInterface
+{
     var $extension = "sqlsrv", $_link, $_result, $server_info, $affected_rows, $errno, $error;
 
-    function _get_error() {
+    public function _get_error() {
         $this->error = "";
         foreach (sqlsrv_errors() as $error) {
             $this->errno = $error["code"];
@@ -19,7 +22,7 @@ class Connection {
         $this->error = rtrim($this->error);
     }
 
-    function connect($server, $username, $password) {
+    public function connect($server, $username, $password) {
         global $adminer;
         $db = $adminer->database();
         $connection_info = array("UID" => $username, "PWD" => $password, "CharacterSet" => "UTF-8");
@@ -36,15 +39,15 @@ class Connection {
         return (bool) $this->_link;
     }
 
-    function quote($string) {
+    public function quote($string) {
         return "'" . str_replace("'", "''", $string) . "'";
     }
 
-    function select_db($database) {
+    public function select_db($database) {
         return $this->query("USE " . idf_escape($database));
     }
 
-    function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false) {
         $result = sqlsrv_query($this->_link, $query); //! , array(), ($unbuffered ? array() : array("Scrollable" => "keyset"))
         $this->error = "";
         if (!$result) {
@@ -54,7 +57,7 @@ class Connection {
         return $this->store_result($result);
     }
 
-    function multi_query($query) {
+    public function multi_query($query) {
         $this->_result = sqlsrv_query($this->_link, $query);
         $this->error = "";
         if (!$this->_result) {
@@ -64,7 +67,7 @@ class Connection {
         return true;
     }
 
-    function store_result($result = null) {
+    public function store_result($result = null) {
         if (!$result) {
             $result = $this->_result;
         }
@@ -78,11 +81,11 @@ class Connection {
         return true;
     }
 
-    function next_result() {
+    public function next_result() {
         return $this->_result ? sqlsrv_next_result($this->_result) : null;
     }
 
-    function result($query, $field = 0) {
+    public function result($query, $field = 0) {
         $result = $this->query($query);
         if (!is_object($result)) {
             return false;

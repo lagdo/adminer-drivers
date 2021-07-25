@@ -2,17 +2,19 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite\Sqlite2;
 
+use Lagdo\Adminer\Drivers\ConnectionInterface;
 use SQLiteDatabase;
 
-class Connection extends \Lagdo\Adminer\Drivers\Sqlite\Connection {
+class Connection extends \Lagdo\Adminer\Drivers\Sqlite\Connection implements ConnectionInterface
+{
     var $extension = "SQLite", $server_info, $affected_rows, $error, $_link;
 
-    function __construct($filename) {
+    public function __construct($filename) {
         $this->server_info = sqlite_libversion();
         $this->_link = new SQLiteDatabase($filename);
     }
 
-    function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false) {
         $method = ($unbuffered ? "unbufferedQuery" : "query");
         $result = @$this->_link->$method($query, SQLITE_BOTH, $error);
         $this->error = "";
@@ -26,15 +28,15 @@ class Connection extends \Lagdo\Adminer\Drivers\Sqlite\Connection {
         return new Result($result);
     }
 
-    function quote($string) {
+    public function quote($string) {
         return "'" . sqlite_escape_string($string) . "'";
     }
 
-    function store_result() {
+    public function store_result() {
         return $this->_result;
     }
 
-    function result($query, $field = 0) {
+    public function result($query, $field = 0) {
         $result = $this->query($query);
         if (!is_object($result)) {
             return false;

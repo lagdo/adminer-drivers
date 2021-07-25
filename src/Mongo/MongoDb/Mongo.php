@@ -2,13 +2,11 @@
 
 namespace Lagdo\Adminer\Drivers\Mongo;
 
-$drivers["mongo"] = "MongoDB (alpha)";
+use Lagdo\Adminer\Drivers\Mongo as MongoDriver;
+use Lagdo\Adminer\Drivers\ServerInterface;
 
-if (isset($_GET["mongo"])) {
-    define("DRIVER", "mongo");
-}
-
-class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
+class Mongo extends MongoDriver implements ServerInterface
+{
 
     var $operators = array(
         "=",
@@ -32,7 +30,23 @@ class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
         "(date)<=",
     );
 
-    function get_databases($flush) {
+    /**
+     * @inheritDoc
+     */
+    public function getDriver()
+    {
+        return "mongo";
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getName()
+    {
+        return "MongoDB (alpha)";
+    }
+
+    public function get_databases($flush) {
         global $connection;
         $return = array();
         foreach ($connection->executeCommand('admin', array('listDatabases' => 1)) as $dbs) {
@@ -43,12 +57,12 @@ class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
         return $return;
     }
 
-    function count_tables($databases) {
+    public function count_tables($databases) {
         $return = array();
         return $return;
     }
 
-    function tables_list() {
+    public function tables_list() {
         global $connection;
         $collections = array();
         foreach ($connection->executeCommand($connection->_db_name, array('listCollections' => 1)) as $result) {
@@ -57,11 +71,11 @@ class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
         return $collections;
     }
 
-    function drop_databases($databases) {
+    public function drop_databases($databases) {
         return false;
     }
 
-    function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null) {
         global $connection;
         $return = array();
         foreach ($connection->executeCommand($connection->_db_name, array('listIndexes' => $table)) as $index) {
@@ -81,7 +95,7 @@ class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
         return $return;
     }
 
-    function fields($table) {
+    public function fields($table) {
         global $driver;
         $fields = fields_from_edit();
         if (!$fields) {
@@ -108,14 +122,14 @@ class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
         return $fields;
     }
 
-    function found_rows($table_status, $where) {
+    public function found_rows($table_status, $where) {
         global $connection;
         $where = where_to_query($where);
         $toArray = $connection->executeCommand($connection->_db_name, array('count' => $table_status['Name'], 'query' => $where))->toArray();
         return $toArray[0]->n;
     }
 
-    function sql_query_where_parser($queryWhere) {
+    public function sql_query_where_parser($queryWhere) {
         $queryWhere = preg_replace('~^\sWHERE \(?\(?(.+?)\)?\)?$~', '\1', $queryWhere);
         $wheres = explode(' AND ', $queryWhere);
         $wheresOr = explode(') OR (', $queryWhere);
@@ -131,7 +145,7 @@ class Mongo extends \Lagdo\Adminer\Drivers\Mongo {
         return where_to_query($where, $wheresOr);
     }
 
-    function where_to_query($whereAnd = array(), $whereOr = array()) {
+    public function where_to_query($whereAnd = array(), $whereOr = array()) {
         global $adminer;
         $data = array();
         foreach (array('and' => $whereAnd, 'or' => $whereOr) as $type => $where) {

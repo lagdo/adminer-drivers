@@ -2,23 +2,39 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite;
 
-$drivers["sqlite"] = "SQLite 3";
-$drivers["sqlite2"] = "SQLite 2";
+use Lagdo\Adminer\Drivers\ServerInterface;
 
-if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
-    define("DRIVER", (isset($_GET["sqlite"]) ? "sqlite" : "sqlite2"));
-}
+class Sqlite implements ServerInterface
+{
+    /**
+     * @inheritDoc
+     */
+    public function getDriver()
+    {
+        return (isset($_GET["sqlite"]) ? "sqlite" : "sqlite2");
+    }
 
-class Sqlite {
-    function idf_escape($idf) {
+    /**
+     * @inheritDoc
+     */
+    public function getName()
+    {
+        return (isset($_GET["sqlite"]) ? "SQLite 3" : "SQLite 2");
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function idf_escape($idf)
+    {
         return '"' . str_replace('"', '""', $idf) . '"';
     }
 
-    function table($idf) {
+    public function table($idf) {
         return idf_escape($idf);
     }
 
-    function connect() {
+    public function connect() {
         global $adminer;
         list(, , $password) = $adminer->credentials();
         if ($password != "") {
@@ -27,15 +43,15 @@ class Sqlite {
         return new Min_DB;
     }
 
-    function get_databases() {
+    public function get_databases($flush) {
         return array();
     }
 
-    function limit($query, $where, $limit, $offset = 0, $separator = " ") {
+    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
         return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
     }
 
-    function limit1($table, $query, $where, $separator = "\n") {
+    public function limit1($table, $query, $where, $separator = "\n") {
         global $connection;
         return (preg_match('~^INTO~', $query) || $connection->result("SELECT sqlite_compileoption_used('ENABLE_UPDATE_DELETE_LIMIT')")
             ? limit($query, $where, 1, 0, $separator)
@@ -43,28 +59,28 @@ class Sqlite {
         );
     }
 
-    function db_collation($db, $collations) {
+    public function db_collation($db, $collations) {
         global $connection;
         return $connection->result("PRAGMA encoding"); // there is no database list so $db == DB
     }
 
-    function engines() {
+    public function engines() {
         return array();
     }
 
-    function logged_user() {
+    public function logged_user() {
         return get_current_user(); // should return effective user
     }
 
-    function tables_list() {
+    public function tables_list() {
         return get_key_vals("SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') ORDER BY (name = 'sqlite_sequence'), name");
     }
 
-    function count_tables($databases) {
+    public function count_tables($databases) {
         return array();
     }
 
-    function table_status($name = "") {
+    public function table_status($name = "", $fast = false) {
         global $connection;
         $return = array();
         foreach (get_rows("SELECT name AS Name, type AS Engine, 'rowid' AS Oid, '' AS Auto_increment FROM sqlite_master WHERE type IN ('table', 'view') " . ($name != "" ? "AND name = " . q($name) : "ORDER BY name")) as $row) {
@@ -77,16 +93,16 @@ class Sqlite {
         return ($name != "" ? $return[$name] : $return);
     }
 
-    function is_view($table_status) {
+    public function is_view($table_status) {
         return $table_status["Engine"] == "view";
     }
 
-    function fk_support($table_status) {
+    public function fk_support($table_status) {
         global $connection;
         return !$connection->result("SELECT sqlite_compileoption_used('OMIT_FOREIGN_KEY')");
     }
 
-    function fields($table) {
+    public function fields($table) {
         global $connection;
         $return = array();
         $primary = "";
@@ -123,7 +139,7 @@ class Sqlite {
         return $return;
     }
 
-    function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null) {
         global $connection;
         if (!is_object($connection2)) {
             $connection2 = $connection;
@@ -170,7 +186,7 @@ class Sqlite {
         return $return;
     }
 
-    function foreign_keys($table) {
+    public function foreign_keys($table) {
         $return = array();
         foreach (get_rows("PRAGMA foreign_key_list(" . table($table) . ")") as $row) {
             $foreign_key = &$return[$row["id"]];
@@ -184,25 +200,25 @@ class Sqlite {
         return $return;
     }
 
-    function view($name) {
+    public function view($name) {
         global $connection;
         return array("select" => preg_replace('~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU', '', $connection->result("SELECT sql FROM sqlite_master WHERE name = " . q($name)))); //! identifiers may be inside []
     }
 
-    function collations() {
+    public function collations() {
         return (isset($_GET["create"]) ? get_vals("PRAGMA collation_list", 1) : array());
     }
 
-    function information_schema($db) {
+    public function information_schema($db) {
         return false;
     }
 
-    function error() {
+    public function error() {
         global $connection;
         return h($connection->error);
     }
 
-    function check_sqlite_name($name) {
+    public function check_sqlite_name($name) {
         // avoid creating PHP files on unsecured servers
         global $connection;
         $extensions = "db|sdb|sqlite";
@@ -213,7 +229,7 @@ class Sqlite {
         return true;
     }
 
-    function create_database($db, $collation) {
+    public function create_database($db, $collation) {
         global $connection;
         if (file_exists($db)) {
             $connection->error = lang('File exists.');
@@ -234,7 +250,7 @@ class Sqlite {
         return true;
     }
 
-    function drop_databases($databases) {
+    public function drop_databases($databases) {
         global $connection;
         $connection->__construct(":memory:"); // to unlock file, doesn't work in PDO on Windows
         foreach ($databases as $db) {
@@ -246,7 +262,7 @@ class Sqlite {
         return true;
     }
 
-    function rename_database($name, $collation) {
+    public function rename_database($name, $collation) {
         global $connection;
         if (!check_sqlite_name($name)) {
             return false;
@@ -256,11 +272,11 @@ class Sqlite {
         return @rename(DB, $name);
     }
 
-    function auto_increment() {
+    public function auto_increment() {
         return " PRIMARY KEY" . (DRIVER == "sqlite" ? " AUTOINCREMENT" : "");
     }
 
-    function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
         global $connection;
         $use_all_fields = ($table == "" || $foreign);
         foreach ($fields as $field) {
@@ -302,7 +318,7 @@ class Sqlite {
         return true;
     }
 
-    function recreate_table($table, $name, $fields, $originals, $foreign, $auto_increment, $indexes = array()) {
+    public function recreate_table($table, $name, $fields, $originals, $foreign, $auto_increment, $indexes = array()) {
         global $connection;
         if ($table != "") {
             if (!$fields) {
@@ -398,7 +414,7 @@ class Sqlite {
         return true;
     }
 
-    function index_sql($table, $type, $name, $columns) {
+    public function index_sql($table, $type, $name, $columns) {
         return "CREATE $type " . ($type != "INDEX" ? "INDEX " : "")
             . idf_escape($name != "" ? $name : uniqid($table . "_"))
             . " ON " . table($table)
@@ -406,7 +422,7 @@ class Sqlite {
         ;
     }
 
-    function alter_indexes($table, $alter) {
+    public function alter_indexes($table, $alter) {
         foreach ($alter as $primary) {
             if ($primary[0] == "PRIMARY") {
                 return recreate_table($table, $table, array(), array(), array(), 0, $alter);
@@ -423,23 +439,23 @@ class Sqlite {
         return true;
     }
 
-    function truncate_tables($tables) {
+    public function truncate_tables($tables) {
         return apply_queries("DELETE FROM", $tables);
     }
 
-    function drop_views($views) {
+    public function drop_views($views) {
         return apply_queries("DROP VIEW", $views);
     }
 
-    function drop_tables($tables) {
+    public function drop_tables($tables) {
         return apply_queries("DROP TABLE", $tables);
     }
 
-    function move_tables($tables, $views, $target) {
+    public function move_tables($tables, $views, $target) {
         return false;
     }
 
-    function trigger($name) {
+    public function trigger($name) {
         global $connection;
         if ($name == "") {
             return array("Statement" => "BEGIN\n\t;\nEND");
@@ -461,7 +477,7 @@ class Sqlite {
         );
     }
 
-    function triggers($table) {
+    public function triggers($table) {
         $return = array();
         $trigger_options = trigger_options();
         foreach (get_rows("SELECT * FROM sqlite_master WHERE type = 'trigger' AND tbl_name = " . q($table)) as $row) {
@@ -471,7 +487,7 @@ class Sqlite {
         return $return;
     }
 
-    function trigger_options() {
+    public function trigger_options() {
         return array(
             "Timing" => array("BEFORE", "AFTER", "INSTEAD OF"),
             "Event" => array("INSERT", "UPDATE", "UPDATE OF", "DELETE"),
@@ -479,39 +495,39 @@ class Sqlite {
         );
     }
 
-    function begin() {
+    public function begin() {
         return queries("BEGIN");
     }
 
-    function last_id() {
+    public function last_id() {
         global $connection;
         return $connection->result("SELECT LAST_INSERT_ROWID()");
     }
 
-    function explain($connection, $query) {
+    public function explain($connection, $query) {
         return $connection->query("EXPLAIN QUERY PLAN $query");
     }
 
-    function found_rows($table_status, $where) {
+    public function found_rows($table_status, $where) {
     }
 
-    function types() {
+    public function types() {
         return array();
     }
 
-    function schemas() {
+    public function schemas() {
         return array();
     }
 
-    function get_schema() {
+    public function get_schema() {
         return "";
     }
 
-    function set_schema($scheme) {
+    public function set_schema($schema, $connection2 = null) {
         return true;
     }
 
-    function create_sql($table, $auto_increment, $style) {
+    public function create_sql($table, $auto_increment, $style) {
         global $connection;
         $return = $connection->result("SELECT sql FROM sqlite_master WHERE type IN ('table', 'view') AND name = " . q($table));
         foreach (indexes($table) as $name => $index) {
@@ -523,18 +539,18 @@ class Sqlite {
         return $return;
     }
 
-    function truncate_sql($table) {
+    public function truncate_sql($table) {
         return "DELETE FROM " . table($table);
     }
 
-    function use_sql($database) {
+    public function use_sql($database) {
     }
 
-    function trigger_sql($table) {
+    public function trigger_sql($table) {
         return implode(get_vals("SELECT sql || ';;\n' FROM sqlite_master WHERE type = 'trigger' AND tbl_name = " . q($table)));
     }
 
-    function show_variables() {
+    public function show_variables() {
         global $connection;
         $return = array();
         foreach (array("auto_vacuum", "cache_size", "count_changes", "default_cache_size", "empty_result_callbacks", "encoding", "foreign_keys", "full_column_names", "fullfsync", "journal_mode", "journal_size_limit", "legacy_file_format", "locking_mode", "page_size", "max_page_count", "read_uncommitted", "recursive_triggers", "reverse_unordered_selects", "secure_delete", "short_column_names", "synchronous", "temp_store", "temp_store_directory", "schema_version", "integrity_check", "quick_check") as $key) {
@@ -543,7 +559,7 @@ class Sqlite {
         return $return;
     }
 
-    function show_status() {
+    public function show_status() {
         $return = array();
         foreach (get_vals("PRAGMA compile_options") as $option) {
             list($key, $val) = explode("=", $option, 2);
@@ -552,18 +568,18 @@ class Sqlite {
         return $return;
     }
 
-    function convert_field($field) {
+    public function convert_field($field) {
     }
 
-    function unconvert_field($field, $return) {
+    public function unconvert_field($field, $return) {
         return $return;
     }
 
-    function support($feature) {
+    public function support($feature) {
         return preg_match('~^(columns|database|drop_col|dump|indexes|descidx|move_col|sql|status|table|trigger|variables|view|view_trigger)$~', $feature);
     }
 
-    function driver_config() {
+    public function driver_config() {
         return array(
             'possible_drivers' => array((isset($_GET["sqlite"]) ? "SQLite3" : "SQLite"), "PDO_SQLite"),
             'jush' => "sqlite",

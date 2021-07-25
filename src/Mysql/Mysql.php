@@ -2,33 +2,42 @@
 
 namespace Lagdo\Adminer\Drivers\Mysql;
 
-$drivers = array("server" => "MySQL") + $drivers;
+use Lagdo\Adminer\Drivers\ServerInterface;
 
-if (!defined("DRIVER")) {
-    define("DRIVER", "server"); // server - backwards compatibility
-}
+class Mysql implements ServerInterface
+{
+    /**
+     * @inheritDoc
+     */
+    public function getDriver()
+    {
+        return "server";
+    }
 
-class Mysql {
-    /** Escape database identifier
-    * @param string
-    * @return string
-    */
-    function idf_escape($idf) {
+    /**
+     * @inheritDoc
+     */
+    public function getName()
+    {
+        return "MySQL";
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function idf_escape($idf)
+    {
         return "`" . str_replace("`", "``", $idf) . "`";
     }
 
-    /** Get escaped table name
-    * @param string
-    * @return string
-    */
-    function table($idf) {
+    public function table($idf) {
         return idf_escape($idf);
     }
 
     /** Connect to the database
     * @return mixed Min_DB or string for error
     */
-    function connect() {
+    public function connect() {
         global $adminer, $types, $structured_types;
         $connection = new Min_DB;
         $credentials = $adminer->credentials();
@@ -52,7 +61,7 @@ class Mysql {
     * @param bool
     * @return array
     */
-    function get_databases($flush) {
+    public function get_databases($flush) {
         // SHOW DATABASES can take a very long time so it is cached
         $return = get_session("dbs");
         if ($return === null) {
@@ -76,7 +85,7 @@ class Mysql {
     * @param string
     * @return string
     */
-    function limit($query, $where, $limit, $offset = 0, $separator = " ") {
+    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
         return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
     }
 
@@ -87,7 +96,7 @@ class Mysql {
     * @param string
     * @return string
     */
-    function limit1($table, $query, $where, $separator = "\n") {
+    public function limit1($table, $query, $where, $separator = "\n") {
         return limit($query, $where, 1, 0, $separator);
     }
 
@@ -96,7 +105,7 @@ class Mysql {
     * @param array result of collations()
     * @return string
     */
-    function db_collation($db, $collations) {
+    public function db_collation($db, $collations) {
         global $connection;
         $return = null;
         $create = $connection->result("SHOW CREATE DATABASE " . idf_escape($db), 1);
@@ -112,7 +121,7 @@ class Mysql {
     /** Get supported engines
     * @return array
     */
-    function engines() {
+    public function engines() {
         $return = array();
         foreach (get_rows("SHOW ENGINES") as $row) {
             if (preg_match("~YES|DEFAULT~", $row["Support"])) {
@@ -125,7 +134,7 @@ class Mysql {
     /** Get logged user
     * @return string
     */
-    function logged_user() {
+    public function logged_user() {
         global $connection;
         return $connection->result("SELECT USER()");
     }
@@ -133,7 +142,7 @@ class Mysql {
     /** Get tables list
     * @return array array($name => $type)
     */
-    function tables_list() {
+    public function tables_list() {
         return get_key_vals(min_version(5)
             ? "SELECT TABLE_NAME, TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME"
             : "SHOW TABLES"
@@ -144,7 +153,7 @@ class Mysql {
     * @param array
     * @return array array($db => $tables)
     */
-    function count_tables($databases) {
+    public function count_tables($databases) {
         $return = array();
         foreach ($databases as $db) {
             $return[$db] = count(get_vals("SHOW TABLES IN " . idf_escape($db)));
@@ -157,7 +166,7 @@ class Mysql {
     * @param bool return only "Name", "Engine" and "Comment" fields
     * @return array array($name => array("Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => )) or only inner array with $name
     */
-    function table_status($name = "", $fast = false) {
+    public function table_status($name = "", $fast = false) {
         $return = array();
         foreach (get_rows($fast && min_version(5)
             ? "SELECT TABLE_NAME AS Name, ENGINE AS Engine, TABLE_COMMENT AS Comment FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() " . ($name != "" ? "AND TABLE_NAME = " . q($name) : "ORDER BY Name")
@@ -182,7 +191,7 @@ class Mysql {
     * @param array
     * @return bool
     */
-    function is_view($table_status) {
+    public function is_view($table_status) {
         return $table_status["Engine"] === null;
     }
 
@@ -190,7 +199,7 @@ class Mysql {
     * @param array result of table_status
     * @return bool
     */
-    function fk_support($table_status) {
+    public function fk_support($table_status) {
         return preg_match('~InnoDB|IBMDB2I~i', $table_status["Engine"])
             || (preg_match('~NDB~i', $table_status["Engine"]) && min_version(5.6));
     }
@@ -199,7 +208,7 @@ class Mysql {
     * @param string
     * @return array array($name => array("field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => ))
     */
-    function fields($table) {
+    public function fields($table) {
         $return = array();
         foreach (get_rows("SHOW FULL COLUMNS FROM " . table($table)) as $row) {
             preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $row["Type"], $match);
@@ -229,7 +238,7 @@ class Mysql {
     * @param string Min_DB to use
     * @return array array($key_name => array("type" => , "columns" => array(), "lengths" => array(), "descs" => array()))
     */
-    function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null) {
         $return = array();
         foreach (get_rows("SHOW INDEX FROM " . table($table), $connection2) as $row) {
             $name = $row["Key_name"];
@@ -245,7 +254,7 @@ class Mysql {
     * @param string
     * @return array array($name => array("db" => , "ns" => , "table" => , "source" => array(), "target" => array(), "on_delete" => , "on_update" => ))
     */
-    function foreign_keys($table) {
+    public function foreign_keys($table) {
         global $connection, $on_actions;
         static $pattern = '(?:`(?:[^`]|``)+`|"(?:[^"]|"")+")';
         $return = array();
@@ -272,7 +281,7 @@ class Mysql {
     * @param string
     * @return array array("select" => )
     */
-    function view($name) {
+    public function view($name) {
         global $connection;
         return array("select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', $connection->result("SHOW CREATE VIEW " . table($name), 1)));
     }
@@ -280,7 +289,7 @@ class Mysql {
     /** Get sorted grouped list of collations
     * @return array
     */
-    function collations() {
+    public function collations() {
         $return = array();
         foreach (get_rows("SHOW COLLATION") as $row) {
             if ($row["Default"]) {
@@ -300,7 +309,7 @@ class Mysql {
     * @param string
     * @return bool
     */
-    function information_schema($db) {
+    public function information_schema($db) {
         return (min_version(5) && $db == "information_schema")
             || (min_version(5.5) && $db == "performance_schema");
     }
@@ -308,7 +317,7 @@ class Mysql {
     /** Get escaped error message
     * @return string
     */
-    function error() {
+    public function error() {
         global $connection;
         return h(preg_replace('~^You have an error.*syntax to use~U', "Syntax error", $connection->error));
     }
@@ -318,7 +327,7 @@ class Mysql {
     * @param string
     * @return string
     */
-    function create_database($db, $collation) {
+    public function create_database($db, $collation) {
         return queries("CREATE DATABASE " . idf_escape($db) . ($collation ? " COLLATE " . q($collation) : ""));
     }
 
@@ -326,7 +335,7 @@ class Mysql {
     * @param array
     * @return bool
     */
-    function drop_databases($databases) {
+    public function drop_databases($databases) {
         $return = apply_queries("DROP DATABASE", $databases, 'idf_escape');
         restart_session();
         set_session("dbs", null);
@@ -338,7 +347,7 @@ class Mysql {
     * @param string
     * @return bool
     */
-    function rename_database($name, $collation) {
+    public function rename_database($name, $collation) {
         $return = false;
         if (create_database($name, $collation)) {
             $tables = array();
@@ -359,7 +368,7 @@ class Mysql {
     /** Generate modifier for auto increment column
     * @return string
     */
-    function auto_increment() {
+    public function auto_increment() {
         $auto_increment_index = " PRIMARY KEY";
         // don't overwrite primary key by auto_increment
         if ($_GET["create"] != "" && $_POST["auto_increment_col"]) {
@@ -388,7 +397,7 @@ class Mysql {
     * @param string
     * @return bool
     */
-    function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
         $alter = array();
         foreach ($fields as $field) {
             $alter[] = ($field[1]
@@ -419,7 +428,7 @@ class Mysql {
     * @param array of array("index type", "name", array("column definition", ...)) or array("index type", "name", "DROP")
     * @return bool
     */
-    function alter_indexes($table, $alter) {
+    public function alter_indexes($table, $alter) {
         foreach ($alter as $key => $val) {
             $alter[$key] = ($val[2] == "DROP"
                 ? "\nDROP INDEX " . idf_escape($val[1])
@@ -433,7 +442,7 @@ class Mysql {
     * @param array
     * @return bool
     */
-    function truncate_tables($tables) {
+    public function truncate_tables($tables) {
         return apply_queries("TRUNCATE TABLE", $tables);
     }
 
@@ -441,7 +450,7 @@ class Mysql {
     * @param array
     * @return bool
     */
-    function drop_views($views) {
+    public function drop_views($views) {
         return queries("DROP VIEW " . implode(", ", array_map('table', $views)));
     }
 
@@ -449,7 +458,7 @@ class Mysql {
     * @param array
     * @return bool
     */
-    function drop_tables($tables) {
+    public function drop_tables($tables) {
         return queries("DROP TABLE " . implode(", ", array_map('table', $tables)));
     }
 
@@ -459,7 +468,7 @@ class Mysql {
     * @param string
     * @return bool
     */
-    function move_tables($tables, $views, $target) {
+    public function move_tables($tables, $views, $target) {
         global $connection;
         $rename = array();
         foreach ($tables as $table) {
@@ -489,7 +498,7 @@ class Mysql {
     * @param string
     * @return bool
     */
-    function copy_tables($tables, $views, $target) {
+    public function copy_tables($tables, $views, $target) {
         queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
         foreach ($tables as $table) {
             $name = ($target == DB ? table("copy_$table") : idf_escape($target) . "." . table($table));
@@ -521,7 +530,7 @@ class Mysql {
     * @param string trigger name
     * @return array array("Trigger" => , "Timing" => , "Event" => , "Of" => , "Type" => , "Statement" => )
     */
-    function trigger($name) {
+    public function trigger($name) {
         if ($name == "") {
             return array();
         }
@@ -533,7 +542,7 @@ class Mysql {
     * @param string
     * @return array array($name => array($timing, $event))
     */
-    function triggers($table) {
+    public function triggers($table) {
         $return = array();
         foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\"))) as $row) {
             $return[$row["Trigger"]] = array($row["Timing"], $row["Event"]);
@@ -544,7 +553,7 @@ class Mysql {
     /** Get trigger options
     * @return array ("Timing" => array(), "Event" => array(), "Type" => array())
     */
-    function trigger_options() {
+    public function trigger_options() {
         return array(
             "Timing" => array("BEFORE", "AFTER"),
             "Event" => array("INSERT", "UPDATE", "DELETE"),
@@ -557,7 +566,7 @@ class Mysql {
     * @param string "FUNCTION" or "PROCEDURE"
     * @return array ("fields" => array("field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ), "returns" => , "definition" => , "language" => )
     */
-    function routine($name, $type) {
+    public function routine($name, $type) {
         global $connection, $enum_length, $inout, $types;
         $aliases = array("bool", "boolean", "integer", "double precision", "real", "dec", "numeric", "fixed", "national char", "national varchar");
         $space = "(?:\\s|/\\*[\s\S]*?\\*/|(?:#|-- )[^\n]*\n?|--\r?\n)";
@@ -593,14 +602,14 @@ class Mysql {
     /** Get list of routines
     * @return array ("SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => )
     */
-    function routines() {
+    public function routines() {
         return get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . q(DB));
     }
 
     /** Get list of available routine languages
     * @return array
     */
-    function routine_languages() {
+    public function routine_languages() {
         return array(); // "SQL" not required
     }
 
@@ -609,14 +618,14 @@ class Mysql {
     * @param array result of routine()
     * @return string
     */
-    function routine_id($name, $row) {
+    public function routine_id($name, $row) {
         return idf_escape($name);
     }
 
     /** Get last auto increment ID
     * @return string
     */
-    function last_id() {
+    public function last_id() {
         global $connection;
         return $connection->result("SELECT LAST_INSERT_ID()"); // mysql_insert_id() truncates bigint
     }
@@ -626,7 +635,7 @@ class Mysql {
     * @param string
     * @return Result
     */
-    function explain($connection, $query) {
+    public function explain($connection, $query) {
         return $connection->query("EXPLAIN " . (min_version(5.1) && !min_version(5.7) ? "PARTITIONS " : "") . $query);
     }
 
@@ -635,28 +644,28 @@ class Mysql {
     * @param array
     * @return int or null if approximate number can't be retrieved
     */
-    function found_rows($table_status, $where) {
+    public function found_rows($table_status, $where) {
         return ($where || $table_status["Engine"] != "InnoDB" ? null : $table_status["Rows"]);
     }
 
     /** Get user defined types
     * @return array
     */
-    function types() {
+    public function types() {
         return array();
     }
 
     /** Get existing schemas
     * @return array
     */
-    function schemas() {
+    public function schemas() {
         return array();
     }
 
     /** Get current schema
     * @return string
     */
-    function get_schema() {
+    public function get_schema() {
         return "";
     }
 
@@ -665,7 +674,7 @@ class Mysql {
     * @param Min_DB
     * @return bool
     */
-    function set_schema($schema, $connection2 = null) {
+    public function set_schema($schema, $connection2 = null) {
         return true;
     }
 
@@ -675,7 +684,7 @@ class Mysql {
     * @param string
     * @return string
     */
-    function create_sql($table, $auto_increment, $style) {
+    public function create_sql($table, $auto_increment, $style) {
         global $connection;
         $return = $connection->result("SHOW CREATE TABLE " . table($table), 1);
         if (!$auto_increment) {
@@ -688,7 +697,7 @@ class Mysql {
     * @param string
     * @return string
     */
-    function truncate_sql($table) {
+    public function truncate_sql($table) {
         return "TRUNCATE " . table($table);
     }
 
@@ -696,7 +705,7 @@ class Mysql {
     * @param string
     * @return string
     */
-    function use_sql($database) {
+    public function use_sql($database) {
         return "USE " . idf_escape($database);
     }
 
@@ -704,7 +713,7 @@ class Mysql {
     * @param string
     * @return string
     */
-    function trigger_sql($table) {
+    public function trigger_sql($table) {
         $return = "";
         foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\")), null, "-- ") as $row) {
             $return .= "\nCREATE TRIGGER " . idf_escape($row["Trigger"]) . " $row[Timing] $row[Event] ON " . table($row["Table"]) . " FOR EACH ROW\n$row[Statement];;\n";
@@ -715,21 +724,21 @@ class Mysql {
     /** Get server variables
     * @return array ($name => $value)
     */
-    function show_variables() {
+    public function show_variables() {
         return get_key_vals("SHOW VARIABLES");
     }
 
     /** Get process list
     * @return array ($row)
     */
-    function process_list() {
+    public function process_list() {
         return get_rows("SHOW FULL PROCESSLIST");
     }
 
     /** Get status variables
     * @return array ($name => $value)
     */
-    function show_status() {
+    public function show_status() {
         return get_key_vals("SHOW STATUS");
     }
 
@@ -737,7 +746,7 @@ class Mysql {
     * @param array one element from fields()
     * @return string
     */
-    function convert_field($field) {
+    public function convert_field($field) {
         if (preg_match("~binary~", $field["type"])) {
             return "HEX(" . idf_escape($field["field"]) . ")";
         }
@@ -754,7 +763,7 @@ class Mysql {
     * @param string
     * @return string
     */
-    function unconvert_field($field, $return) {
+    public function unconvert_field($field, $return) {
         if (preg_match("~binary~", $field["type"])) {
             $return = "UNHEX($return)";
         }
@@ -771,7 +780,7 @@ class Mysql {
     * @param string "comment", "copy", "database", "descidx", "drop_col", "dump", "event", "indexes", "kill", "materializedview", "partitioning", "privileges", "procedure", "processlist", "routine", "scheme", "sequence", "status", "table", "trigger", "type", "variables", "view", "view_trigger"
     * @return bool
     */
-    function support($feature) {
+    public function support($feature) {
         return !preg_match("~scheme|sequence|type|view_trigger|materializedview" . (min_version(8) ? "" : "|descidx" . (min_version(5.1) ? "" : "|event|partitioning" . (min_version(5) ? "" : "|routine|trigger|view"))) . "~", $feature);
     }
 
@@ -779,21 +788,21 @@ class Mysql {
     * @param int
     * @return bool
     */
-    function kill_process($val) {
+    public function kill_process($val) {
         return queries("KILL " . number($val));
     }
 
     /** Return query to get connection ID
     * @return string
     */
-    function connection_id(){
+    public function connection_id(){
         return "SELECT CONNECTION_ID()";
     }
 
     /** Get maximum number of connections
     * @return int
     */
-    function max_connections() {
+    public function max_connections() {
         global $connection;
         return $connection->result("SELECT @@max_connections");
     }
@@ -801,7 +810,7 @@ class Mysql {
     /** Get driver config
     * @return array array('possible_drivers' => , 'jush' => , 'types' => , 'structured_types' => , 'unsigned' => , 'operators' => , 'functions' => , 'grouping' => , 'edit_functions' => )
     */
-    function driver_config() {
+    public function driver_config() {
         $types = array(); ///< @var array ($type => $maximum_unsigned_length, ...)
         $structured_types = array(); ///< @var array ($description => array($type, ...), ...)
         foreach (array(

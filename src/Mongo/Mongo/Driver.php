@@ -7,7 +7,7 @@ use Exception;
 class Driver extends \Lagdo\Adminer\Drivers\Driver {
     public $primary = "_id";
 
-    function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
+    public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
         $select = ($select == array("*")
             ? array()
             : array_fill_keys($select, true)
@@ -25,7 +25,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         );
     }
 
-    function insert($table, $set) {
+    public function insert($table, $set) {
         try {
             $return = $this->_conn->_db->selectCollection($table)->insert($set);
             $this->_conn->errno = $return['code'];

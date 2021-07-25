@@ -2,14 +2,17 @@
 
 namespace Lagdo\Adminer\Drivers\Oracle\Oci;
 
+use Lagdo\Adminer\Drivers\ConnectionInterface;
+
 /**
  * Oracle driver to be used with the oci8 PHP extension.
  */
-class Connection {
+class Connection implements ConnectionInterface
+{
     var $extension = "oci8", $_link, $_result, $server_info, $affected_rows, $errno, $error;
     var $_current_db;
 
-    function _error($errno, $error) {
+    public function _error($errno, $error) {
         if (ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));
         }
@@ -17,7 +20,7 @@ class Connection {
         $this->error = $error;
     }
 
-    function connect($server, $username, $password) {
+    public function connect($server, $username, $password) {
         $this->_link = @oci_new_connect($username, $password, $server, "AL32UTF8");
         if ($this->_link) {
             $this->server_info = oci_server_version($this->_link);
@@ -28,16 +31,16 @@ class Connection {
         return false;
     }
 
-    function quote($string) {
+    public function quote($string) {
         return "'" . str_replace("'", "''", $string) . "'";
     }
 
-    function select_db($database) {
+    public function select_db($database) {
         $this->_current_db = $database;
         return true;
     }
 
-    function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false) {
         $result = oci_parse($this->_link, $query);
         $this->error = "";
         if (!$result) {
@@ -59,19 +62,19 @@ class Connection {
         return $return;
     }
 
-    function multi_query($query) {
+    public function multi_query($query) {
         return $this->_result = $this->query($query);
     }
 
-    function store_result() {
+    public function store_result() {
         return $this->_result;
     }
 
-    function next_result() {
+    public function next_result() {
         return false;
     }
 
-    function result($query, $field = 1) {
+    public function result($query, $field = 1) {
         $result = $this->query($query);
         if (!is_object($result) || !oci_fetch($result->_result)) {
             return false;

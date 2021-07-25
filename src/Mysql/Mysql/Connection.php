@@ -2,10 +2,13 @@
 
 namespace Lagdo\Adminer\Drivers\Mysql\Mysql;
 
+use Lagdo\Adminer\Drivers\ConnectionInterface;
+
 /**
  * MySQL driver to be used with the mysql PHP extension.
  */
-class Connection {
+class Connection implements ConnectionInterface
+{
     var
         $extension = "MySQL", ///< @var string extension name
         $server_info, ///< @var string server version
@@ -21,7 +24,7 @@ class Connection {
     * @param string
     * @return bool
     */
-    function connect($server, $username, $password) {
+    public function connect($server, $username, $password) {
         if (ini_bool("mysql.allow_local_infile")) {
             $this->error = lang('Disable %s or enable %s or %s extensions.', "'mysql.allow_local_infile'", "MySQLi", "PDO_MySQL");
             return false;
@@ -45,7 +48,7 @@ class Connection {
     * @param string
     * @return bool
     */
-    function set_charset($charset) {
+    public function set_charset($charset) {
         if (function_exists('mysql_set_charset')) {
             if (mysql_set_charset($charset, $this->_link)) {
                 return true;
@@ -60,7 +63,7 @@ class Connection {
     * @param string
     * @return string escaped string enclosed in '
     */
-    function quote($string) {
+    public function quote($string) {
         return "'" . mysql_real_escape_string($string, $this->_link) . "'";
     }
 
@@ -68,7 +71,7 @@ class Connection {
     * @param string
     * @return bool
     */
-    function select_db($database) {
+    public function select_db($database) {
         return mysql_select_db($database, $this->_link);
     }
 
@@ -77,7 +80,7 @@ class Connection {
     * @param bool
     * @return mixed bool or Result
     */
-    function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false) {
         $result = @($unbuffered ? mysql_unbuffered_query($query, $this->_link) : mysql_query($query, $this->_link)); // @ - mute mysql.trace_mode
         $this->error = "";
         if (!$result) {
@@ -97,21 +100,21 @@ class Connection {
     * @param string
     * @return bool
     */
-    function multi_query($query) {
+    public function multi_query($query) {
         return $this->_result = $this->query($query);
     }
 
     /** Get current resultset
     * @return Result
     */
-    function store_result() {
+    public function store_result() {
         return $this->_result;
     }
 
     /** Fetch next resultset
     * @return bool
     */
-    function next_result() {
+    public function next_result() {
         // MySQL extension doesn't support multiple results
         return false;
     }
@@ -121,7 +124,7 @@ class Connection {
     * @param int
     * @return string
     */
-    function result($query, $field = 0) {
+    public function result($query, $field = 0) {
         $result = $this->query($query);
         if (!$result || !$result->num_rows) {
             return false;

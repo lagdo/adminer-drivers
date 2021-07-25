@@ -2,14 +2,35 @@
 
 namespace Lagdo\Adminer\Drivers\Elastic;
 
-$drivers["elastic"] = "Elasticsearch (beta)";
+use Lagdo\Adminer\Drivers\ServerInterface;
 
-if (isset($_GET["elastic"])) {
-    define("DRIVER", "elastic");
-}
+class Elastic implements ServerInterface
+{
+    /**
+     * @inheritDoc
+     */
+    public function getDriver()
+    {
+        return "elastic";
+    }
 
-class Elastic {
-    function connect() {
+    /**
+     * @inheritDoc
+     */
+    public function getName()
+    {
+        return "Elasticsearch (beta)";
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function idf_escape($idf)
+    {
+        return $idf;
+    }
+
+    public function connect() {
         global $adminer;
         $connection = new Min_DB;
         list($server, $username, $password) = $adminer->credentials();
@@ -22,17 +43,17 @@ class Elastic {
         return $connection->error;
     }
 
-    function support($feature) {
+    public function support($feature) {
         return preg_match("~database|table|columns~", $feature);
     }
 
-    function logged_user() {
+    public function logged_user() {
         global $adminer;
         $credentials = $adminer->credentials();
         return $credentials[1];
     }
 
-    function get_databases() {
+    public function get_databases($flush) {
         global $connection;
         $return = $connection->rootQuery('_aliases');
         if ($return) {
@@ -42,18 +63,22 @@ class Elastic {
         return $return;
     }
 
-    function collations() {
+    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
+        return "";
+    }
+
+    public function collations() {
         return array();
     }
 
-    function db_collation($db, $collations) {
+    public function db_collation($db, $collations) {
     }
 
-    function engines() {
+    public function engines() {
         return array();
     }
 
-    function count_tables($databases) {
+    public function count_tables($databases) {
         global $connection;
         $return = array();
         $result = $connection->query('_stats');
@@ -67,7 +92,7 @@ class Elastic {
         return $return;
     }
 
-    function tables_list() {
+    public function tables_list() {
         global $connection;
 
         if (min_version(6)) {
@@ -81,7 +106,7 @@ class Elastic {
         return $return;
     }
 
-    function table_status($name = "", $fast = false) {
+    public function table_status($name = "", $fast = false) {
         global $connection;
         $search = $connection->query("_search", array(
             "size" => 0,
@@ -110,24 +135,26 @@ class Elastic {
         return $return;
     }
 
-    function error() {
+    public function error() {
         global $connection;
         return h($connection->error);
     }
 
-    function information_schema() {
+    public function information_schema($db) {
+        return null;
     }
 
-    function is_view($table_status) {
+    public function is_view($table_status) {
+        return false;
     }
 
-    function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null) {
         return array(
             array("type" => "PRIMARY", "columns" => array("_id")),
         );
     }
 
-    function fields($table) {
+    public function fields($table) {
         global $connection;
 
         $mappings = array();
@@ -164,29 +191,30 @@ class Elastic {
         return $return;
     }
 
-    function foreign_keys($table) {
+    public function foreign_keys($table) {
         return array();
     }
 
-    function table($idf) {
+    public function table($idf) {
         return $idf;
     }
 
-    function idf_escape($idf) {
-        return $idf;
+    public function convert_field($field) {
     }
 
-    function convert_field($field) {
-    }
-
-    function unconvert_field($field, $return) {
+    public function unconvert_field($field, $return) {
         return $return;
     }
 
-    function fk_support($table_status) {
+    public function fk_support($table_status) {
+        return false;
     }
 
-    function found_rows($table_status, $where) {
+    public function view($name) {
+        return array();
+    }
+
+    public function found_rows($table_status, $where) {
         return null;
     }
 
@@ -194,7 +222,7 @@ class Elastic {
     * @param string
     * @return mixed
     */
-    function create_database($db) {
+    public function create_database($db, $collation) {
         global $connection;
         return $connection->rootQuery(urlencode($db), null, 'PUT');
     }
@@ -203,16 +231,36 @@ class Elastic {
     * @param array
     * @return mixed
     */
-    function drop_databases($databases) {
+    public function drop_databases($databases) {
         global $connection;
         return $connection->rootQuery(urlencode(implode(',', $databases)), array(), 'DELETE');
+    }
+
+    public function rename_database($name, $collation) {
+        return false;
+    }
+
+    public function auto_increment() {
+        return "";
+    }
+
+    public function alter_indexes($table, $alter) {
+        return false;
+    }
+
+    public function drop_views($views) {
+        return false;
+    }
+
+    public function truncate_tables($tables) {
+        return false;
     }
 
     /** Alter type
     * @param array
     * @return mixed
     */
-    function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
         global $connection;
         $properties = array();
         foreach ($fields as $f) {
@@ -232,7 +280,7 @@ class Elastic {
     * @param array
     * @return bool
     */
-    function drop_tables($tables) {
+    public function drop_tables($tables) {
         global $connection;
         $return = true;
         foreach ($tables as $table) { //! convert to bulk api
@@ -241,12 +289,12 @@ class Elastic {
         return $return;
     }
 
-    function last_id() {
+    public function last_id() {
         global $connection;
         return $connection->last_id;
     }
 
-    function driver_config() {
+    public function driver_config() {
         $types = array();
         $structured_types = array();
         foreach (array(
@@ -268,5 +316,29 @@ class Elastic {
             'types' => $types,
             'structured_types' => $structured_types,
         );
+    }
+
+    public function explain($connection, $query) {
+        return null;
+    }
+
+    public function schemas() {
+        return array();
+    }
+
+    public function get_schema() {
+        return "";
+    }
+
+    public function set_schema($schema, $connection2 = null) {
+        return true;
+    }
+
+    public function show_variables() {
+        return array();
+    }
+
+    public function show_status() {
+        return array();
     }
 }

@@ -2,13 +2,16 @@
 
 namespace Lagdo\Adminer\Drivers\Pgsql\Pdo;
 
+use Lagdo\Adminer\Drivers\ConnectionInterface;
+
 /**
  * PostgreSQL driver to be used with the pdo_pgsql PHP extension.
  */
-class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection {
+class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements ConnectionInterface
+{
     var $extension = "PDO_PgSQL", $timeout;
 
-    function connect($server, $username, $password) {
+    public function connect($server, $username, $password) {
         global $adminer;
         $db = $adminer->database();
         //! client_encoding is supported since 9.1 but we can't yet use min_version here
@@ -19,16 +22,16 @@ class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection {
         return true;
     }
 
-    function select_db($database) {
+    public function select_db($database) {
         global $adminer;
         return ($adminer->database() == $database);
     }
 
-    function quoteBinary($s) {
+    public function quoteBinary($s) {
         return q($s);
     }
 
-    function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false) {
         $return = parent::query($query, $unbuffered);
         if ($this->timeout) {
             $this->timeout = 0;
@@ -37,10 +40,10 @@ class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection {
         return $return;
     }
 
-    function warnings() {
+    public function warnings() {
         return ''; // not implemented in PDO_PgSQL as of PHP 7.2.1
     }
 
-    function close() {
+    public function close() {
     }
 }

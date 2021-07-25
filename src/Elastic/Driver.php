@@ -4,7 +4,7 @@ namespace Lagdo\Adminer\Drivers\Elastic;
 
 class Driver extends \Lagdo\Adminer\Drivers\Driver {
 
-    function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
+    public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
         global $adminer;
         $data = array();
         $query = "$table/_search";
@@ -74,7 +74,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         return new Min_Result($return);
     }
 
-    function update($type, $record, $queryWhere, $limit = 0, $separator = "\n") {
+    public function update($type, $record, $queryWhere, $limit = 0, $separator = "\n") {
         //! use $limit
         $parts = preg_split('~ *= *~', $queryWhere);
         if (count($parts) == 2) {
@@ -85,7 +85,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         return false;
     }
 
-    function insert($type, $record) {
+    public function insert($type, $record) {
         $id = ""; //! user should be able to inform _id
         $query = "$type/$id";
         $response = $this->_conn->query($query, $record, 'POST');
@@ -93,7 +93,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         return $response['created'];
     }
 
-    function delete($type, $queryWhere, $limit = 0) {
+    public function delete($type, $queryWhere, $limit = 0) {
         //! use $limit
         $ids = array();
         if (is_array($_GET["where"]) && $_GET["where"]["_id"]) {

@@ -9,7 +9,7 @@ namespace Lagdo\Adminer\Drivers\Mssql;
 
 class Driver extends \Lagdo\Adminer\Drivers\Driver {
 
-    function insertUpdate($table, $rows, $primary) {
+    public function insertUpdate($table, $rows, $primary) {
         foreach ($rows as $set) {
             $update = array();
             $where = array();
@@ -30,7 +30,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         return true;
     }
 
-    function begin() {
+    public function begin() {
         return queries("BEGIN TRANSACTION");
     }
 

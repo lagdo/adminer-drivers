@@ -2,19 +2,20 @@
 
 namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
 
-class Connection {
+class Connection implements ConnectionInterface
+{
     var $extension = "MongoDB", $server_info = MONGODB_VERSION, $affected_rows, $error, $last_id;
     /** @var MongoDB\Driver\Manager */
     var $_link;
     var $_db, $_db_name;
 
-    function connect($uri, $options) {
+    public function connect($uri, $options) {
         $class = 'MongoDB\Driver\Manager';
         $this->_link = new $class($uri, $options);
         $this->executeCommand('admin', array('ping' => 1));
     }
 
-    function executeCommand($db, $command) {
+    public function executeCommand($db, $command) {
         $class = 'MongoDB\Driver\Command';
         try {
             return $this->_link->executeCommand($db, new $class($command));
@@ -24,7 +25,7 @@ class Connection {
         }
     }
 
-    function executeBulkWrite($namespace, $bulk, $counter) {
+    public function executeBulkWrite($namespace, $bulk, $counter) {
         try {
             $results = $this->_link->executeBulkWrite($namespace, $bulk);
             $this->affected_rows = $results->$counter();
@@ -35,16 +36,16 @@ class Connection {
         }
     }
 
-    function query($query) {
+    public function query($query) {
         return false;
     }
 
-    function select_db($database) {
+    public function select_db($database) {
         $this->_db_name = $database;
         return true;
     }
 
-    function quote($string) {
+    public function quote($string) {
         return $string;
     }
 }

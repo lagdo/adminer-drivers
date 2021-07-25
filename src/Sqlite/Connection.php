@@ -2,14 +2,16 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite;
 
+use Lagdo\Adminer\Drivers\ConnectionInterface;
+
 class Connection {
 
-    function __construct() {
+    public function __construct() {
         parent::__construct(":memory:");
         $this->query("PRAGMA foreign_keys = 1");
     }
 
-    function select_db($filename) {
+    public function select_db($filename) {
         if (is_readable($filename) && $this->query("ATTACH " . $this->quote(preg_match("~(^[/\\\\]|:)~", $filename) ? $filename : dirname($_SERVER["SCRIPT_FILENAME"]) . "/$filename") . " AS a")) { // is_readable - SQLite 3
             parent::__construct($filename);
             $this->query("PRAGMA foreign_keys = 1");
@@ -19,11 +21,11 @@ class Connection {
         return false;
     }
 
-    function multi_query($query) {
+    public function multi_query($query) {
         return $this->_result = $this->query($query);
     }
 
-    function next_result() {
+    public function next_result() {
         return false;
     }
 }
