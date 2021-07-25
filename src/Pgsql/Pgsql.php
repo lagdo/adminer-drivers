@@ -23,20 +23,28 @@ class Pgsql implements ServerInterface
     }
 
     /**
+     * Get a connection to the server, based on the config and available packages
+     */
+    protected function createConnection()
+    {
+        if(extension_loaded("pgsql"))
+        {
+            return new Pgsql\Connection();
+        }
+        if(extension_loaded("pdo_pgsql"))
+        {
+            return new Pdo\Connection();
+        }
+        return null;
+    }
+
+    /**
      * @inheritDoc
      */
-    public function idf_escape($idf)
+    public function connect()
     {
-        return '"' . str_replace('"', '""', $idf) . '"';
-    }
-
-    public function table($idf) {
-        return idf_escape($idf);
-    }
-
-    public function connect() {
         global $adminer, $types, $structured_types;
-        $connection = new Min_DB;
+        $connection = $this->createConnection();
         $credentials = $adminer->credentials();
         if ($connection->connect($credentials[0], $credentials[1], $credentials[2])) {
             if (min_version(9, 0, $connection)) {
@@ -53,6 +61,18 @@ class Pgsql implements ServerInterface
             return $connection;
         }
         return $connection->error;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function idf_escape($idf)
+    {
+        return '"' . str_replace('"', '""', $idf) . '"';
+    }
+
+    public function table($idf) {
+        return idf_escape($idf);
     }
 
     public function get_databases($flush) {

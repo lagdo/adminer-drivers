@@ -5,6 +5,49 @@ namespace Lagdo\Adminer\Drivers\Mongo;
 class Mongo
 {
     /**
+     * Get a connection to the server, based on the config and available packages
+     */
+    protected function createConnection()
+    {
+        if(class_exists('MongoDB'))
+        {
+            return new Mongo\Connection();
+        }
+        if(class_exists('MongoDB\Driver\Manager'))
+        {
+            return new MongoDb\Connection();
+        }
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function connect()
+    {
+        global $adminer;
+        $connection = $this->createConnection();
+        list($server, $username, $password) = $adminer->credentials();
+        $options = array();
+        if ($username . $password != "") {
+            $options["username"] = $username;
+            $options["password"] = $password;
+        }
+        $db = $adminer->database();
+        if ($db != "") {
+            $options["db"] = $db;
+        }
+        if (($auth_source = getenv("MONGO_AUTH_SOURCE"))) {
+            $options["authSource"] = $auth_source;
+        }
+        $connection->connect("mongodb://$server", $options);
+        if ($connection->error) {
+            return $connection->error;
+        }
+        return $connection;
+    }
+
+    /**
      * @inheritDoc
      */
     public function idf_escape($idf)
@@ -65,29 +108,6 @@ class Mongo
         global $adminer;
         $credentials = $adminer->credentials();
         return $credentials[1];
-    }
-
-    public function connect() {
-        global $adminer;
-        $connection = new Min_DB;
-        list($server, $username, $password) = $adminer->credentials();
-        $options = array();
-        if ($username . $password != "") {
-            $options["username"] = $username;
-            $options["password"] = $password;
-        }
-        $db = $adminer->database();
-        if ($db != "") {
-            $options["db"] = $db;
-        }
-        if (($auth_source = getenv("MONGO_AUTH_SOURCE"))) {
-            $options["authSource"] = $auth_source;
-        }
-        $connection->connect("mongodb://$server", $options);
-        if ($connection->error) {
-            return $connection->error;
-        }
-        return $connection;
     }
 
     public function alter_indexes($table, $alter) {

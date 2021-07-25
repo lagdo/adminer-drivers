@@ -23,6 +23,36 @@ class Oracle implements ServerInterface
     }
 
     /**
+     * Get a connection to the server, based on the config and available packages
+     */
+    protected function createConnection()
+    {
+        if(extension_loaded("oci8"))
+        {
+            return new Oci\Connection();
+        }
+        if(extension_loaded("pdo_oci"))
+        {
+            return new Pdo\Connection();
+        }
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function connect()
+    {
+        global $adminer;
+        $connection = $this->createConnection();
+        $credentials = $adminer->credentials();
+        if ($connection->connect($credentials[0], $credentials[1], $credentials[2])) {
+            return $connection;
+        }
+        return $connection->error;
+    }
+
+    /**
      * @inheritDoc
      */
     public function idf_escape($idf)
@@ -32,16 +62,6 @@ class Oracle implements ServerInterface
 
     public function table($idf) {
         return idf_escape($idf);
-    }
-
-    public function connect() {
-        global $adminer;
-        $connection = new Min_DB;
-        $credentials = $adminer->credentials();
-        if ($connection->connect($credentials[0], $credentials[1], $credentials[2])) {
-            return $connection;
-        }
-        return $connection->error;
     }
 
     public function get_databases($flush) {

@@ -23,6 +23,39 @@ class Sqlite implements ServerInterface
     }
 
     /**
+     * Get a connection to the server, based on the config and available packages
+     */
+    protected function createConnection()
+    {
+        if(class_exists("SQLite3"))
+        {
+            return new Sqlite\Connection();
+        }
+        if(class_exists("SQLiteDatabase"))
+        {
+            return new Sqlite2\Connection();
+        }
+        if(extension_loaded("pdo_sqlite"))
+        {
+            return new Pdo\Connection();
+        }
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function connect()
+    {
+        global $adminer;
+        list(, , $password) = $adminer->credentials();
+        if ($password != "") {
+            return lang('Database does not support password.');
+        }
+        return $this->createConnection();
+    }
+
+    /**
      * @inheritDoc
      */
     public function idf_escape($idf)
@@ -32,15 +65,6 @@ class Sqlite implements ServerInterface
 
     public function table($idf) {
         return idf_escape($idf);
-    }
-
-    public function connect() {
-        global $adminer;
-        list(, , $password) = $adminer->credentials();
-        if ($password != "") {
-            return lang('Database does not support password.');
-        }
-        return new Min_DB;
     }
 
     public function get_databases($flush) {

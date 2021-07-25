@@ -23,23 +23,32 @@ class Mysql implements ServerInterface
     }
 
     /**
+     * Get a connection to the server, based on the config and available packages
+     */
+    protected function createConnection()
+    {
+        if(extension_loaded("mysqli"))
+        {
+            return new Mysqli\Connection();
+        }
+        if(extension_loaded("mysql") && !((ini_bool("sql.safe_mode") || ini_bool("mysql.allow_local_infile")) && extension_loaded("pdo_mysql")))
+        {
+            return new Mysql\Connection();
+        }
+        if(extension_loaded("pdo_mysql"))
+        {
+            return new Pdo\Connection();
+        }
+        return null;
+    }
+
+    /**
      * @inheritDoc
      */
-    public function idf_escape($idf)
+    public function connect()
     {
-        return "`" . str_replace("`", "``", $idf) . "`";
-    }
-
-    public function table($idf) {
-        return idf_escape($idf);
-    }
-
-    /** Connect to the database
-    * @return mixed Min_DB or string for error
-    */
-    public function connect() {
         global $adminer, $types, $structured_types;
-        $connection = new Min_DB;
+        $connection = $this->createConnection();
         $credentials = $adminer->credentials();
         if ($connection->connect($credentials[0], $credentials[1], $credentials[2])) {
             $connection->set_charset(charset($connection)); // available in MySQLi since PHP 5.0.5
@@ -55,6 +64,18 @@ class Mysql implements ServerInterface
             $return = $s;
         }
         return $return;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function idf_escape($idf)
+    {
+        return "`" . str_replace("`", "``", $idf) . "`";
+    }
+
+    public function table($idf) {
+        return idf_escape($idf);
     }
 
     /** Get cached list of databases

@@ -23,16 +23,24 @@ class Elastic implements ServerInterface
     }
 
     /**
-     * @inheritDoc
+     * Get a connection to the server, based on the config and available packages
      */
-    public function idf_escape($idf)
+    protected function createConnection()
     {
-        return $idf;
+        if(function_exists('json_decode') && ini_bool('allow_url_fopen'))
+        {
+            return new Connection();
+        }
+        return null;
     }
 
-    public function connect() {
+    /**
+     * @inheritDoc
+     */
+    public function connect()
+    {
         global $adminer;
-        $connection = new Min_DB;
+        $connection = $this->createConnection();
         list($server, $username, $password) = $adminer->credentials();
         if ($password != "" && $connection->connect($server, $username, "")) {
             return lang('Database does not support password.');
@@ -41,6 +49,14 @@ class Elastic implements ServerInterface
             return $connection;
         }
         return $connection->error;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function idf_escape($idf)
+    {
+        return $idf;
     }
 
     public function support($feature) {

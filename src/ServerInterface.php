@@ -19,6 +19,14 @@ interface ServerInterface
     public function getName();
 
     /**
+     * Connect to the database
+     * Return a string for error
+     *
+     * @return ConnectionInterface|string
+     */
+    public function connect();
+
+    /**
      * Escape database identifier
      *
      * @param string $idf
@@ -35,14 +43,6 @@ interface ServerInterface
      * @return string
      */
     public function table($idf);
-
-    /**
-     * Connect to the database
-     * Return a string for error
-     *
-     * @return ConnectionInterface|string
-     */
-    public function connect();
 
     /**
      * Get cached list of databases
