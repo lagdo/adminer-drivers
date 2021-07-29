@@ -5,7 +5,6 @@ namespace Lagdo\Adminer\Drivers\Pgsql;
 class Driver extends \Lagdo\Adminer\Drivers\Driver {
 
     public function insertUpdate($table, $rows, $primary) {
-        global $connection;
         foreach ($rows as $set) {
             $update = array();
             $where = array();
@@ -15,8 +14,8 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
                     $where[] = "$key = $val";
                 }
             }
-            if (!(($where && queries("UPDATE " . table($table) . " SET " . implode(", ", $update) . " WHERE " . implode(" AND ", $where)) && $connection->affected_rows)
-                || queries("INSERT INTO " . table($table) . " (" . implode(", ", array_keys($set)) . ") VALUES (" . implode(", ", $set) . ")")
+            if (!(($where && $this->server->queries("UPDATE " . $this->server->table($table) . " SET " . implode(", ", $update) . " WHERE " . implode(" AND ", $where)) && $this->connection->affected_rows)
+                || $this->server->queries("INSERT INTO " . $this->server->table($table) . " (" . implode(", ", array_keys($set)) . ") VALUES (" . implode(", ", $set) . ")")
             )) {
                 return false;
             }

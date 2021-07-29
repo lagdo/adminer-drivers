@@ -20,7 +20,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
                 }
             }
             //! can use only one query for all rows
-            if (!queries("MERGE " . table($table) . " USING (VALUES(" . implode(", ", $set) . ")) AS source (c" . implode(", c", range(1, count($set))) . ") ON " . implode(" AND ", $where) //! source, c1 - possible conflict
+            if (!$this->server->queries("MERGE " . $this->server->table($table) . " USING (VALUES(" . implode(", ", $set) . ")) AS source (c" . implode(", c", range(1, count($set))) . ") ON " . implode(" AND ", $where) //! source, c1 - possible conflict
                 . " WHEN MATCHED THEN UPDATE SET " . implode(", ", $update)
                 . " WHEN NOT MATCHED THEN INSERT (" . implode(", ", array_keys($set)) . ") VALUES (" . implode(", ", $set) . ");" // ; is mandatory
             )) {
@@ -31,7 +31,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
     }
 
     public function begin() {
-        return queries("BEGIN TRANSACTION");
+        return $this->server->queries("BEGIN TRANSACTION");
     }
 
 }

@@ -2,29 +2,29 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite;
 
-use Lagdo\Adminer\Drivers\ServerInterface;
+use Lagdo\Adminer\Drivers\Server;
 
-class Sqlite implements ServerInterface
+class Sqlite extends Server
 {
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getDriver()
     {
         return (isset($_GET["sqlite"]) ? "sqlite" : "sqlite2");
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getName()
     {
         return (isset($_GET["sqlite"]) ? "SQLite 3" : "SQLite 2");
     }
 
     /**
-      * Get a connection to the server, based on the config and available packages
-      */
+     * Get a connection to the server, based on the config and available packages
+     */
     protected function createConnection()
     {
         if(class_exists("SQLite3"))
@@ -43,12 +43,11 @@ class Sqlite implements ServerInterface
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function connect()
     {
-        global $adminer;
-        list(, , $password) = $adminer->credentials();
+        list(, , $password) = $this->adminer->credentials();
         if ($password != "") {
             return lang('Database does not support password.');
         }
@@ -56,15 +55,15 @@ class Sqlite implements ServerInterface
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function idf_escape($idf)
     {
         return '"' . str_replace('"', '""', $idf) . '"';
     }
 
     public function table($idf) {
-        return idf_escape($idf);
+        return $this->idf_escape($idf);
     }
 
     public function get_databases($flush) {
@@ -76,16 +75,14 @@ class Sqlite implements ServerInterface
     }
 
     public function limit1($table, $query, $where, $separator = "\n") {
-        global $connection;
-        return (preg_match('~^INTO~', $query) || $connection->result("SELECT sqlite_compileoption_used('ENABLE_UPDATE_DELETE_LIMIT')")
+        return (preg_match('~^INTO~', $query) || $this->connection->result("SELECT sqlite_compileoption_used('ENABLE_UPDATE_DELETE_LIMIT')")
             ? limit($query, $where, 1, 0, $separator)
-            : " $query WHERE rowid = (SELECT rowid FROM " . table($table) . $where . $separator . "LIMIT 1)" //! use primary key in tables with WITHOUT rowid
+            : " $query WHERE rowid = (SELECT rowid FROM " . $this->table($table) . $where . $separator . "LIMIT 1)" //! use primary key in tables with WITHOUT rowid
         );
     }
 
     public function db_collation($db, $collations) {
-        global $connection;
-        return $connection->result("PRAGMA encoding"); // there is no database list so $db == DB
+        return $this->connection->result("PRAGMA encoding"); // there is no database list so $db == DB
     }
 
     public function engines() {
@@ -105,10 +102,9 @@ class Sqlite implements ServerInterface
     }
 
     public function table_status($name = "", $fast = false) {
-        global $connection;
         $return = array();
         foreach (get_rows("SELECT name AS Name, type AS Engine, 'rowid' AS Oid, '' AS Auto_increment FROM sqlite_master WHERE type IN ('table', 'view') " . ($name != "" ? "AND name = " . q($name) : "ORDER BY name")) as $row) {
-            $row["Rows"] = $connection->result("SELECT COUNT(*) FROM " . idf_escape($row["Name"]));
+            $row["Rows"] = $this->connection->result("SELECT COUNT(*) FROM " . $this->idf_escape($row["Name"]));
             $return[$row["Name"]] = $row;
         }
         foreach (get_rows("SELECT * FROM sqlite_sequence", null, "") as $row) {
@@ -122,15 +118,13 @@ class Sqlite implements ServerInterface
     }
 
     public function fk_support($table_status) {
-        global $connection;
-        return !$connection->result("SELECT sqlite_compileoption_used('OMIT_FOREIGN_KEY')");
+        return !$this->connection->result("SELECT sqlite_compileoption_used('OMIT_FOREIGN_KEY')");
     }
 
     public function fields($table) {
-        global $connection;
         $return = array();
         $primary = "";
-        foreach (get_rows("PRAGMA table_info(" . table($table) . ")") as $row) {
+        foreach (get_rows("PRAGMA table_info(" . $this->table($table) . ")") as $row) {
             $name = $row["name"];
             $type = strtolower($row["type"]);
             $default = $row["dflt_value"];
@@ -152,7 +146,7 @@ class Sqlite implements ServerInterface
                 $primary = $name;
             }
         }
-        $sql = $connection->result("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = " . q($table));
+        $sql = $this->connection->result("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = " . q($table));
         preg_match_all('~(("[^"]*+")+|[a-z0-9_]+)\s+text\s+COLLATE\s+(\'[^\']+\'|\S+)~i', $sql, $matches, PREG_SET_ORDER);
         foreach ($matches as $match) {
             $name = str_replace('""', '"', preg_replace('~^"|"$~', '', $match[1]));
@@ -164,7 +158,6 @@ class Sqlite implements ServerInterface
     }
 
     public function indexes($table, $connection2 = null) {
-        global $connection;
         if (!is_object($connection2)) {
             $connection2 = $connection;
         }
@@ -186,16 +179,16 @@ class Sqlite implements ServerInterface
             }
         }
         $sqls = get_key_vals("SELECT name, sql FROM sqlite_master WHERE type = 'index' AND tbl_name = " . q($table), $connection2);
-        foreach (get_rows("PRAGMA index_list(" . table($table) . ")", $connection2) as $row) {
+        foreach (get_rows("PRAGMA index_list(" . $this->table($table) . ")", $connection2) as $row) {
             $name = $row["name"];
             $index = array("type" => ($row["unique"] ? "UNIQUE" : "INDEX"));
             $index["lengths"] = array();
             $index["descs"] = array();
-            foreach (get_rows("PRAGMA index_info(" . idf_escape($name) . ")", $connection2) as $row1) {
+            foreach (get_rows("PRAGMA index_info(" . $this->idf_escape($name) . ")", $connection2) as $row1) {
                 $index["columns"][] = $row1["name"];
                 $index["descs"][] = null;
             }
-            if (preg_match('~^CREATE( UNIQUE)? INDEX ' . preg_quote(idf_escape($name) . ' ON ' . idf_escape($table), '~') . ' \((.*)\)$~i', $sqls[$name], $regs)) {
+            if (preg_match('~^CREATE( UNIQUE)? INDEX ' . preg_quote(idf_escape($name) . ' ON ' . $this->idf_escape($table), '~') . ' \((.*)\)$~i', $sqls[$name], $regs)) {
                 preg_match_all('/("[^"]*+")+( DESC)?/', $regs[2], $matches);
                 foreach ($matches[2] as $key => $val) {
                     if ($val) {
@@ -212,7 +205,7 @@ class Sqlite implements ServerInterface
 
     public function foreign_keys($table) {
         $return = array();
-        foreach (get_rows("PRAGMA foreign_key_list(" . table($table) . ")") as $row) {
+        foreach (get_rows("PRAGMA foreign_key_list(" . $this->table($table) . ")") as $row) {
             $foreign_key = &$return[$row["id"]];
             //! idf_unescape in SQLite2
             if (!$foreign_key) {
@@ -225,8 +218,7 @@ class Sqlite implements ServerInterface
     }
 
     public function view($name) {
-        global $connection;
-        return array("select" => preg_replace('~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU', '', $connection->result("SELECT sql FROM sqlite_master WHERE name = " . q($name)))); //! identifiers may be inside []
+        return array("select" => preg_replace('~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU', '', $this->connection->result("SELECT sql FROM sqlite_master WHERE name = " . q($name)))); //! identifiers may be inside []
     }
 
     public function collations() {
@@ -238,25 +230,22 @@ class Sqlite implements ServerInterface
     }
 
     public function error() {
-        global $connection;
-        return h($connection->error);
+        return h($this->connection->error);
     }
 
     public function check_sqlite_name($name) {
         // avoid creating PHP files on unsecured servers
-        global $connection;
         $extensions = "db|sdb|sqlite";
         if (!preg_match("~^[^\\0]*\\.($extensions)\$~", $name)) {
-            $connection->error = lang('Please use one of the extensions %s.', str_replace("|", ", ", $extensions));
+            $this->connection->error = lang('Please use one of the extensions %s.', str_replace("|", ", ", $extensions));
             return false;
         }
         return true;
     }
 
     public function create_database($db, $collation) {
-        global $connection;
         if (file_exists($db)) {
-            $connection->error = lang('File exists.');
+            $this->connection->error = lang('File exists.');
             return false;
         }
         if (!check_sqlite_name($db)) {
@@ -265,7 +254,7 @@ class Sqlite implements ServerInterface
         try {
             $link = new Min_SQLite($db);
         } catch (Exception $ex) {
-            $connection->error = $ex->getMessage();
+            $this->connection->error = $ex->getMessage();
             return false;
         }
         $link->query('PRAGMA encoding = "UTF-8"');
@@ -275,11 +264,10 @@ class Sqlite implements ServerInterface
     }
 
     public function drop_databases($databases) {
-        global $connection;
-        $connection->__construct(":memory:"); // to unlock file, doesn't work in PDO on Windows
+        $this->connection->__construct(":memory:"); // to unlock file, doesn't work in PDO on Windows
         foreach ($databases as $db) {
             if (!@unlink($db)) {
-                $connection->error = lang('File exists.');
+                $this->connection->error = lang('File exists.');
                 return false;
             }
         }
@@ -287,12 +275,11 @@ class Sqlite implements ServerInterface
     }
 
     public function rename_database($name, $collation) {
-        global $connection;
         if (!check_sqlite_name($name)) {
             return false;
         }
-        $connection->__construct(":memory:");
-        $connection->error = lang('File exists.');
+        $this->connection->__construct(":memory:");
+        $this->connection->error = lang('File exists.');
         return @rename(DB, $name);
     }
 
@@ -301,7 +288,6 @@ class Sqlite implements ServerInterface
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
-        global $connection;
         $use_all_fields = ($table == "" || $foreign);
         foreach ($fields as $field) {
             if ($field[0] != "" || !$field[1] || $field[2]) {
@@ -321,29 +307,28 @@ class Sqlite implements ServerInterface
         }
         if (!$use_all_fields) {
             foreach ($alter as $val) {
-                if (!queries("ALTER TABLE " . table($table) . " $val")) {
+                if (!$this->queries("ALTER TABLE " . $this->table($table) . " $val")) {
                     return false;
                 }
             }
-            if ($table != $name && !queries("ALTER TABLE " . table($table) . " RENAME TO " . table($name))) {
+            if ($table != $name && !$this->queries("ALTER TABLE " . $this->table($table) . " RENAME TO " . $this->table($name))) {
                 return false;
             }
         } elseif (!recreate_table($table, $name, $alter, $originals, $foreign, $auto_increment)) {
             return false;
         }
         if ($auto_increment) {
-            queries("BEGIN");
-            queries("UPDATE sqlite_sequence SET seq = $auto_increment WHERE name = " . q($name)); // ignores error
-            if (!$connection->affected_rows) {
-                queries("INSERT INTO sqlite_sequence (name, seq) VALUES (" . q($name) . ", $auto_increment)");
+            $this->queries("BEGIN");
+            $this->queries("UPDATE sqlite_sequence SET seq = $auto_increment WHERE name = " . q($name)); // ignores error
+            if (!$this->connection->affected_rows) {
+                $this->queries("INSERT INTO sqlite_sequence (name, seq) VALUES (" . q($name) . ", $auto_increment)");
             }
-            queries("COMMIT");
+            $this->queries("COMMIT");
         }
         return true;
     }
 
     public function recreate_table($table, $name, $fields, $originals, $foreign, $auto_increment, $indexes = array()) {
-        global $connection;
         if ($table != "") {
             if (!$fields) {
                 foreach (fields($table) as $key => $field) {
@@ -351,7 +336,7 @@ class Sqlite implements ServerInterface
                         $field["auto_increment"] = 0;
                     }
                     $fields[] = process_field($field, $field);
-                    $originals[$key] = idf_escape($key);
+                    $originals[$key] = $this->idf_escape($key);
                 }
             }
             $primary_key = false;
@@ -398,50 +383,50 @@ class Sqlite implements ServerInterface
                     $foreign[] = " " . format_foreign_key($foreign_key);
                 }
             }
-            queries("BEGIN");
+            $this->queries("BEGIN");
         }
         foreach ($fields as $key => $field) {
             $fields[$key] = "  " . implode($field);
         }
         $fields = array_merge($fields, array_filter($foreign));
         $temp_name = ($table == $name ? "adminer_$name" : $name);
-        if (!queries("CREATE TABLE " . table($temp_name) . " (\n" . implode(",\n", $fields) . "\n)")) {
-            // implicit ROLLBACK to not overwrite $connection->error
+        if (!$this->queries("CREATE TABLE " . $this->table($temp_name) . " (\n" . implode(",\n", $fields) . "\n)")) {
+            // implicit ROLLBACK to not overwrite $this->connection->error
             return false;
         }
         if ($table != "") {
-            if ($originals && !queries("INSERT INTO " . table($temp_name) . " (" . implode(", ", $originals) . ") SELECT " . implode(", ", array_map('idf_escape', array_keys($originals))) . " FROM " . table($table))) {
+            if ($originals && !$this->queries("INSERT INTO " . $this->table($temp_name) . " (" . implode(", ", $originals) . ") SELECT " . implode(", ", array_map('idf_escape', array_keys($originals))) . " FROM " . $this->table($table))) {
                 return false;
             }
             $triggers = array();
             foreach (triggers($table) as $trigger_name => $timing_event) {
                 $trigger = trigger($trigger_name);
-                $triggers[] = "CREATE TRIGGER " . idf_escape($trigger_name) . " " . implode(" ", $timing_event) . " ON " . table($name) . "\n$trigger[Statement]";
+                $triggers[] = "CREATE TRIGGER " . $this->idf_escape($trigger_name) . " " . implode(" ", $timing_event) . " ON " . $this->table($name) . "\n$trigger[Statement]";
             }
-            $auto_increment = $auto_increment ? 0 : $connection->result("SELECT seq FROM sqlite_sequence WHERE name = " . q($table)); // if $auto_increment is set then it will be updated later
-            if (!queries("DROP TABLE " . table($table)) // drop before creating indexes and triggers to allow using old names
-                || ($table == $name && !queries("ALTER TABLE " . table($temp_name) . " RENAME TO " . table($name)))
+            $auto_increment = $auto_increment ? 0 : $this->connection->result("SELECT seq FROM sqlite_sequence WHERE name = " . q($table)); // if $auto_increment is set then it will be updated later
+            if (!$this->queries("DROP TABLE " . $this->table($table)) // drop before creating indexes and triggers to allow using old names
+                || ($table == $name && !$this->queries("ALTER TABLE " . $this->table($temp_name) . " RENAME TO " . $this->table($name)))
                 || !alter_indexes($name, $indexes)
             ) {
                 return false;
             }
             if ($auto_increment) {
-                queries("UPDATE sqlite_sequence SET seq = $auto_increment WHERE name = " . q($name)); // ignores error
+                $this->queries("UPDATE sqlite_sequence SET seq = $auto_increment WHERE name = " . q($name)); // ignores error
             }
             foreach ($triggers as $trigger) {
-                if (!queries($trigger)) {
+                if (!$this->queries($trigger)) {
                     return false;
                 }
             }
-            queries("COMMIT");
+            $this->queries("COMMIT");
         }
         return true;
     }
 
     public function index_sql($table, $type, $name, $columns) {
         return "CREATE $type " . ($type != "INDEX" ? "INDEX " : "")
-            . idf_escape($name != "" ? $name : uniqid($table . "_"))
-            . " ON " . table($table)
+            . $this->idf_escape($name != "" ? $name : uniqid($table . "_"))
+            . " ON " . $this->table($table)
             . " $columns"
         ;
     }
@@ -453,8 +438,8 @@ class Sqlite implements ServerInterface
             }
         }
         foreach (array_reverse($alter) as $val) {
-            if (!queries($val[2] == "DROP"
-                ? "DROP INDEX " . idf_escape($val[1])
+            if (!$this->queries($val[2] == "DROP"
+                ? "DROP INDEX " . $this->idf_escape($val[1])
                 : index_sql($table, $val[0], $val[1], "(" . implode(", ", $val[2]) . ")")
             )) {
                 return false;
@@ -464,15 +449,15 @@ class Sqlite implements ServerInterface
     }
 
     public function truncate_tables($tables) {
-        return apply_queries("DELETE FROM", $tables);
+        return $this->apply_queries("DELETE FROM", $tables);
     }
 
     public function drop_views($views) {
-        return apply_queries("DROP VIEW", $views);
+        return $this->apply_queries("DROP VIEW", $views);
     }
 
     public function drop_tables($tables) {
-        return apply_queries("DROP TABLE", $tables);
+        return $this->apply_queries("DROP TABLE", $tables);
     }
 
     public function move_tables($tables, $views, $target) {
@@ -480,7 +465,6 @@ class Sqlite implements ServerInterface
     }
 
     public function trigger($name) {
-        global $connection;
         if ($name == "") {
             return array("Statement" => "BEGIN\n\t;\nEND");
         }
@@ -488,7 +472,7 @@ class Sqlite implements ServerInterface
         $trigger_options = trigger_options();
         preg_match(
             "~^CREATE\\s+TRIGGER\\s*$idf\\s*(" . implode("|", $trigger_options["Timing"]) . ")\\s+([a-z]+)(?:\\s+OF\\s+($idf))?\\s+ON\\s*$idf\\s*(?:FOR\\s+EACH\\s+ROW\\s)?(.*)~is",
-            $connection->result("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = " . q($name)),
+            $this->connection->result("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = " . q($name)),
             $match
         );
         $of = $match[3];
@@ -520,16 +504,15 @@ class Sqlite implements ServerInterface
     }
 
     public function begin() {
-        return queries("BEGIN");
+        return $this->queries("BEGIN");
     }
 
     public function last_id() {
-        global $connection;
-        return $connection->result("SELECT LAST_INSERT_ROWID()");
+        return $this->connection->result("SELECT LAST_INSERT_ROWID()");
     }
 
     public function explain($connection, $query) {
-        return $connection->query("EXPLAIN QUERY PLAN $query");
+        return $this->connection->query("EXPLAIN QUERY PLAN $query");
     }
 
     public function found_rows($table_status, $where) {
@@ -552,8 +535,7 @@ class Sqlite implements ServerInterface
     }
 
     public function create_sql($table, $auto_increment, $style) {
-        global $connection;
-        $return = $connection->result("SELECT sql FROM sqlite_master WHERE type IN ('table', 'view') AND name = " . q($table));
+        $return = $this->connection->result("SELECT sql FROM sqlite_master WHERE type IN ('table', 'view') AND name = " . q($table));
         foreach (indexes($table) as $name => $index) {
             if ($name == '') {
                 continue;
@@ -564,7 +546,7 @@ class Sqlite implements ServerInterface
     }
 
     public function truncate_sql($table) {
-        return "DELETE FROM " . table($table);
+        return "DELETE FROM " . $this->table($table);
     }
 
     public function use_sql($database) {
@@ -575,10 +557,9 @@ class Sqlite implements ServerInterface
     }
 
     public function show_variables() {
-        global $connection;
         $return = array();
         foreach (array("auto_vacuum", "cache_size", "count_changes", "default_cache_size", "empty_result_callbacks", "encoding", "foreign_keys", "full_column_names", "fullfsync", "journal_mode", "journal_size_limit", "legacy_file_format", "locking_mode", "page_size", "max_page_count", "read_uncommitted", "recursive_triggers", "reverse_unordered_selects", "secure_delete", "short_column_names", "synchronous", "temp_store", "temp_store_directory", "schema_version", "integrity_check", "quick_check") as $key) {
-            $return[$key] = $connection->result("PRAGMA $key");
+            $return[$key] = $this->connection->result("PRAGMA $key");
         }
         return $return;
     }

@@ -12,9 +12,8 @@ class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements Connec
     var $extension = "PDO_MySQL";
 
     public function connect($server, $username, $password) {
-        global $adminer;
         $options = array(PDO::MYSQL_ATTR_LOCAL_INFILE => false);
-        $ssl = $adminer->connectSsl();
+        $ssl = $this->adminer->connectSsl();
         if ($ssl) {
             if (!empty($ssl['key'])) {
                 $options[PDO::MYSQL_ATTR_SSL_KEY] = $ssl['key'];
@@ -41,7 +40,7 @@ class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements Connec
 
     public function select_db($database) {
         // database selection is separated from the connection so dbname in DSN can't be used
-        return $this->query("USE " . idf_escape($database));
+        return $this->query("USE " . $this->server->idf_escape($database));
     }
 
     public function query($query, $unbuffered = false) {

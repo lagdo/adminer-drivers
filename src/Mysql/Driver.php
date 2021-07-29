@@ -5,12 +5,12 @@ namespace Lagdo\Adminer\Drivers\Mysql;
 class Driver extends \Lagdo\Adminer\Drivers\Driver {
 
     public function insert($table, $set) {
-        return ($set ? parent::insert($table, $set) : queries("INSERT INTO " . table($table) . " ()\nVALUES ()"));
+        return ($set ? parent::insert($table, $set) : $this->server->queries("INSERT INTO " . $this->server->table($table) . " ()\nVALUES ()"));
     }
 
     public function insertUpdate($table, $rows, $primary) {
         $columns = array_keys(reset($rows));
-        $prefix = "INSERT INTO " . table($table) . " (" . implode(", ", $columns) . ") VALUES\n";
+        $prefix = "INSERT INTO " . $this->server->table($table) . " (" . implode(", ", $columns) . ") VALUES\n";
         $values = array();
         foreach ($columns as $key) {
             $values[$key] = "$key = VALUES($key)";
@@ -21,7 +21,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         foreach ($rows as $set) {
             $value = "(" . implode(", ", $set) . ")";
             if ($values && (strlen($prefix) + $length + strlen($value) + strlen($suffix) > 1e6)) { // 1e6 - default max_allowed_packet
-                if (!queries($prefix . implode(",\n", $values) . $suffix)) {
+                if (!$this->server->queries($prefix . implode(",\n", $values) . $suffix)) {
                     return false;
                 }
                 $values = array();
@@ -30,7 +30,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
             $values[] = $value;
             $length += strlen($value) + 2; // 2 - strlen(",\n")
         }
-        return queries($prefix . implode(",\n", $values) . $suffix);
+        return $this->server->queries($prefix . implode(",\n", $values) . $suffix);
     }
 
     public function slowQuery($query, $timeout) {

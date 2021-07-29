@@ -6,7 +6,6 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
     public $primary = "_id";
 
     public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
-        global $connection;
         $select = ($select == array("*")
             ? array()
             : array_fill_keys($select, 1)
@@ -27,16 +26,15 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         $skip = $page * $limit;
         $class = 'MongoDB\Driver\Query';
         try {
-            return new Result($connection->_link->executeQuery("$connection->_db_name.$table", new $class($where, array('projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort))));
+            return new Result($this->connection->_link->executeQuery("$this->connection->_db_name.$table", new $class($where, array('projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort))));
         } catch (Exception $e) {
-            $connection->error = $e->getMessage();
+            $this->connection->error = $e->getMessage();
             return false;
         }
     }
 
     public function update($table, $set, $queryWhere, $limit = 0, $separator = "\n") {
-        global $connection;
-        $db = $connection->_db_name;
+        $db = $this->connection->_db_name;
         $where = sql_query_where_parser($queryWhere);
         $class = 'MongoDB\Driver\BulkWrite';
         $bulk = new $class(array());
@@ -55,28 +53,26 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
             $update['$unset'] = $removeFields;
         }
         $bulk->update($where, $update, array('upsert' => false));
-        return $connection->executeBulkWrite("$db.$table", $bulk, 'getModifiedCount');
+        return $this->connection->executeBulkWrite("$db.$table", $bulk, 'getModifiedCount');
     }
 
     public function delete($table, $queryWhere, $limit = 0) {
-        global $connection;
-        $db = $connection->_db_name;
+        $db = $this->connection->_db_name;
         $where = sql_query_where_parser($queryWhere);
         $class = 'MongoDB\Driver\BulkWrite';
         $bulk = new $class(array());
         $bulk->delete($where, array('limit' => $limit));
-        return $connection->executeBulkWrite("$db.$table", $bulk, 'getDeletedCount');
+        return $this->connection->executeBulkWrite("$db.$table", $bulk, 'getDeletedCount');
     }
 
     public function insert($table, $set) {
-        global $connection;
-        $db = $connection->_db_name;
+        $db = $this->connection->_db_name;
         $class = 'MongoDB\Driver\BulkWrite';
         $bulk = new $class(array());
         if ($set['_id'] == '') {
             unset($set['_id']);
         }
         $bulk->insert($set);
-        return $connection->executeBulkWrite("$db.$table", $bulk, 'getInsertedCount');
+        return $this->connection->executeBulkWrite("$db.$table", $bulk, 'getInsertedCount');
     }
 }

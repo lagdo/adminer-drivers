@@ -2,29 +2,29 @@
 
 namespace Lagdo\Adminer\Drivers\Mysql;
 
-use Lagdo\Adminer\Drivers\ServerInterface;
+use Lagdo\Adminer\Drivers\Server;
 
-class Mysql implements ServerInterface
+class Mysql extends Server
 {
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getDriver()
     {
         return "server";
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getName()
     {
         return "MySQL";
     }
 
     /**
-      * Get a connection to the server, based on the config and available packages
-      */
+     * Get a connection to the server, based on the config and available packages
+     */
     protected function createConnection()
     {
         if(extension_loaded("mysqli"))
@@ -43,23 +43,23 @@ class Mysql implements ServerInterface
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function connect()
     {
-        global $adminer, $types, $structured_types;
+        global $types, $structured_types;
         $connection = $this->createConnection();
-        $credentials = $adminer->credentials();
-        if ($connection->connect($credentials[0], $credentials[1], $credentials[2])) {
-            $connection->set_charset(charset($connection)); // available in MySQLi since PHP 5.0.5
-            $connection->query("SET sql_quote_show_create = 1, autocommit = 1");
+        $credentials = $this->adminer->credentials();
+        if ($this->connection->connect($credentials[0], $credentials[1], $credentials[2])) {
+            $this->connection->set_charset(charset($connection)); // available in MySQLi since PHP 5.0.5
+            $this->connection->query("SET sql_quote_show_create = 1, autocommit = 1");
             if (min_version('5.7.8', 10.2, $connection)) {
                 $structured_types[lang('Strings')][] = "json";
                 $types["json"] = 4294967295;
             }
             return $connection;
         }
-        $return = $connection->error;
+        $return = $this->connection->error;
         if (function_exists('iconv') && !is_utf8($return) && strlen($s = iconv("windows-1250", "utf-8", $return)) > strlen($return)) { // windows-1250 - most common Windows encoding
             $return = $s;
         }
@@ -67,15 +67,15 @@ class Mysql implements ServerInterface
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function idf_escape($idf)
     {
         return "`" . str_replace("`", "``", $idf) . "`";
     }
 
     public function table($idf) {
-        return idf_escape($idf);
+        return $this->idf_escape($idf);
     }
 
     /**
@@ -131,9 +131,8 @@ class Mysql implements ServerInterface
      * @return string
      */
     public function db_collation($db, $collations) {
-        global $connection;
         $return = null;
-        $create = $connection->result("SHOW CREATE DATABASE " . idf_escape($db), 1);
+        $create = $this->connection->result("SHOW CREATE DATABASE " . $this->idf_escape($db), 1);
         if (preg_match('~ COLLATE ([^ ]+)~', $create, $match)) {
             $return = $match[1];
         } elseif (preg_match('~ CHARACTER SET ([^ ]+)~', $create, $match)) {
@@ -162,8 +161,7 @@ class Mysql implements ServerInterface
      * @return string
      */
     public function logged_user() {
-        global $connection;
-        return $connection->result("SELECT USER()");
+        return $this->connection->result("SELECT USER()");
     }
 
     /**
@@ -185,7 +183,7 @@ class Mysql implements ServerInterface
     public function count_tables($databases) {
         $return = array();
         foreach ($databases as $db) {
-            $return[$db] = count(get_vals("SHOW TABLES IN " . idf_escape($db)));
+            $return[$db] = count(get_vals("SHOW TABLES IN " . $this->idf_escape($db)));
         }
         return $return;
     }
@@ -243,7 +241,7 @@ class Mysql implements ServerInterface
      */
     public function fields($table) {
         $return = array();
-        foreach (get_rows("SHOW FULL COLUMNS FROM " . table($table)) as $row) {
+        foreach (get_rows("SHOW FULL COLUMNS FROM " . $this->table($table)) as $row) {
             preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $row["Type"], $match);
             $return[$row["Field"]] = array(
                 "field" => $row["Field"],
@@ -274,7 +272,7 @@ class Mysql implements ServerInterface
      */
     public function indexes($table, $connection2 = null) {
         $return = array();
-        foreach (get_rows("SHOW INDEX FROM " . table($table), $connection2) as $row) {
+        foreach (get_rows("SHOW INDEX FROM " . $this->table($table), $connection2) as $row) {
             $name = $row["Key_name"];
             $return[$name]["type"] = ($name == "PRIMARY" ? "PRIMARY" : ($row["Index_type"] == "FULLTEXT" ? "FULLTEXT" : ($row["Non_unique"] ? ($row["Index_type"] == "SPATIAL" ? "SPATIAL" : "INDEX") : "UNIQUE")));
             $return[$name]["columns"][] = $row["Column_name"];
@@ -290,10 +288,10 @@ class Mysql implements ServerInterface
      * @return array array($name => array("db" => , "ns" => , "table" => , "source" => array(), "target" => array(), "on_delete" => , "on_update" => ))
      */
     public function foreign_keys($table) {
-        global $connection, $on_actions;
+        global $on_actions;
         static $pattern = '(?:`(?:[^`]|``)+`|"(?:[^"]|"")+")';
         $return = array();
-        $create_table = $connection->result("SHOW CREATE TABLE " . table($table), 1);
+        $create_table = $this->connection->result("SHOW CREATE TABLE " . $this->table($table), 1);
         if ($create_table) {
             preg_match_all("~CONSTRAINT ($pattern) FOREIGN KEY ?\\(((?:$pattern,? ?)+)\\) REFERENCES ($pattern)(?:\\.($pattern))? \\(((?:$pattern,? ?)+)\\)(?: ON DELETE ($on_actions))?(?: ON UPDATE ($on_actions))?~", $create_table, $matches, PREG_SET_ORDER);
             foreach ($matches as $match) {
@@ -318,8 +316,7 @@ class Mysql implements ServerInterface
      * @return array array("select" => )
      */
     public function view($name) {
-        global $connection;
-        return array("select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', $connection->result("SHOW CREATE VIEW " . table($name), 1)));
+        return array("select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', $this->connection->result("SHOW CREATE VIEW " . $this->table($name), 1)));
     }
 
     /**
@@ -357,8 +354,7 @@ class Mysql implements ServerInterface
      * @return string
      */
     public function error() {
-        global $connection;
-        return h(preg_replace('~^You have an error.*syntax to use~U', "Syntax error", $connection->error));
+        return h(preg_replace('~^You have an error.*syntax to use~U', "Syntax error", $this->connection->error));
     }
 
     /**
@@ -368,7 +364,7 @@ class Mysql implements ServerInterface
      * @return string
      */
     public function create_database($db, $collation) {
-        return queries("CREATE DATABASE " . idf_escape($db) . ($collation ? " COLLATE " . q($collation) : ""));
+        return $this->queries("CREATE DATABASE " . $this->idf_escape($db) . ($collation ? " COLLATE " . q($collation) : ""));
     }
 
     /**
@@ -377,7 +373,7 @@ class Mysql implements ServerInterface
      * @return bool
      */
     public function drop_databases($databases) {
-        $return = apply_queries("DROP DATABASE", $databases, 'idf_escape');
+        $return = $this->apply_queries("DROP DATABASE", $databases, 'idf_escape');
         restart_session();
         set_session("dbs", null);
         return $return;
@@ -445,8 +441,8 @@ class Mysql implements ServerInterface
         $alter = array();
         foreach ($fields as $field) {
             $alter[] = ($field[1]
-                ? ($table != "" ? ($field[0] != "" ? "CHANGE " . idf_escape($field[0]) : "ADD") : " ") . " " . implode($field[1]) . ($table != "" ? $field[2] : "")
-                : "DROP " . idf_escape($field[0])
+                ? ($table != "" ? ($field[0] != "" ? "CHANGE " . $this->idf_escape($field[0]) : "ADD") : " ") . " " . implode($field[1]) . ($table != "" ? $field[2] : "")
+                : "DROP " . $this->idf_escape($field[0])
             );
         }
         $alter = array_merge($alter, $foreign);
@@ -456,15 +452,15 @@ class Mysql implements ServerInterface
             . ($auto_increment != "" ? " AUTO_INCREMENT=$auto_increment" : "")
         ;
         if ($table == "") {
-            return queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning");
+            return $this->queries("CREATE TABLE " . $this->table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning");
         }
         if ($table != $name) {
-            $alter[] = "RENAME TO " . table($name);
+            $alter[] = "RENAME TO " . $this->table($name);
         }
         if ($status) {
             $alter[] = ltrim($status);
         }
-        return ($alter || $partitioning ? queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter) . $partitioning) : true);
+        return ($alter || $partitioning ? $this->queries("ALTER TABLE " . $this->table($table) . "\n" . implode(",\n", $alter) . $partitioning) : true);
     }
 
     /**
@@ -476,11 +472,11 @@ class Mysql implements ServerInterface
     public function alter_indexes($table, $alter) {
         foreach ($alter as $key => $val) {
             $alter[$key] = ($val[2] == "DROP"
-                ? "\nDROP INDEX " . idf_escape($val[1])
-                : "\nADD $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . ($val[1] != "" ? idf_escape($val[1]) . " " : "") . "(" . implode(", ", $val[2]) . ")"
+                ? "\nDROP INDEX " . $this->idf_escape($val[1])
+                : "\nADD $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . ($val[1] != "" ? $this->idf_escape($val[1]) . " " : "") . "(" . implode(", ", $val[2]) . ")"
             );
         }
-        return queries("ALTER TABLE " . table($table) . implode(",", $alter));
+        return $this->queries("ALTER TABLE " . $this->table($table) . implode(",", $alter));
     }
 
     /**
@@ -489,7 +485,7 @@ class Mysql implements ServerInterface
      * @return bool
      */
     public function truncate_tables($tables) {
-        return apply_queries("TRUNCATE TABLE", $tables);
+        return $this->apply_queries("TRUNCATE TABLE", $tables);
     }
 
     /**
@@ -498,7 +494,7 @@ class Mysql implements ServerInterface
      * @return bool
      */
     public function drop_views($views) {
-        return queries("DROP VIEW " . implode(", ", array_map('table', $views)));
+        return $this->queries("DROP VIEW " . implode(", ", array_map('table', $views)));
     }
 
     /**
@@ -507,7 +503,7 @@ class Mysql implements ServerInterface
      * @return bool
      */
     public function drop_tables($tables) {
-        return queries("DROP TABLE " . implode(", ", array_map('table', $tables)));
+        return $this->queries("DROP TABLE " . implode(", ", array_map('table', $tables)));
     }
 
     /**
@@ -518,20 +514,19 @@ class Mysql implements ServerInterface
      * @return bool
      */
     public function move_tables($tables, $views, $target) {
-        global $connection;
         $rename = array();
         foreach ($tables as $table) {
-            $rename[] = table($table) . " TO " . idf_escape($target) . "." . table($table);
+            $rename[] = $this->table($table) . " TO " . $this->idf_escape($target) . "." . $this->table($table);
         }
-        if (!$rename || queries("RENAME TABLE " . implode(", ", $rename))) {
+        if (!$rename || $this->queries("RENAME TABLE " . implode(", ", $rename))) {
             $definitions = array();
             foreach ($views as $table) {
                 $definitions[table($table)] = view($table);
             }
-            $connection->select_db($target);
-            $db = idf_escape(DB);
+            $this->connection->select_db($target);
+            $db = $this->idf_escape(DB);
             foreach ($definitions as $name => $view) {
-                if (!queries("CREATE VIEW $name AS " . str_replace(" $db.", " ", $view["select"])) || !queries("DROP VIEW $db.$name")) {
+                if (!$this->server->queries("CREATE VIEW $name AS " . str_replace(" $db.", " ", $view["select"])) || !$this->queries("DROP VIEW $db.$name")) {
                     return false;
                 }
             }
@@ -549,27 +544,27 @@ class Mysql implements ServerInterface
      * @return bool
      */
     public function copy_tables($tables, $views, $target) {
-        queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
+        $this->queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
         foreach ($tables as $table) {
-            $name = ($target == DB ? table("copy_$table") : idf_escape($target) . "." . table($table));
-            if (($_POST["overwrite"] && !queries("\nDROP TABLE IF EXISTS $name"))
-                || !queries("CREATE TABLE $name LIKE " . table($table))
-                || !queries("INSERT INTO $name SELECT * FROM " . table($table))
+            $name = ($target == DB ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
+            if (($_POST["overwrite"] && !$this->queries("\nDROP TABLE IF EXISTS $name"))
+                || !$this->queries("CREATE TABLE $name LIKE " . $this->table($table))
+                || !$this->queries("INSERT INTO $name SELECT * FROM " . $this->table($table))
             ) {
                 return false;
             }
             foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\"))) as $row) {
                 $trigger = $row["Trigger"];
-                if (!queries("CREATE TRIGGER " . ($target == DB ? idf_escape("copy_$trigger") : idf_escape($target) . "." . idf_escape($trigger)) . " $row[Timing] $row[Event] ON $name FOR EACH ROW\n$row[Statement];")) {
+                if (!$this->queries("CREATE TRIGGER " . ($target == DB ? $this->idf_escape("copy_$trigger") : $this->idf_escape($target) . "." . $this->idf_escape($trigger)) . " $row[Timing] $row[Event] ON $name FOR EACH ROW\n$row[Statement];")) {
                     return false;
                 }
             }
         }
         foreach ($views as $table) {
-            $name = ($target == DB ? table("copy_$table") : idf_escape($target) . "." . table($table));
+            $name = ($target == DB ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
             $view = view($table);
-            if (($_POST["overwrite"] && !queries("DROP VIEW IF EXISTS $name"))
-                || !queries("CREATE VIEW $name AS $view[select]")) { //! USE to avoid db.table
+            if (($_POST["overwrite"] && !$this->queries("DROP VIEW IF EXISTS $name"))
+                || !$this->queries("CREATE VIEW $name AS $view[select]")) { //! USE to avoid db.table
                 return false;
             }
         }
@@ -621,12 +616,12 @@ class Mysql implements ServerInterface
      * @return array ("fields" => array("field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ), "returns" => , "definition" => , "language" => )
      */
     public function routine($name, $type) {
-        global $connection, $enum_length, $inout, $types;
+        global $enum_length, $inout, $types;
         $aliases = array("bool", "boolean", "integer", "double precision", "real", "dec", "numeric", "fixed", "national char", "national varchar");
         $space = "(?:\\s|/\\*[\s\S]*?\\*/|(?:#|-- )[^\n]*\n?|--\r?\n)";
         $type_pattern = "((" . implode("|", array_merge(array_keys($types), $aliases)) . ")\\b(?:\\s*\\(((?:[^'\")]|$enum_length)++)\\))?\\s*(zerofill\\s*)?(unsigned(?:\\s+zerofill)?)?)(?:\\s*(?:CHARSET|CHARACTER\\s+SET)\\s*['\"]?([^'\"\\s,]+)['\"]?)?";
         $pattern = "$space*(" . ($type == "FUNCTION" ? "" : $inout) . ")?\\s*(?:`((?:[^`]|``)*)`\\s*|\\b(\\S+)\\s+)$type_pattern";
-        $create = $connection->result("SHOW CREATE $type " . idf_escape($name), 2);
+        $create = $this->connection->result("SHOW CREATE $type " . $this->idf_escape($name), 2);
         preg_match("~\\(((?:$pattern\\s*,?)*)\\)\\s*" . ($type == "FUNCTION" ? "RETURNS\\s+$type_pattern\\s+" : "") . "(.*)~is", $create, $match);
         $fields = array();
         preg_match_all("~$pattern\\s*,?~is", $match[1], $matches, PREG_SET_ORDER);
@@ -676,7 +671,7 @@ class Mysql implements ServerInterface
      * @return string
      */
     public function routine_id($name, $row) {
-        return idf_escape($name);
+        return $this->idf_escape($name);
     }
 
     /**
@@ -684,8 +679,7 @@ class Mysql implements ServerInterface
      * @return string
      */
     public function last_id() {
-        global $connection;
-        return $connection->result("SELECT LAST_INSERT_ID()"); // mysql_insert_id() truncates bigint
+        return $this->connection->result("SELECT LAST_INSERT_ID()"); // mysql_insert_id() truncates bigint
     }
 
     /**
@@ -695,7 +689,7 @@ class Mysql implements ServerInterface
      * @return Result
      */
     public function explain($connection, $query) {
-        return $connection->query("EXPLAIN " . (min_version(5.1) && !min_version(5.7) ? "PARTITIONS " : "") . $query);
+        return $this->connection->query("EXPLAIN " . (min_version(5.1) && !min_version(5.7) ? "PARTITIONS " : "") . $query);
     }
 
     /**
@@ -750,8 +744,7 @@ class Mysql implements ServerInterface
      * @return string
      */
     public function create_sql($table, $auto_increment, $style) {
-        global $connection;
-        $return = $connection->result("SHOW CREATE TABLE " . table($table), 1);
+        $return = $this->connection->result("SHOW CREATE TABLE " . $this->table($table), 1);
         if (!$auto_increment) {
             $return = preg_replace('~ AUTO_INCREMENT=\d+~', '', $return); //! skip comments
         }
@@ -764,7 +757,7 @@ class Mysql implements ServerInterface
      * @return string
      */
     public function truncate_sql($table) {
-        return "TRUNCATE " . table($table);
+        return "TRUNCATE " . $this->table($table);
     }
 
     /**
@@ -773,7 +766,7 @@ class Mysql implements ServerInterface
      * @return string
      */
     public function use_sql($database) {
-        return "USE " . idf_escape($database);
+        return "USE " . $this->idf_escape($database);
     }
 
     /**
@@ -784,7 +777,7 @@ class Mysql implements ServerInterface
     public function trigger_sql($table) {
         $return = "";
         foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\")), null, "-- ") as $row) {
-            $return .= "\nCREATE TRIGGER " . idf_escape($row["Trigger"]) . " $row[Timing] $row[Event] ON " . table($row["Table"]) . " FOR EACH ROW\n$row[Statement];;\n";
+            $return .= "\nCREATE TRIGGER " . $this->idf_escape($row["Trigger"]) . " $row[Timing] $row[Event] ON " . $this->table($row["Table"]) . " FOR EACH ROW\n$row[Statement];;\n";
         }
         return $return;
     }
@@ -820,13 +813,13 @@ class Mysql implements ServerInterface
      */
     public function convert_field($field) {
         if (preg_match("~binary~", $field["type"])) {
-            return "HEX(" . idf_escape($field["field"]) . ")";
+            return "HEX(" . $this->idf_escape($field["field"]) . ")";
         }
         if ($field["type"] == "bit") {
-            return "BIN(" . idf_escape($field["field"]) . " + 0)"; // + 0 is required outside MySQLnd
+            return "BIN(" . $this->idf_escape($field["field"]) . " + 0)"; // + 0 is required outside MySQLnd
         }
         if (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
-            return (min_version(8) ? "ST_" : "") . "AsWKT(" . idf_escape($field["field"]) . ")";
+            return (min_version(8) ? "ST_" : "") . "AsWKT(" . $this->idf_escape($field["field"]) . ")";
         }
     }
 
@@ -864,7 +857,7 @@ class Mysql implements ServerInterface
      * @return bool
      */
     public function kill_process($val) {
-        return queries("KILL " . number($val));
+        return $this->queries("KILL " . number($val));
     }
 
     /**
@@ -880,8 +873,7 @@ class Mysql implements ServerInterface
      * @return int
      */
     public function max_connections() {
-        global $connection;
-        return $connection->result("SELECT @@max_connections");
+        return $this->connection->result("SELECT @@max_connections");
     }
 
     /**

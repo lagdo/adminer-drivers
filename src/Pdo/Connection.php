@@ -9,10 +9,9 @@ class Connection {
     var $_result, $server_info, $affected_rows, $errno, $error, $pdo;
 
     public function __construct() {
-        global $adminer;
-        $pos = array_search("SQL", $adminer->operators);
+        $pos = array_search("SQL", $this->adminer->operators);
         if ($pos !== false) {
-            unset($adminer->operators[$pos]);
+            unset($this->adminer->operators[$pos]);
         }
     }
 

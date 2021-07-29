@@ -1,11 +1,10 @@
 <?php
 
-namespace Lagdo\Adminer\Drivers\Mongo;
+namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
 
-use Lagdo\Adminer\Drivers\Mongo as MongoDriver;
-use Lagdo\Adminer\Drivers\ServerInterface;
+use Lagdo\Adminer\Drivers\Mongo\Mongo as MongoServer;
 
-class Mongo extends MongoDriver implements ServerInterface
+class Mongo extends MongoServer
 {
 
     var $operators = array(
@@ -31,25 +30,24 @@ class Mongo extends MongoDriver implements ServerInterface
     );
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getDriver()
     {
         return "mongo";
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getName()
     {
         return "MongoDB (alpha)";
     }
 
     public function get_databases($flush) {
-        global $connection;
         $return = array();
-        foreach ($connection->executeCommand('admin', array('listDatabases' => 1)) as $dbs) {
+        foreach ($this->connection->executeCommand('admin', array('listDatabases' => 1)) as $dbs) {
             foreach ($dbs->databases as $db) {
                 $return[] = $db->name;
             }
@@ -63,9 +61,8 @@ class Mongo extends MongoDriver implements ServerInterface
     }
 
     public function tables_list() {
-        global $connection;
         $collections = array();
-        foreach ($connection->executeCommand($connection->_db_name, array('listCollections' => 1)) as $result) {
+        foreach ($this->connection->executeCommand($this->connection->_db_name, array('listCollections' => 1)) as $result) {
             $collections[$result->name] = 'table';
         }
         return $collections;
@@ -76,9 +73,8 @@ class Mongo extends MongoDriver implements ServerInterface
     }
 
     public function indexes($table, $connection2 = null) {
-        global $connection;
         $return = array();
-        foreach ($connection->executeCommand($connection->_db_name, array('listIndexes' => $table)) as $index) {
+        foreach ($this->connection->executeCommand($this->connection->_db_name, array('listIndexes' => $table)) as $index) {
             $descs = array();
             $columns = array();
             foreach (get_object_vars($index->key) as $column => $type) {
@@ -96,10 +92,9 @@ class Mongo extends MongoDriver implements ServerInterface
     }
 
     public function fields($table) {
-        global $driver;
         $fields = fields_from_edit();
         if (!$fields) {
-            $result = $driver->select($table, array("*"), null, null, array(), 10);
+            $result = $this->driver->select($table, array("*"), null, null, array(), 10);
             if ($result) {
                 while ($row = $result->fetch_assoc()) {
                     foreach ($row as $key => $val) {
@@ -107,8 +102,8 @@ class Mongo extends MongoDriver implements ServerInterface
                         $fields[$key] = array(
                             "field" => $key,
                             "type" => "string",
-                            "null" => ($key != $driver->primary),
-                            "auto_increment" => ($key == $driver->primary),
+                            "null" => ($key != $this->driver->primary),
+                            "auto_increment" => ($key == $this->driver->primary),
                             "privileges" => array(
                                 "insert" => 1,
                                 "select" => 1,
@@ -123,9 +118,8 @@ class Mongo extends MongoDriver implements ServerInterface
     }
 
     public function found_rows($table_status, $where) {
-        global $connection;
         $where = where_to_query($where);
-        $toArray = $connection->executeCommand($connection->_db_name, array('count' => $table_status['Name'], 'query' => $where))->toArray();
+        $toArray = $this->connection->executeCommand($this->connection->_db_name, array('count' => $table_status['Name'], 'query' => $where))->toArray();
         return $toArray[0]->n;
     }
 
@@ -146,7 +140,6 @@ class Mongo extends MongoDriver implements ServerInterface
     }
 
     public function where_to_query($whereAnd = array(), $whereOr = array()) {
-        global $adminer;
         $data = array();
         foreach (array('and' => $whereAnd, 'or' => $whereOr) as $type => $where) {
             if (is_array($where)) {
@@ -156,7 +149,7 @@ class Mongo extends MongoDriver implements ServerInterface
                         list(, $class, $val) = $match;
                         $val = new $class($val);
                     }
-                    if (!in_array($op, $adminer->operators)) {
+                    if (!in_array($op, $this->adminer->operators)) {
                         continue;
                     }
                     if (preg_match('~^\(f\)(.+)~', $op, $match)) {

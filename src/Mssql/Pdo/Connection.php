@@ -21,6 +21,6 @@ class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements Connec
 
     public function select_db($database) {
         // database selection is separated from the connection so dbname in DSN can't be used
-        return $this->query("USE " . idf_escape($database));
+        return $this->query("USE " . $this->server->idf_escape($database));
     }
 }

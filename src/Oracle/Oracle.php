@@ -2,29 +2,29 @@
 
 namespace Lagdo\Adminer\Drivers\Oracle;
 
-use Lagdo\Adminer\Drivers\ServerInterface;
+use Lagdo\Adminer\Drivers\Server;
 
-class Oracle implements ServerInterface
+class Oracle extends Server
 {
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getDriver()
     {
         return "oracle";
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getName()
     {
         return "Oracle (beta)";
     }
 
     /**
-      * Get a connection to the server, based on the config and available packages
-      */
+     * Get a connection to the server, based on the config and available packages
+     */
     protected function createConnection()
     {
         if(extension_loaded("oci8"))
@@ -39,29 +39,28 @@ class Oracle implements ServerInterface
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function connect()
     {
-        global $adminer;
         $connection = $this->createConnection();
-        $credentials = $adminer->credentials();
-        if ($connection->connect($credentials[0], $credentials[1], $credentials[2])) {
+        $credentials = $this->adminer->credentials();
+        if ($this->connection->connect($credentials[0], $credentials[1], $credentials[2])) {
             return $connection;
         }
-        return $connection->error;
+        return $this->connection->error;
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function idf_escape($idf)
     {
         return '"' . str_replace('"', '""', $idf) . '"';
     }
 
     public function table($idf) {
-        return idf_escape($idf);
+        return $this->idf_escape($idf);
     }
 
     public function get_databases($flush) {
@@ -80,8 +79,7 @@ class Oracle implements ServerInterface
     }
 
     public function db_collation($db, $collations) {
-        global $connection;
-        return $connection->result("SELECT value FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'"); //! respect $db
+        return $this->connection->result("SELECT value FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'"); //! respect $db
     }
 
     public function engines() {
@@ -89,14 +87,12 @@ class Oracle implements ServerInterface
     }
 
     public function logged_user() {
-        global $connection;
-        return $connection->result("SELECT USER FROM DUAL");
+        return $this->connection->result("SELECT USER FROM DUAL");
     }
 
     public function get_current_db() {
-        global $connection;
-        $db = $connection->_current_db ? $connection->_current_db : DB;
-        unset($connection->_current_db);
+        $db = $this->connection->_current_db ? $this->connection->_current_db : DB;
+        unset($this->connection->_current_db);
         return $db;
     }
 
@@ -122,10 +118,9 @@ ORDER BY 1"
     }
 
     public function count_tables($databases) {
-        global $connection;
         $return = array();
         foreach ($databases as $db) {
-            $return[$db] = $connection->result("SELECT COUNT(*) FROM all_tables WHERE tablespace_name = " . q($db));
+            $return[$db] = $this->connection->result("SELECT COUNT(*) FROM all_tables WHERE tablespace_name = " . q($db));
         }
         return $return;
     }
@@ -221,8 +216,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
     }
 
     public function error() {
-        global $connection;
-        return h($connection->error); //! highlight sqltext from offset
+        return h($this->connection->error); //! highlight sqltext from offset
     }
 
     public function create_database($db, $collation) {
@@ -238,8 +232,8 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
     }
 
     public function explain($connection, $query) {
-        $connection->query("EXPLAIN PLAN FOR $query");
-        return $connection->query("SELECT * FROM plan_table");
+        $this->connection->query("EXPLAIN PLAN FOR $query");
+        return $this->connection->query("SELECT * FROM plan_table");
     }
 
     public function found_rows($table_status, $where) {
@@ -254,8 +248,8 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
         $orig_fields = ($table ? fields($table) : array());
         foreach ($fields as $field) {
             $val = $field[1];
-            if ($val && $field[0] != "" && idf_escape($field[0]) != $val[0]) {
-                queries("ALTER TABLE " . table($table) . " RENAME COLUMN " . idf_escape($field[0]) . " TO $val[0]");
+            if ($val && $field[0] != "" && $this->idf_escape($field[0]) != $val[0]) {
+                $this->queries("ALTER TABLE " . $this->table($table) . " RENAME COLUMN " . $this->idf_escape($field[0]) . " TO $val[0]");
             }
             $orig_field = $orig_fields[$field[0]];
             if ($val && $orig_field) {
@@ -267,15 +261,15 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
             if ($val) {
                 $alter[] = ($table != "" ? ($field[0] != "" ? "MODIFY (" : "ADD (") : "  ") . implode($val) . ($table != "" ? ")" : ""); //! error with name change only
             } else {
-                $drop[] = idf_escape($field[0]);
+                $drop[] = $this->idf_escape($field[0]);
             }
         }
         if ($table == "") {
-            return queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)");
+            return $this->queries("CREATE TABLE " . $this->table($name) . " (\n" . implode(",\n", $alter) . "\n)");
         }
-        return (!$alter || queries("ALTER TABLE " . table($table) . "\n" . implode("\n", $alter)))
-            && (!$drop || queries("ALTER TABLE " . table($table) . " DROP (" . implode(", ", $drop) . ")"))
-            && ($table == $name || queries("ALTER TABLE " . table($table) . " RENAME TO " . table($name)))
+        return (!$alter || $this->queries("ALTER TABLE " . $this->table($table) . "\n" . implode("\n", $alter)))
+            && (!$drop || $this->queries("ALTER TABLE " . $this->table($table) . " DROP (" . implode(", ", $drop) . ")"))
+            && ($table == $name || $this->queries("ALTER TABLE " . $this->table($table) . " RENAME TO " . $this->table($name)))
         ;
     }
 
@@ -287,21 +281,21 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
                 //! descending UNIQUE indexes results in syntax error
                 $val[2] = preg_replace('~ DESC$~', '', $val[2]);
                 $create = ($val[2] == "DROP"
-                    ? "\nDROP CONSTRAINT " . idf_escape($val[1])
-                    : "\nADD" . ($val[1] != "" ? " CONSTRAINT " . idf_escape($val[1]) : "") . " $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . "(" . implode(", ", $val[2]) . ")"
+                    ? "\nDROP CONSTRAINT " . $this->idf_escape($val[1])
+                    : "\nADD" . ($val[1] != "" ? " CONSTRAINT " . $this->idf_escape($val[1]) : "") . " $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . "(" . implode(", ", $val[2]) . ")"
                 );
-                array_unshift($queries, "ALTER TABLE " . table($table) . $create);
+                array_unshift($queries, "ALTER TABLE " . $this->table($table) . $create);
             } elseif ($val[2] == "DROP") {
-                $drop[] = idf_escape($val[1]);
+                $drop[] = $this->idf_escape($val[1]);
             } else {
-                $queries[] = "CREATE INDEX " . idf_escape($val[1] != "" ? $val[1] : uniqid($table . "_")) . " ON " . table($table) . " (" . implode(", ", $val[2]) . ")";
+                $queries[] = "CREATE INDEX " . $this->idf_escape($val[1] != "" ? $val[1] : uniqid($table . "_")) . " ON " . $this->table($table) . " (" . implode(", ", $val[2]) . ")";
             }
         }
         if ($drop) {
             array_unshift($queries, "DROP INDEX " . implode(", ", $drop));
         }
         foreach ($queries as $query) {
-            if (!queries($query)) {
+            if (!$this->queries($query)) {
                 return false;
             }
         }
@@ -335,15 +329,15 @@ AND c_src.TABLE_NAME = " . q($table);
     }
 
     public function truncate_tables($tables) {
-        return apply_queries("TRUNCATE TABLE", $tables);
+        return $this->apply_queries("TRUNCATE TABLE", $tables);
     }
 
     public function drop_views($views) {
-        return apply_queries("DROP VIEW", $views);
+        return $this->apply_queries("DROP VIEW", $views);
     }
 
     public function drop_tables($tables) {
-        return apply_queries("DROP TABLE", $tables);
+        return $this->apply_queries("DROP TABLE", $tables);
     }
 
     public function last_id() {
@@ -356,16 +350,14 @@ AND c_src.TABLE_NAME = " . q($table);
     }
 
     public function get_schema() {
-        global $connection;
-        return $connection->result("SELECT sys_context('USERENV', 'SESSION_USER') FROM dual");
+        return $this->connection->result("SELECT sys_context('USERENV', 'SESSION_USER') FROM dual");
     }
 
     public function set_schema($scheme, $connection2 = null) {
-        global $connection;
         if (!$connection2) {
             $connection2 = $connection;
         }
-        return $connection2->query("ALTER SESSION SET CURRENT_SCHEMA = " . idf_escape($scheme));
+        return $connection2->query("ALTER SESSION SET CURRENT_SCHEMA = " . $this->idf_escape($scheme));
     }
 
     public function show_variables() {

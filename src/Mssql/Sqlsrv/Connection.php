@@ -23,8 +23,7 @@ class Connection implements ConnectionInterface
     }
 
     public function connect($server, $username, $password) {
-        global $adminer;
-        $db = $adminer->database();
+        $db = $this->adminer->database();
         $connection_info = array("UID" => $username, "PWD" => $password, "CharacterSet" => "UTF-8");
         if ($db != "") {
             $connection_info["Database"] = $db;
@@ -44,7 +43,7 @@ class Connection implements ConnectionInterface
     }
 
     public function select_db($database) {
-        return $this->query("USE " . idf_escape($database));
+        return $this->query("USE " . $this->server->idf_escape($database));
     }
 
     public function query($query, $unbuffered = false) {

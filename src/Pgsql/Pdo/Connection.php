@@ -12,8 +12,7 @@ class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements Connec
     var $extension = "PDO_PgSQL", $timeout;
 
     public function connect($server, $username, $password) {
-        global $adminer;
-        $db = $adminer->database();
+        $db = $this->adminer->database();
         //! client_encoding is supported since 9.1 but we can't yet use min_version here
         $this->dsn("pgsql:host='" . str_replace(":", "' port='", addcslashes($server, "'\\")) .
             "' client_encoding=utf8 dbname='" .
@@ -23,8 +22,7 @@ class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements Connec
     }
 
     public function select_db($database) {
-        global $adminer;
-        return ($adminer->database() == $database);
+        return ($this->adminer->database() == $database);
     }
 
     public function quoteBinary($s) {

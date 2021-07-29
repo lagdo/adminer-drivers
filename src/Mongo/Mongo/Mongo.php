@@ -1,34 +1,32 @@
 <?php
 
-namespace Lagdo\Adminer\Drivers\Mongo;
+namespace Lagdo\Adminer\Drivers\Mongo\Mongo;
 
-use Lagdo\Adminer\Drivers\Mongo as MongoDriver;
-use Lagdo\Adminer\Drivers\ServerInterface;
+use Lagdo\Adminer\Drivers\Mongo\Mongo as MongoServer;
 
-class Mongo extends MongoDriver implements ServerInterface
+class Mongo extends MongoServer
 {
     var $operators = array("=");
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getDriver()
     {
         return "mongo";
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getName()
     {
         return "MongoDB (alpha)";
     }
 
     public function get_databases($flush) {
-        global $connection;
         $return = array();
-        $dbs = $connection->_link->listDBs();
+        $dbs = $this->connection->_link->listDBs();
         foreach ($dbs['databases'] as $db) {
             $return[] = $db['name'];
         }
@@ -36,23 +34,20 @@ class Mongo extends MongoDriver implements ServerInterface
     }
 
     public function count_tables($databases) {
-        global $connection;
         $return = array();
         foreach ($databases as $db) {
-            $return[$db] = count($connection->_link->selectDB($db)->getCollectionNames(true));
+            $return[$db] = count($this->connection->_link->selectDB($db)->getCollectionNames(true));
         }
         return $return;
     }
 
     public function tables_list() {
-        global $connection;
-        return array_fill_keys($connection->_db->getCollectionNames(true), 'table');
+        return array_fill_keys($this->connection->_db->getCollectionNames(true), 'table');
     }
 
     public function drop_databases($databases) {
-        global $connection;
         foreach ($databases as $db) {
-            $response = $connection->_link->selectDB($db)->drop();
+            $response = $this->connection->_link->selectDB($db)->drop();
             if (!$response['ok']) {
                 return false;
             }
@@ -61,9 +56,8 @@ class Mongo extends MongoDriver implements ServerInterface
     }
 
     public function indexes($table, $connection2 = null) {
-        global $connection;
         $return = array();
-        foreach ($connection->_db->selectCollection($table)->getIndexInfo() as $index) {
+        foreach ($this->connection->_db->selectCollection($table)->getIndexInfo() as $index) {
             $descs = array();
             foreach ($index["key"] as $column => $type) {
                 $descs[] = ($type == -1 ? '1' : null);
@@ -83,8 +77,7 @@ class Mongo extends MongoDriver implements ServerInterface
     }
 
     public function found_rows($table_status, $where) {
-        global $connection;
         //! don't call count_rows()
-        return $connection->_db->selectCollection($_GET["select"])->count($where);
+        return $this->connection->_db->selectCollection($_GET["select"])->count($where);
     }
 }

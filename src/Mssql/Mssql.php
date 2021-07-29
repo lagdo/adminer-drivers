@@ -7,29 +7,29 @@
 
 namespace Lagdo\Adminer\Drivers\Mssql;
 
-use Lagdo\Adminer\Drivers\ServerInterface;
+use Lagdo\Adminer\Drivers\Server;
 
-class Mssql implements ServerInterface
+class Mssql extends Server
 {
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getDriver()
     {
         return "mssql";
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getName()
     {
         return "MS SQL (beta)";
     }
 
     /**
-      * Get a connection to the server, based on the config and available packages
-      */
+     * Get a connection to the server, based on the config and available packages
+     */
     protected function createConnection()
     {
         if(extension_loaded("sqlsrv"))
@@ -48,29 +48,28 @@ class Mssql implements ServerInterface
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function connect()
     {
-        global $adminer;
         $connection = $this->createConnection();
-        $credentials = $adminer->credentials();
-        if ($connection->connect($credentials[0], $credentials[1], $credentials[2])) {
+        $credentials = $this->adminer->credentials();
+        if ($this->connection->connect($credentials[0], $credentials[1], $credentials[2])) {
             return $connection;
         }
-        return $connection->error;
+        return $this->connection->error;
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function idf_escape($idf)
     {
         return "[" . str_replace("]", "]]", $idf) . "]";
     }
 
     public function table($idf) {
-        return ($_GET["ns"] != "" ? idf_escape($_GET["ns"]) . "." : "") . idf_escape($idf);
+        return ($_GET["ns"] != "" ? $this->idf_escape($_GET["ns"]) . "." : "") . $this->idf_escape($idf);
     }
 
     public function get_databases($flush) {
@@ -86,8 +85,7 @@ class Mssql implements ServerInterface
     }
 
     public function db_collation($db, $collations) {
-        global $connection;
-        return $connection->result("SELECT collation_name FROM sys.databases WHERE name = " . q($db));
+        return $this->connection->result("SELECT collation_name FROM sys.databases WHERE name = " . q($db));
     }
 
     public function engines() {
@@ -95,8 +93,7 @@ class Mssql implements ServerInterface
     }
 
     public function logged_user() {
-        global $connection;
-        return $connection->result("SELECT SUSER_NAME()");
+        return $this->connection->result("SELECT SUSER_NAME()");
     }
 
     public function tables_list() {
@@ -104,11 +101,10 @@ class Mssql implements ServerInterface
     }
 
     public function count_tables($databases) {
-        global $connection;
         $return = array();
         foreach ($databases as $db) {
-            $connection->select_db($db);
-            $return[$db] = $connection->result("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES");
+            $this->connection->select_db($db);
+            $return[$db] = $this->connection->result("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES");
         }
         return $return;
     }
@@ -180,8 +176,7 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
     }
 
     public function view($name) {
-        global $connection;
-        return array("select" => preg_replace('~^(?:[^[]|\[[^]]*])*\s+AS\s+~isU', '', $connection->result("SELECT VIEW_DEFINITION FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_SCHEMA = SCHEMA_NAME() AND TABLE_NAME = " . q($name))));
+        return array("select" => preg_replace('~^(?:[^[]|\[[^]]*])*\s+AS\s+~isU', '', $this->connection->result("SELECT VIEW_DEFINITION FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_SCHEMA = SCHEMA_NAME() AND TABLE_NAME = " . q($name))));
     }
 
     public function collations() {
@@ -197,23 +192,22 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
     }
 
     public function error() {
-        global $connection;
-        return nl_br(h(preg_replace('~^(\[[^]]*])+~m', '', $connection->error)));
+        return nl_br(h(preg_replace('~^(\[[^]]*])+~m', '', $this->connection->error)));
     }
 
     public function create_database($db, $collation) {
-        return queries("CREATE DATABASE " . idf_escape($db) . (preg_match('~^[a-z0-9_]+$~i', $collation) ? " COLLATE $collation" : ""));
+        return $this->queries("CREATE DATABASE " . $this->idf_escape($db) . (preg_match('~^[a-z0-9_]+$~i', $collation) ? " COLLATE $collation" : ""));
     }
 
     public function drop_databases($databases) {
-        return queries("DROP DATABASE " . implode(", ", array_map('idf_escape', $databases)));
+        return $this->queries("DROP DATABASE " . implode(", ", array_map('idf_escape', $databases)));
     }
 
     public function rename_database($name, $collation) {
         if (preg_match('~^[a-z0-9_]+$~i', $collation)) {
-            queries("ALTER DATABASE " . idf_escape(DB) . " COLLATE $collation");
+            $this->queries("ALTER DATABASE " . $this->idf_escape(DB) . " COLLATE $collation");
         }
-        queries("ALTER DATABASE " . idf_escape(DB) . " MODIFY NAME = " . idf_escape($name));
+        $this->queries("ALTER DATABASE " . $this->idf_escape(DB) . " MODIFY NAME = " . $this->idf_escape($name));
         return true; //! false negative "The database name 'test2' has been set."
     }
 
@@ -225,7 +219,7 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
         $alter = array();
         $comments = array();
         foreach ($fields as $field) {
-            $column = idf_escape($field[0]);
+            $column = $this->idf_escape($field[0]);
             $val = $field[1];
             if (!$val) {
                 $alter["DROP"][] = " COLUMN $column";
@@ -238,30 +232,30 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
                 } else {
                     unset($val[6]); //! identity can't be removed
                     if ($column != $val[0]) {
-                        queries("EXEC sp_rename " . q(table($table) . ".$column") . ", " . q(idf_unescape($val[0])) . ", 'COLUMN'");
+                        $this->queries("EXEC sp_rename " . q(table($table) . ".$column") . ", " . q(idf_unescape($val[0])) . ", 'COLUMN'");
                     }
                     $alter["ALTER COLUMN " . implode("", $val)][] = "";
                 }
             }
         }
         if ($table == "") {
-            return queries("CREATE TABLE " . table($name) . " (" . implode(",", (array) $alter["ADD"]) . "\n)");
+            return $this->queries("CREATE TABLE " . $this->table($name) . " (" . implode(",", (array) $alter["ADD"]) . "\n)");
         }
         if ($table != $name) {
-            queries("EXEC sp_rename " . q(table($table)) . ", " . q($name));
+            $this->queries("EXEC sp_rename " . q(table($table)) . ", " . q($name));
         }
         if ($foreign) {
             $alter[""] = $foreign;
         }
         foreach ($alter as $key => $val) {
-            if (!queries("ALTER TABLE " . idf_escape($name) . " $key" . implode(",", $val))) {
+            if (!$this->queries("ALTER TABLE " . $this->idf_escape($name) . " $key" . implode(",", $val))) {
                 return false;
             }
         }
         foreach ($comments as $key => $val) {
             $comment = substr($val, 9); // 9 - strlen(" COMMENT ")
-            queries("EXEC sp_dropextendedproperty @name = N'MS_Description', @level0type = N'Schema', @level0name = " . q(get_schema()) . ", @level1type = N'Table', @level1name = " . q($name) . ", @level2type = N'Column', @level2name = " . q($key));
-            queries("EXEC sp_addextendedproperty @name = N'MS_Description', @value = " . $comment . ", @level0type = N'Schema', @level0name = " . q(get_schema()) . ", @level1type = N'Table', @level1name = " . q($name) . ", @level2type = N'Column', @level2name = " . q($key));
+            $this->queries("EXEC sp_dropextendedproperty @name = N'MS_Description', @level0type = N'Schema', @level0name = " . q(get_schema()) . ", @level1type = N'Table', @level1name = " . q($name) . ", @level2type = N'Column', @level2name = " . q($key));
+            $this->queries("EXEC sp_addextendedproperty @name = N'MS_Description', @value = " . $comment . ", @level0type = N'Schema', @level0name = " . q(get_schema()) . ", @level1type = N'Table', @level1name = " . q($name) . ", @level2type = N'Column', @level2name = " . q($key));
         }
         return true;
     }
@@ -272,31 +266,30 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
         foreach ($alter as $val) {
             if ($val[2] == "DROP") {
                 if ($val[0] == "PRIMARY") { //! sometimes used also for UNIQUE
-                    $drop[] = idf_escape($val[1]);
+                    $drop[] = $this->idf_escape($val[1]);
                 } else {
-                    $index[] = idf_escape($val[1]) . " ON " . table($table);
+                    $index[] = $this->idf_escape($val[1]) . " ON " . $this->table($table);
                 }
-            } elseif (!queries(($val[0] != "PRIMARY"
-                ? "CREATE $val[0] " . ($val[0] != "INDEX" ? "INDEX " : "") . idf_escape($val[1] != "" ? $val[1] : uniqid($table . "_")) . " ON " . table($table)
-                : "ALTER TABLE " . table($table) . " ADD PRIMARY KEY"
+            } elseif (!$this->queries(($val[0] != "PRIMARY"
+                ? "CREATE $val[0] " . ($val[0] != "INDEX" ? "INDEX " : "") . $this->idf_escape($val[1] != "" ? $val[1] : uniqid($table . "_")) . " ON " . $this->table($table)
+                : "ALTER TABLE " . $this->table($table) . " ADD PRIMARY KEY"
             ) . " (" . implode(", ", $val[2]) . ")")) {
                 return false;
             }
         }
-        return (!$index || queries("DROP INDEX " . implode(", ", $index)))
-            && (!$drop || queries("ALTER TABLE " . table($table) . " DROP " . implode(", ", $drop)))
+        return (!$index || $this->queries("DROP INDEX " . implode(", ", $index)))
+            && (!$drop || $this->queries("ALTER TABLE " . $this->table($table) . " DROP " . implode(", ", $drop)))
         ;
     }
 
     public function last_id() {
-        global $connection;
-        return $connection->result("SELECT SCOPE_IDENTITY()"); // @@IDENTITY can return trigger INSERT
+        return $this->connection->result("SELECT SCOPE_IDENTITY()"); // @@IDENTITY can return trigger INSERT
     }
 
     public function explain($connection, $query) {
-        $connection->query("SET SHOWPLAN_ALL ON");
-        $return = $connection->query($query);
-        $connection->query("SET SHOWPLAN_ALL OFF"); // connection is used also for indexes
+        $this->connection->query("SET SHOWPLAN_ALL ON");
+        $return = $this->connection->query($query);
+        $this->connection->query("SET SHOWPLAN_ALL OFF"); // connection is used also for indexes
         return $return;
     }
 
@@ -316,19 +309,19 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
     }
 
     public function truncate_tables($tables) {
-        return apply_queries("TRUNCATE TABLE", $tables);
+        return $this->apply_queries("TRUNCATE TABLE", $tables);
     }
 
     public function drop_views($views) {
-        return queries("DROP VIEW " . implode(", ", array_map('table', $views)));
+        return $this->queries("DROP VIEW " . implode(", ", array_map('table', $views)));
     }
 
     public function drop_tables($tables) {
-        return queries("DROP TABLE " . implode(", ", array_map('table', $tables)));
+        return $this->queries("DROP TABLE " . implode(", ", array_map('table', $tables)));
     }
 
     public function move_tables($tables, $views, $target) {
-        return apply_queries("ALTER SCHEMA " . idf_escape($target) . " TRANSFER", array_merge($tables, $views));
+        return $this->apply_queries("ALTER SCHEMA " . $this->idf_escape($target) . " TRANSFER", array_merge($tables, $views));
     }
 
     public function trigger($name) {
@@ -377,11 +370,10 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
     }
 
     public function get_schema() {
-        global $connection;
         if ($_GET["ns"] != "") {
             return $_GET["ns"];
         }
-        return $connection->result("SELECT SCHEMA_NAME()");
+        return $this->connection->result("SELECT SCHEMA_NAME()");
     }
 
     public function set_schema($schema, $connection2 = null) {
@@ -389,7 +381,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
     }
 
     public function use_sql($database) {
-        return "USE " . idf_escape($database);
+        return "USE " . $this->idf_escape($database);
     }
 
     public function show_variables() {

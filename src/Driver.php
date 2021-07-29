@@ -1,6 +1,6 @@
 <?php
 
-namespace Lagdo\Adminer\Drivers\Pgsql;
+namespace Lagdo\Adminer\Drivers;
 
 $drivers = array();
 
@@ -17,35 +17,52 @@ function add_driver($id, $name) {
 
 class Driver implements DriverInterface
 {
-    var $_conn;
+    /**
+     * @var Adminer
+     */
+    protected $adminer;
+
+    /**
+     * @var ServerInterface
+     */
+    protected $server;
+
+    /**
+     * @var ConnectionInterface
+     */
+    protected $connection;
+
+    /**
+     * @var string
+     */
+    protected $jush;
 
     /**
      * Create object for performing database operations
      * @param Min_DB
      */
     public function __construct($connection) {
-        $this->_conn = $connection;
+        $this->connection = $connection;
     }
 
     /**
      * Select data from table
      * @param string
-     * @param array result of $adminer->selectColumnsProcess()[0]
-     * @param array result of $adminer->selectSearchProcess()
-     * @param array result of $adminer->selectColumnsProcess()[1]
-     * @param array result of $adminer->selectOrderProcess()
-     * @param int result of $adminer->selectLimitProcess()
+     * @param array result of $this->adminer->selectColumnsProcess()[0]
+     * @param array result of $this->adminer->selectSearchProcess()
+     * @param array result of $this->adminer->selectColumnsProcess()[1]
+     * @param array result of $this->adminer->selectOrderProcess()
+     * @param int result of $this->adminer->selectLimitProcess()
      * @param int index of page starting at zero
      * @param bool whether to print the query
      * @return Result
      */
     public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
-        global $adminer, $jush;
         $is_group = (count($group) < count($select));
-        $query = $adminer->selectQueryBuild($select, $where, $group, $order, $limit, $page);
+        $query = $this->adminer->selectQueryBuild($select, $where, $group, $order, $limit, $page);
         if (!$query) {
-            $query = "SELECT" . limit(
-                ($_GET["page"] != "last" && $limit != "" && $group && $is_group && $jush == "sql" ? "SQL_CALC_FOUND_ROWS " : "") . implode(", ", $select) . "\nFROM " . table($table),
+            $query = "SELECT" . $this->server->limit(
+                ($_GET["page"] != "last" && $limit != "" && $group && $is_group && $this->jush == "sql" ? "SQL_CALC_FOUND_ROWS " : "") . implode(", ", $select) . "\nFROM " . $this->server->table($table),
                 ($where ? "\nWHERE " . implode(" AND ", $where) : "") . ($group && $is_group ? "\nGROUP BY " . implode(", ", $group) : "") . ($order ? "\nORDER BY " . implode(", ", $order) : ""),
                 ($limit != "" ? +$limit : null),
                 ($page ? $limit * $page : 0),
@@ -53,9 +70,9 @@ class Driver implements DriverInterface
             );
         }
         $start = microtime(true);
-        $return = $this->_conn->query($query);
+        $return = $this->connection->query($query);
         if ($print) {
-            echo $adminer->selectQuery($query, $start, !$return);
+            echo $this->adminer->selectQuery($query, $start, !$return);
         }
         return $return;
     }
@@ -68,8 +85,8 @@ class Driver implements DriverInterface
      * @return bool
      */
     public function delete($table, $queryWhere, $limit = 0) {
-        $query = "FROM " . table($table);
-        return queries("DELETE" . ($limit ? limit1($table, $query, $queryWhere) : " $query$queryWhere"));
+        $query = "FROM " . $this->server->table($table);
+        return $this->server->queries("DELETE" . ($limit ? $this->server->limit1($table, $query, $queryWhere) : " $query$queryWhere"));
     }
 
     /**
@@ -86,8 +103,8 @@ class Driver implements DriverInterface
         foreach ($set as $key => $val) {
             $values[] = "$key = $val";
         }
-        $query = table($table) . " SET$separator" . implode(",$separator", $values);
-        return queries("UPDATE" . ($limit ? limit1($table, $query, $queryWhere, $separator) : " $query$queryWhere"));
+        $query = $this->server->table($table) . " SET$separator" . implode(",$separator", $values);
+        return $this->server->queries("UPDATE" . ($limit ? $this->server->limit1($table, $query, $queryWhere, $separator) : " $query$queryWhere"));
     }
 
     /**
@@ -97,7 +114,7 @@ class Driver implements DriverInterface
      * @return bool
      */
     public function insert($table, $set) {
-        return queries("INSERT INTO " . table($table) . ($set
+        return $this->server->queries("INSERT INTO " . $this->server->table($table) . ($set
             ? " (" . implode(", ", array_keys($set)) . ")\nVALUES (" . implode(", ", $set) . ")"
             : " DEFAULT VALUES"
         ));
@@ -119,7 +136,7 @@ class Driver implements DriverInterface
      * @return bool
      */
     public function begin() {
-        return queries("BEGIN");
+        return $this->server->queries("BEGIN");
     }
 
     /**
@@ -127,7 +144,7 @@ class Driver implements DriverInterface
      * @return bool
      */
     public function commit() {
-        return queries("COMMIT");
+        return $this->server->queries("COMMIT");
     }
 
     /**
@@ -135,7 +152,7 @@ class Driver implements DriverInterface
      * @return bool
      */
     public function rollback() {
-        return queries("ROLLBACK");
+        return $this->server->queries("ROLLBACK");
     }
 
     /**
@@ -165,8 +182,8 @@ class Driver implements DriverInterface
      * @return string
      */
     public function value($val, $field) {
-        return (method_exists($this->_conn, 'value')
-            ? $this->_conn->value($val, $field)
+        return (method_exists($this->connection, 'value')
+            ? $this->connection->value($val, $field)
             : (is_resource($val) ? stream_get_contents($val) : $val)
         );
     }
@@ -177,7 +194,7 @@ class Driver implements DriverInterface
      * @return string
      */
     public function quoteBinary($s) {
-        return q($s);
+        return $this->connection->quote($s);
     }
 
     /**

@@ -5,7 +5,6 @@ namespace Lagdo\Adminer\Drivers\Elastic;
 class Driver extends \Lagdo\Adminer\Drivers\Driver {
 
     public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
-        global $adminer;
         $data = array();
         $query = "$table/_search";
         if ($select != array("*")) {
@@ -45,7 +44,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         $start = microtime(true);
         $search = $this->_conn->query($query, $data);
         if ($print) {
-            echo $adminer->selectQuery("$query: " . json_encode($data), $start, !$search);
+            echo $this->adminer->selectQuery("$query: " . json_encode($data), $start, !$search);
         }
         if (!$search) {
             return false;

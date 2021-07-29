@@ -2,29 +2,29 @@
 
 namespace Lagdo\Adminer\Drivers\Elastic;
 
-use Lagdo\Adminer\Drivers\ServerInterface;
+use Lagdo\Adminer\Drivers\Server;
 
-class Elastic implements ServerInterface
+class Elastic extends Server
 {
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getDriver()
     {
         return "elastic";
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getName()
     {
         return "Elasticsearch (beta)";
     }
 
     /**
-      * Get a connection to the server, based on the config and available packages
-      */
+     * Get a connection to the server, based on the config and available packages
+     */
     protected function createConnection()
     {
         if(function_exists('json_decode') && ini_bool('allow_url_fopen'))
@@ -35,25 +35,24 @@ class Elastic implements ServerInterface
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function connect()
     {
-        global $adminer;
         $connection = $this->createConnection();
-        list($server, $username, $password) = $adminer->credentials();
-        if ($password != "" && $connection->connect($server, $username, "")) {
+        list($server, $username, $password) = $this->adminer->credentials();
+        if ($password != "" && $this->connection->connect($server, $username, "")) {
             return lang('Database does not support password.');
         }
-        if ($connection->connect($server, $username, $password)) {
+        if ($this->connection->connect($server, $username, $password)) {
             return $connection;
         }
-        return $connection->error;
+        return $this->connection->error;
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function idf_escape($idf)
     {
         return $idf;
@@ -64,14 +63,12 @@ class Elastic implements ServerInterface
     }
 
     public function logged_user() {
-        global $adminer;
-        $credentials = $adminer->credentials();
+        $credentials = $this->adminer->credentials();
         return $credentials[1];
     }
 
     public function get_databases($flush) {
-        global $connection;
-        $return = $connection->rootQuery('_aliases');
+        $return = $this->connection->rootQuery('_aliases');
         if ($return) {
             $return = array_keys($return);
             sort($return, SORT_STRING);
@@ -95,9 +92,8 @@ class Elastic implements ServerInterface
     }
 
     public function count_tables($databases) {
-        global $connection;
         $return = array();
-        $result = $connection->query('_stats');
+        $result = $this->connection->query('_stats');
         if ($result && $result['indices']) {
             $indices = $result['indices'];
             foreach ($indices as $indice => $stats) {
@@ -109,22 +105,19 @@ class Elastic implements ServerInterface
     }
 
     public function tables_list() {
-        global $connection;
-
         if (min_version(6)) {
             return array('_doc' => 'table');
         }
 
-        $return = $connection->query('_mapping');
+        $return = $this->connection->query('_mapping');
         if ($return) {
-            $return = array_fill_keys(array_keys($return[$connection->_db]["mappings"]), 'table');
+            $return = array_fill_keys(array_keys($return[$this->connection->_db]["mappings"]), 'table');
         }
         return $return;
     }
 
     public function table_status($name = "", $fast = false) {
-        global $connection;
-        $search = $connection->query("_search", array(
+        $search = $this->connection->query("_search", array(
             "size" => 0,
             "aggregations" => array(
                 "count_by_type" => array(
@@ -152,8 +145,7 @@ class Elastic implements ServerInterface
     }
 
     public function error() {
-        global $connection;
-        return h($connection->error);
+        return h($this->connection->error);
     }
 
     public function information_schema($db) {
@@ -171,20 +163,18 @@ class Elastic implements ServerInterface
     }
 
     public function fields($table) {
-        global $connection;
-
         $mappings = array();
         if (min_version(6)) {
-            $result = $connection->query("_mapping");
+            $result = $this->connection->query("_mapping");
             if ($result) {
-                $mappings = $result[$connection->_db]['mappings']['properties'];
+                $mappings = $result[$this->connection->_db]['mappings']['properties'];
             }
         } else {
-            $result = $connection->query("$table/_mapping");
+            $result = $this->connection->query("$table/_mapping");
             if ($result) {
                 $mappings = $result[$table]['properties'];
                 if (!$mappings) {
-                    $mappings = $result[$connection->_db]['mappings'][$table]['properties'];
+                    $mappings = $result[$this->connection->_db]['mappings'][$table]['properties'];
                 }
             }
         }
@@ -240,8 +230,7 @@ class Elastic implements ServerInterface
      * @return mixed
      */
     public function create_database($db, $collation) {
-        global $connection;
-        return $connection->rootQuery(urlencode($db), null, 'PUT');
+        return $this->connection->rootQuery(urlencode($db), null, 'PUT');
     }
 
     /**
@@ -250,8 +239,7 @@ class Elastic implements ServerInterface
      * @return mixed
      */
     public function drop_databases($databases) {
-        global $connection;
-        return $connection->rootQuery(urlencode(implode(',', $databases)), array(), 'DELETE');
+        return $this->connection->rootQuery(urlencode(implode(',', $databases)), array(), 'DELETE');
     }
 
     public function rename_database($name, $collation) {
@@ -280,7 +268,6 @@ class Elastic implements ServerInterface
      * @return mixed
      */
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
-        global $connection;
         $properties = array();
         foreach ($fields as $f) {
             $field_name = trim($f[1][0]);
@@ -292,7 +279,7 @@ class Elastic implements ServerInterface
         if (!empty($properties)) {
             $properties = array('properties' => $properties);
         }
-        return $connection->query("_mapping/{$name}", $properties, 'PUT');
+        return $this->connection->query("_mapping/{$name}", $properties, 'PUT');
     }
 
     /**
@@ -301,17 +288,15 @@ class Elastic implements ServerInterface
      * @return bool
      */
     public function drop_tables($tables) {
-        global $connection;
         $return = true;
         foreach ($tables as $table) { //! convert to bulk api
-            $return = $return && $connection->query(urlencode($table), array(), 'DELETE');
+            $return = $return && $this->connection->query(urlencode($table), array(), 'DELETE');
         }
         return $return;
     }
 
     public function last_id() {
-        global $connection;
-        return $connection->last_id;
+        return $this->connection->last_id;
     }
 
     public function driver_config() {

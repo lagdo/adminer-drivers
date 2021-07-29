@@ -9,7 +9,7 @@ class Driver extends \Lagdo\Adminer\Drivers\Driver {
         foreach ($rows as $set) {
             $values[] = "(" . implode(", ", $set) . ")";
         }
-        return queries("REPLACE INTO " . table($table) ." (" . implode(", ",
+        return $this->server->queries("REPLACE INTO " . $this->server->table($table) ." (" . implode(", ",
             array_keys(reset($rows))) . ") VALUES\n" . implode(",\n", $values));
     }
 

@@ -2,29 +2,29 @@
 
 namespace Lagdo\Adminer\Drivers\Pgsql;
 
-use Lagdo\Adminer\Drivers\ServerInterface;
+use Lagdo\Adminer\Drivers\Server;
 
-class Pgsql implements ServerInterface
+class Pgsql extends Server
 {
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getDriver()
     {
         return "pgsql";
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function getName()
     {
         return "PostgreSQL";
     }
 
     /**
-      * Get a connection to the server, based on the config and available packages
-      */
+     * Get a connection to the server, based on the config and available packages
+     */
     protected function createConnection()
     {
         if(extension_loaded("pgsql"))
@@ -39,16 +39,16 @@ class Pgsql implements ServerInterface
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function connect()
     {
-        global $adminer, $types, $structured_types;
+        global $types, $structured_types;
         $connection = $this->createConnection();
-        $credentials = $adminer->credentials();
-        if ($connection->connect($credentials[0], $credentials[1], $credentials[2])) {
+        $credentials = $this->adminer->credentials();
+        if ($this->connection->connect($credentials[0], $credentials[1], $credentials[2])) {
             if (min_version(9, 0, $connection)) {
-                $connection->query("SET application_name = 'Adminer'");
+                $this->connection->query("SET application_name = 'Adminer'");
                 if (min_version(9.2, 0, $connection)) {
                     $structured_types[lang('Strings')][] = "json";
                     $types["json"] = 4294967295;
@@ -60,12 +60,12 @@ class Pgsql implements ServerInterface
             }
             return $connection;
         }
-        return $connection->error;
+        return $this->connection->error;
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function idf_escape($idf)
     {
         return '"' . str_replace('"', '""', $idf) . '"';
@@ -86,13 +86,12 @@ class Pgsql implements ServerInterface
     public function limit1($table, $query, $where, $separator = "\n") {
         return (preg_match('~^INTO~', $query)
             ? limit($query, $where, 1, 0, $separator)
-            : " $query" . (is_view(table_status1($table)) ? $where : " WHERE ctid = (SELECT ctid FROM " . table($table) . $where . $separator . "LIMIT 1)")
+            : " $query" . (is_view(table_status1($table)) ? $where : " WHERE ctid = (SELECT ctid FROM " . $this->table($table) . $where . $separator . "LIMIT 1)")
         );
     }
 
     public function db_collation($db, $collations) {
-        global $connection;
-        return $connection->result("SELECT datcollate FROM pg_database WHERE datname = " . q($db));
+        return $this->connection->result("SELECT datcollate FROM pg_database WHERE datname = " . q($db));
     }
 
     public function engines() {
@@ -100,8 +99,7 @@ class Pgsql implements ServerInterface
     }
 
     public function logged_user() {
-        global $connection;
-        return $connection->result("SELECT user");
+        return $this->connection->result("SELECT user");
     }
 
     public function tables_list() {
@@ -190,7 +188,6 @@ ORDER BY a.attnum"
     }
 
     public function indexes($table, $connection2 = null) {
-        global $connection;
         if (!is_object($connection2)) {
             $connection2 = $connection;
         }
@@ -254,8 +251,7 @@ ORDER BY connamespace, conname") as $row) {
     }
 
     public function view($name) {
-        global $connection;
-        return array("select" => trim($connection->result("SELECT pg_get_viewdef(" . $connection->result("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($name)) . ")")));
+        return array("select" => trim($this->connection->result("SELECT pg_get_viewdef(" . $this->connection->result("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($name)) . ")")));
     }
 
     public function collations() {
@@ -268,8 +264,7 @@ ORDER BY connamespace, conname") as $row) {
     }
 
     public function error() {
-        global $connection;
-        $return = h($connection->error);
+        $return = h($this->connection->error);
         if (preg_match('~^(.*\n)?([^\n]*)\n( *)\^(\n.*)?$~s', $return, $match)) {
             $return = $match[1] . preg_replace('~((?:[^&]|&[^;]*;){' . strlen($match[3]) . '})(.*)~', '\1<b>\2</b>', $match[2]) . $match[4];
         }
@@ -277,18 +272,17 @@ ORDER BY connamespace, conname") as $row) {
     }
 
     public function create_database($db, $collation) {
-        return queries("CREATE DATABASE " . idf_escape($db) . ($collation ? " ENCODING " . idf_escape($collation) : ""));
+        return $this->queries("CREATE DATABASE " . $this->idf_escape($db) . ($collation ? " ENCODING " . $this->idf_escape($collation) : ""));
     }
 
     public function drop_databases($databases) {
-        global $connection;
-        $connection->close();
-        return apply_queries("DROP DATABASE", $databases, 'idf_escape');
+        $this->connection->close();
+        return $this->apply_queries("DROP DATABASE", $databases, 'idf_escape');
     }
 
     public function rename_database($name, $collation) {
         //! current database cannot be renamed
-        return queries("ALTER DATABASE " . idf_escape(DB) . " RENAME TO " . idf_escape($name));
+        return $this->queries("ALTER DATABASE " . $this->idf_escape(DB) . " RENAME TO " . $this->idf_escape($name));
     }
 
     public function auto_increment() {
@@ -299,10 +293,10 @@ ORDER BY connamespace, conname") as $row) {
         $alter = array();
         $queries = array();
         if ($table != "" && $table != $name) {
-            $queries[] = "ALTER TABLE " . table($table) . " RENAME TO " . table($name);
+            $queries[] = "ALTER TABLE " . $this->table($table) . " RENAME TO " . $this->table($name);
         }
         foreach ($fields as $field) {
-            $column = idf_escape($field[0]);
+            $column = $this->idf_escape($field[0]);
             $val = $field[1];
             if (!$val) {
                 $alter[] = "DROP $column";
@@ -319,7 +313,7 @@ ORDER BY connamespace, conname") as $row) {
                     }
                 } else {
                     if ($column != $val[0]) {
-                        $queries[] = "ALTER TABLE " . table($name) . " RENAME $column TO $val[0]";
+                        $queries[] = "ALTER TABLE " . $this->table($name) . " RENAME $column TO $val[0]";
                     }
                     $alter[] = "ALTER $column TYPE$val[1]";
                     if (!$val[6]) {
@@ -328,24 +322,24 @@ ORDER BY connamespace, conname") as $row) {
                     }
                 }
                 if ($field[0] != "" || $val5 != "") {
-                    $queries[] = "COMMENT ON COLUMN " . table($name) . ".$val[0] IS " . ($val5 != "" ? substr($val5, 9) : "''");
+                    $queries[] = "COMMENT ON COLUMN " . $this->table($name) . ".$val[0] IS " . ($val5 != "" ? substr($val5, 9) : "''");
                 }
             }
         }
         $alter = array_merge($alter, $foreign);
         if ($table == "") {
-            array_unshift($queries, "CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)");
+            array_unshift($queries, "CREATE TABLE " . $this->table($name) . " (\n" . implode(",\n", $alter) . "\n)");
         } elseif ($alter) {
-            array_unshift($queries, "ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter));
+            array_unshift($queries, "ALTER TABLE " . $this->table($table) . "\n" . implode(",\n", $alter));
         }
         if ($table != "" || $comment != "") {
-            $queries[] = "COMMENT ON TABLE " . table($name) . " IS " . q($comment);
+            $queries[] = "COMMENT ON TABLE " . $this->table($name) . " IS " . q($comment);
         }
         if ($auto_increment != "") {
             //! $queries[] = "SELECT setval(pg_get_serial_sequence(" . q($name) . ", ), $auto_increment)";
         }
         foreach ($queries as $query) {
-            if (!queries($query)) {
+            if (!$this->queries($query)) {
                 return false;
             }
         }
@@ -360,23 +354,23 @@ ORDER BY connamespace, conname") as $row) {
             if ($val[0] != "INDEX") {
                 //! descending UNIQUE indexes results in syntax error
                 $create[] = ($val[2] == "DROP"
-                    ? "\nDROP CONSTRAINT " . idf_escape($val[1])
-                    : "\nADD" . ($val[1] != "" ? " CONSTRAINT " . idf_escape($val[1]) : "") . " $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . "(" . implode(", ", $val[2]) . ")"
+                    ? "\nDROP CONSTRAINT " . $this->idf_escape($val[1])
+                    : "\nADD" . ($val[1] != "" ? " CONSTRAINT " . $this->idf_escape($val[1]) : "") . " $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . "(" . implode(", ", $val[2]) . ")"
                 );
             } elseif ($val[2] == "DROP") {
-                $drop[] = idf_escape($val[1]);
+                $drop[] = $this->idf_escape($val[1]);
             } else {
-                $queries[] = "CREATE INDEX " . idf_escape($val[1] != "" ? $val[1] : uniqid($table . "_")) . " ON " . table($table) . " (" . implode(", ", $val[2]) . ")";
+                $queries[] = "CREATE INDEX " . $this->idf_escape($val[1] != "" ? $val[1] : uniqid($table . "_")) . " ON " . $this->table($table) . " (" . implode(", ", $val[2]) . ")";
             }
         }
         if ($create) {
-            array_unshift($queries, "ALTER TABLE " . table($table) . implode(",", $create));
+            array_unshift($queries, "ALTER TABLE " . $this->table($table) . implode(",", $create));
         }
         if ($drop) {
             array_unshift($queries, "DROP INDEX " . implode(", ", $drop));
         }
         foreach ($queries as $query) {
-            if (!queries($query)) {
+            if (!$this->queries($query)) {
                 return false;
             }
         }
@@ -384,7 +378,7 @@ ORDER BY connamespace, conname") as $row) {
     }
 
     public function truncate_tables($tables) {
-        return queries("TRUNCATE " . implode(", ", array_map('table', $tables)));
+        return $this->queries("TRUNCATE " . implode(", ", array_map('table', $tables)));
         return true;
     }
 
@@ -395,7 +389,7 @@ ORDER BY connamespace, conname") as $row) {
     public function drop_tables($tables) {
         foreach ($tables as $table) {
                 $status = table_status($table);
-                if (!queries("DROP " . strtoupper($status["Engine"]) . " " . table($table))) {
+                if (!$this->queries("DROP " . strtoupper($status["Engine"]) . " " . $this->table($table))) {
                     return false;
                 }
         }
@@ -405,7 +399,7 @@ ORDER BY connamespace, conname") as $row) {
     public function move_tables($tables, $views, $target) {
         foreach (array_merge($tables, $views) as $table) {
             $status = table_status($table);
-            if (!queries("ALTER " . strtoupper($status["Engine"]) . " " . table($table) . " SET SCHEMA " . idf_escape($target))) {
+            if (!$this->queries("ALTER " . strtoupper($status["Engine"]) . " " . $this->table($table) . " SET SCHEMA " . $this->idf_escape($target))) {
                 return false;
             }
         }
@@ -468,7 +462,7 @@ ORDER BY SPECIFIC_NAME');
         foreach ($row["fields"] as $field) {
             $return[] = $field["type"];
         }
-        return idf_escape($name) . "(" . implode(", ", $return) . ")";
+        return $this->idf_escape($name) . "(" . implode(", ", $return) . ")";
     }
 
     public function last_id() {
@@ -476,14 +470,13 @@ ORDER BY SPECIFIC_NAME');
     }
 
     public function explain($connection, $query) {
-        return $connection->query("EXPLAIN $query");
+        return $this->connection->query("EXPLAIN $query");
     }
 
     public function found_rows($table_status, $where) {
-        global $connection;
         if (preg_match(
             "~ rows=([0-9]+)~",
-            $connection->result("EXPLAIN SELECT * FROM " . idf_escape($table_status["Name"]) . ($where ? " WHERE " . implode(" AND ", $where) : "")),
+            $this->connection->result("EXPLAIN SELECT * FROM " . $this->idf_escape($table_status["Name"]) . ($where ? " WHERE " . implode(" AND ", $where) : "")),
             $regs
         )) {
             return $regs[1];
@@ -505,16 +498,15 @@ AND typelem = 0"
     }
 
     public function get_schema() {
-        global $connection;
-        return $connection->result("SELECT current_schema()");
+        return $this->connection->result("SELECT current_schema()");
     }
 
     public function set_schema($schema, $connection2 = null) {
-        global $connection, $types, $structured_types;
+        global $types, $structured_types;
         if (!$connection2) {
             $connection2 = $connection;
         }
-        $return = $connection2->query("SET search_path TO " . idf_escape($schema));
+        $return = $connection2->query("SET search_path TO " . $this->idf_escape($schema));
         foreach (types() as $type) { //! get types from current_schemas('t')
             if (!isset($types[$type])) {
                 $types[$type] = 0;
@@ -535,14 +527,13 @@ AND typelem = 0"
         ksort($fkeys);
 
         foreach ($fkeys as $fkey_name => $fkey) {
-            $return .= "ALTER TABLE ONLY " . idf_escape($status['nspname']) . "." . idf_escape($status['Name']) . " ADD CONSTRAINT " . idf_escape($fkey_name) . " $fkey[definition] " . ($fkey['deferrable'] ? 'DEFERRABLE' : 'NOT DEFERRABLE') . ";\n";
+            $return .= "ALTER TABLE ONLY " . $this->idf_escape($status['nspname']) . "." . $this->idf_escape($status['Name']) . " ADD CONSTRAINT " . $this->idf_escape($fkey_name) . " $fkey[definition] " . ($fkey['deferrable'] ? 'DEFERRABLE' : 'NOT DEFERRABLE') . ";\n";
         }
 
         return ($return ? "$return\n" : $return);
     }
 
     public function create_sql($table, $auto_increment, $style) {
-        global $connection;
         $return = '';
         $return_parts = array();
         $sequences = array();
@@ -550,7 +541,7 @@ AND typelem = 0"
         $status = table_status($table);
         if (is_view($status)) {
             $view = view($table);
-            return rtrim("CREATE VIEW " . idf_escape($table) . " AS $view[select]", ";");
+            return rtrim("CREATE VIEW " . $this->idf_escape($table) . " AS $view[select]", ";");
         }
         $fields = fields($table);
         $indexes = indexes($table);
@@ -561,11 +552,11 @@ AND typelem = 0"
             return false;
         }
 
-        $return = "CREATE TABLE " . idf_escape($status['nspname']) . "." . idf_escape($status['Name']) . " (\n    ";
+        $return = "CREATE TABLE " . $this->idf_escape($status['nspname']) . "." . $this->idf_escape($status['Name']) . " (\n    ";
 
         // fields' definitions
         foreach ($fields as $field_name => $field) {
-            $part = idf_escape($field['field']) . ' ' . $field['full_type']
+            $part = $this->idf_escape($field['field']) . ' ' . $field['full_type']
                 . default_value($field)
                 . ($field['attnotnull'] ? " NOT NULL" : "");
             $return_parts[] = $part;
@@ -590,13 +581,13 @@ AND typelem = 0"
         // primary + unique keys
         foreach ($indexes as $index_name => $index) {
             switch($index['type']) {
-                case 'UNIQUE': $return_parts[] = "CONSTRAINT " . idf_escape($index_name) . " UNIQUE (" . implode(', ', array_map('idf_escape', $index['columns'])) . ")"; break;
-                case 'PRIMARY': $return_parts[] = "CONSTRAINT " . idf_escape($index_name) . " PRIMARY KEY (" . implode(', ', array_map('idf_escape', $index['columns'])) . ")"; break;
+                case 'UNIQUE': $return_parts[] = "CONSTRAINT " . $this->idf_escape($index_name) . " UNIQUE (" . implode(', ', array_map('idf_escape', $index['columns'])) . ")"; break;
+                case 'PRIMARY': $return_parts[] = "CONSTRAINT " . $this->idf_escape($index_name) . " PRIMARY KEY (" . implode(', ', array_map('idf_escape', $index['columns'])) . ")"; break;
             }
         }
 
         foreach ($constraints as $conname => $consrc) {
-            $return_parts[] = "CONSTRAINT " . idf_escape($conname) . " CHECK $consrc";
+            $return_parts[] = "CONSTRAINT " . $this->idf_escape($conname) . " CHECK $consrc";
         }
 
         $return .= implode(",\n    ", $return_parts) . "\n) WITH (oids = " . ($status['Oid'] ? 'true' : 'false') . ");";
@@ -606,20 +597,20 @@ AND typelem = 0"
             if ($index['type'] == 'INDEX') {
                 $columns = array();
                 foreach ($index['columns'] as $key => $val) {
-                    $columns[] = idf_escape($val) . ($index['descs'][$key] ? " DESC" : "");
+                    $columns[] = $this->idf_escape($val) . ($index['descs'][$key] ? " DESC" : "");
                 }
-                $return .= "\n\nCREATE INDEX " . idf_escape($index_name) . " ON " . idf_escape($status['nspname']) . "." . idf_escape($status['Name']) . " USING btree (" . implode(', ', $columns) . ");";
+                $return .= "\n\nCREATE INDEX " . $this->idf_escape($index_name) . " ON " . $this->idf_escape($status['nspname']) . "." . $this->idf_escape($status['Name']) . " USING btree (" . implode(', ', $columns) . ");";
             }
         }
 
         // coments for table & fields
         if ($status['Comment']) {
-            $return .= "\n\nCOMMENT ON TABLE " . idf_escape($status['nspname']) . "." . idf_escape($status['Name']) . " IS " . q($status['Comment']) . ";";
+            $return .= "\n\nCOMMENT ON TABLE " . $this->idf_escape($status['nspname']) . "." . $this->idf_escape($status['Name']) . " IS " . q($status['Comment']) . ";";
         }
 
         foreach ($fields as $field_name => $field) {
             if ($field['comment']) {
-                $return .= "\n\nCOMMENT ON COLUMN " . idf_escape($status['nspname']) . "." . idf_escape($status['Name']) . "." . idf_escape($field_name) . " IS " . q($field['comment']) . ";";
+                $return .= "\n\nCOMMENT ON COLUMN " . $this->idf_escape($status['nspname']) . "." . $this->idf_escape($status['Name']) . "." . $this->idf_escape($field_name) . " IS " . q($field['comment']) . ";";
             }
         }
 
@@ -627,7 +618,7 @@ AND typelem = 0"
     }
 
     public function truncate_sql($table) {
-        return "TRUNCATE " . table($table);
+        return "TRUNCATE " . $this->table($table);
     }
 
     public function trigger_sql($table) {
@@ -635,14 +626,14 @@ AND typelem = 0"
         $return = "";
         foreach (triggers($table) as $trg_id => $trg) {
             $trigger = trigger($trg_id, $status['Name']);
-            $return .= "\nCREATE TRIGGER " . idf_escape($trigger['Trigger']) . " $trigger[Timing] $trigger[Events] ON " . idf_escape($status["nspname"]) . "." . idf_escape($status['Name']) . " $trigger[Type] $trigger[Statement];;\n";
+            $return .= "\nCREATE TRIGGER " . $this->idf_escape($trigger['Trigger']) . " $trigger[Timing] $trigger[Events] ON " . $this->idf_escape($status["nspname"]) . "." . $this->idf_escape($status['Name']) . " $trigger[Type] $trigger[Statement];;\n";
         }
         return $return;
     }
 
 
     public function use_sql($database) {
-        return "\connect " . idf_escape($database);
+        return "\connect " . $this->idf_escape($database);
     }
 
     public function show_variables() {
@@ -668,7 +659,7 @@ AND typelem = 0"
     }
 
     public function kill_process($val) {
-        return queries("SELECT pg_terminate_backend(" . number($val) . ")");
+        return $this->queries("SELECT pg_terminate_backend(" . number($val) . ")");
     }
 
     public function connection_id(){
@@ -676,8 +667,7 @@ AND typelem = 0"
     }
 
     public function max_connections() {
-        global $connection;
-        return $connection->result("SHOW max_connections");
+        return $this->connection->result("SHOW max_connections");
     }
 
     public function driver_config() {

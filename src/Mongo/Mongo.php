@@ -2,11 +2,13 @@
 
 namespace Lagdo\Adminer\Drivers\Mongo;
 
-class Mongo
+use Lagdo\Adminer\Drivers\Server;
+
+class Mongo extends Server
 {
     /**
-      * Get a connection to the server, based on the config and available packages
-      */
+     * Get a connection to the server, based on the config and available packages
+     */
     protected function createConnection()
     {
         if(class_exists('MongoDB'))
@@ -21,35 +23,34 @@ class Mongo
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function connect()
     {
-        global $adminer;
         $connection = $this->createConnection();
-        list($server, $username, $password) = $adminer->credentials();
+        list($server, $username, $password) = $this->adminer->credentials();
         $options = array();
         if ($username . $password != "") {
             $options["username"] = $username;
             $options["password"] = $password;
         }
-        $db = $adminer->database();
+        $db = $this->adminer->database();
         if ($db != "") {
             $options["db"] = $db;
         }
         if (($auth_source = getenv("MONGO_AUTH_SOURCE"))) {
             $options["authSource"] = $auth_source;
         }
-        $connection->connect("mongodb://$server", $options);
-        if ($connection->error) {
-            return $connection->error;
+        $this->connection->connect("mongodb://$server", $options);
+        if ($this->connection->error) {
+            return $this->connection->error;
         }
         return $connection;
     }
 
     /**
-      * @inheritDoc
-      */
+     * @inheritDoc
+     */
     public function idf_escape($idf)
     {
         return $idf;
@@ -91,13 +92,11 @@ class Mongo
     }
 
     public function last_id() {
-        global $connection;
-        return $connection->last_id;
+        return $this->connection->last_id;
     }
 
     public function error() {
-        global $connection;
-        return h($connection->error);
+        return h($this->connection->error);
     }
 
     public function collations() {
@@ -105,31 +104,29 @@ class Mongo
     }
 
     public function logged_user() {
-        global $adminer;
-        $credentials = $adminer->credentials();
+        $credentials = $this->adminer->credentials();
         return $credentials[1];
     }
 
     public function alter_indexes($table, $alter) {
-        global $connection;
         foreach ($alter as $val) {
             list($type, $name, $set) = $val;
             if ($set == "DROP") {
-                $return = $connection->_db->command(array("deleteIndexes" => $table, "index" => $name));
+                $return = $this->connection->_db->command(array("deleteIndexes" => $table, "index" => $name));
             } else {
                 $columns = array();
                 foreach ($set as $column) {
                     $column = preg_replace('~ DESC$~', '', $column, 1, $count);
                     $columns[$column] = ($count ? -1 : 1);
                 }
-                $return = $connection->_db->selectCollection($table)->ensureIndex($columns, array(
+                $return = $this->connection->_db->selectCollection($table)->ensureIndex($columns, array(
                     "unique" => ($type == "UNIQUE"),
                     "name" => $name,
                     //! "sparse"
                 ));
             }
             if ($return['errmsg']) {
-                $connection->error = $return['errmsg'];
+                $this->connection->error = $return['errmsg'];
                 return false;
             }
         }
@@ -179,17 +176,15 @@ class Mongo
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
-        global $connection;
         if ($table == "") {
-            $connection->_db->createCollection($name);
+            $this->connection->_db->createCollection($name);
             return true;
         }
     }
 
     public function drop_tables($tables) {
-        global $connection;
         foreach ($tables as $table) {
-            $response = $connection->_db->selectCollection($table)->drop();
+            $response = $this->connection->_db->selectCollection($table)->drop();
             if (!$response['ok']) {
                 return false;
             }
@@ -198,9 +193,8 @@ class Mongo
     }
 
     public function truncate_tables($tables) {
-        global $connection;
         foreach ($tables as $table) {
-            $response = $connection->_db->selectCollection($table)->remove();
+            $response = $this->connection->_db->selectCollection($table)->remove();
             if (!$response['ok']) {
                 return false;
             }
@@ -209,11 +203,10 @@ class Mongo
     }
 
     public function driver_config() {
-        global $operators;
         return array(
             'possible_drivers' => array("mongo", "mongodb"),
             'jush' => "mongo",
-            'operators' => $operators,
+            'operators' => $this->adminer->operators,
             'functions' => array(),
             'grouping' => array(),
             'edit_functions' => array(array("json")),
