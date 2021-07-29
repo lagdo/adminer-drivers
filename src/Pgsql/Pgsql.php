@@ -2,9 +2,9 @@
 
 namespace Lagdo\Adminer\Drivers\Pgsql;
 
-use Lagdo\Adminer\Drivers\Server;
+use Lagdo\Adminer\Drivers\AbstractServer;
 
-class Pgsql extends Server
+class Pgsql extends AbstractServer
 {
     /**
      * @inheritDoc

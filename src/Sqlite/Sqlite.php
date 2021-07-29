@@ -2,9 +2,9 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite;
 
-use Lagdo\Adminer\Drivers\Server;
+use Lagdo\Adminer\Drivers\AbstractServer;
 
-class Sqlite extends Server
+class Sqlite extends AbstractServer
 {
     /**
      * @inheritDoc

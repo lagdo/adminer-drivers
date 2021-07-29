@@ -2,9 +2,9 @@
 
 namespace Lagdo\Adminer\Drivers\Elastic;
 
-use Lagdo\Adminer\Drivers\Server;
+use Lagdo\Adminer\Drivers\AbstractServer;
 
-class Elastic extends Server
+class Elastic extends AbstractServer
 {
     /**
      * @inheritDoc

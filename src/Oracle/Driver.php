@@ -2,7 +2,9 @@
 
 namespace Lagdo\Adminer\Drivers\Oracle;
 
-class Driver extends \Lagdo\Adminer\Drivers\Driver {
+use Lagdo\Adminer\Drivers\AbstractDriver;
+
+class Driver extends AbstractDriver {
 
     //! support empty $set in insert()
 

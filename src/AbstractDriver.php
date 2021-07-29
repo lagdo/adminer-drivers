@@ -15,7 +15,7 @@ function add_driver($id, $name) {
     $drivers[$id] = $name;
 }
 
-class Driver implements DriverInterface
+abstract class AbstractDriver implements DriverInterface
 {
     /**
      * @var Adminer
@@ -44,6 +44,15 @@ class Driver implements DriverInterface
     public function __construct($connection) {
         $this->connection = $connection;
     }
+
+    /**
+     * Insert or update data in table
+     * @param string
+     * @param array
+     * @param array of arrays with escaped columns in keys and quoted data in values
+     * @return bool
+     */
+    abstract public function insertUpdate($table, $rows, $primary);
 
     /**
      * Select data from table
@@ -118,17 +127,6 @@ class Driver implements DriverInterface
             ? " (" . implode(", ", array_keys($set)) . ")\nVALUES (" . implode(", ", $set) . ")"
             : " DEFAULT VALUES"
         ));
-    }
-
-    /**
-     * Insert or update data in table
-     * @param string
-     * @param array
-     * @param array of arrays with escaped columns in keys and quoted data in values
-     * @return bool
-     */
-    /*abstract*/ function insertUpdate($table, $rows, $primary) {
-        return false;
     }
 
     /**

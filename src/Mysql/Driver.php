@@ -2,7 +2,9 @@
 
 namespace Lagdo\Adminer\Drivers\Mysql;
 
-class Driver extends \Lagdo\Adminer\Drivers\Driver {
+use Lagdo\Adminer\Drivers\AbstractDriver;
+
+class Driver extends AbstractDriver {
 
     public function insert($table, $set) {
         return ($set ? parent::insert($table, $set) : $this->server->queries("INSERT INTO " . $this->server->table($table) . " ()\nVALUES ()"));

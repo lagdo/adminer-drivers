@@ -2,7 +2,7 @@
 
 namespace Lagdo\Adminer\Drivers;
 
-abstract class Server implements ServerInterface
+abstract class AbstractServer implements ServerInterface
 {
     /**
      * @var Adminer

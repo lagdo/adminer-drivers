@@ -2,9 +2,9 @@
 
 namespace Lagdo\Adminer\Drivers\Mongo;
 
-use Lagdo\Adminer\Drivers\Server;
+use Lagdo\Adminer\Drivers\AbstractServer;
 
-class Mongo extends Server
+class Mongo extends AbstractServer
 {
     /**
      * Get a connection to the server, based on the config and available packages

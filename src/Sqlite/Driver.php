@@ -2,7 +2,9 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite;
 
-class Driver extends \Lagdo\Adminer\Drivers\Driver {
+use Lagdo\Adminer\Drivers\AbstractDriver;
+
+class Driver extends AbstractDriver {
 
     public function insertUpdate($table, $rows, $primary) {
         $values = array();

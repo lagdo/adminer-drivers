@@ -2,9 +2,9 @@
 
 namespace Lagdo\Adminer\Drivers\Mysql;
 
-use Lagdo\Adminer\Drivers\Server;
+use Lagdo\Adminer\Drivers\AbstractServer;
 
-class Mysql extends Server
+class Mysql extends AbstractServer
 {
     /**
      * @inheritDoc

@@ -2,9 +2,9 @@
 
 namespace Lagdo\Adminer\Drivers\Oracle;
 
-use Lagdo\Adminer\Drivers\Server;
+use Lagdo\Adminer\Drivers\AbstractServer;
 
-class Oracle extends Server
+class Oracle extends AbstractServer
 {
     /**
      * @inheritDoc

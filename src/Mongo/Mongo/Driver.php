@@ -2,9 +2,14 @@
 
 namespace Lagdo\Adminer\Drivers\Mongo\Mongo;
 
+use Lagdo\Adminer\Drivers\AbstractDriver;
+use Lagdo\Adminer\Drivers\DriverTrait;
+
 use Exception;
 
-class Driver extends \Lagdo\Adminer\Drivers\Driver {
+class Driver extends AbstractDriver {
+    use DriverTrait;
+
     public $primary = "_id";
 
     public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {

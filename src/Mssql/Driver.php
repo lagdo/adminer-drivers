@@ -7,7 +7,9 @@
 
 namespace Lagdo\Adminer\Drivers\Mssql;
 
-class Driver extends \Lagdo\Adminer\Drivers\Driver {
+use Lagdo\Adminer\Drivers\AbstractDriver;
+
+class Driver extends AbstractDriver {
 
     public function insertUpdate($table, $rows, $primary) {
         foreach ($rows as $set) {

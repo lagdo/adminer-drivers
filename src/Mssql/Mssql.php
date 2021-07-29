@@ -7,9 +7,9 @@
 
 namespace Lagdo\Adminer\Drivers\Mssql;
 
-use Lagdo\Adminer\Drivers\Server;
+use Lagdo\Adminer\Drivers\AbstractServer;
 
-class Mssql extends Server
+class Mssql extends AbstractServer
 {
     /**
      * @inheritDoc
