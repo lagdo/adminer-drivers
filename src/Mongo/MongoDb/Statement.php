@@ -2,7 +2,7 @@
 
 namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
 
-class Result {
+class Statement {
     var $num_rows, $_rows = array(), $_offset = 0, $_charset = array();
 
     public function __construct($result) {

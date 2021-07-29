@@ -2,7 +2,7 @@
 
 namespace Lagdo\Adminer\Drivers\Elastic;
 
-class Result {
+class Statement {
     var $num_rows, $_rows;
 
     public function __construct($rows) {

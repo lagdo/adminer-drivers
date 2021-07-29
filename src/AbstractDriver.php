@@ -64,7 +64,7 @@ abstract class AbstractDriver implements DriverInterface
      * @param int result of $this->adminer->selectLimitProcess()
      * @param int index of page starting at zero
      * @param bool whether to print the query
-     * @return Result
+     * @return Statement
      */
     public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
         $is_group = (count($group) < count($select));

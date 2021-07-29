@@ -82,7 +82,7 @@ class Sqlite extends AbstractServer
     }
 
     public function db_collation($db, $collations) {
-        return $this->connection->result("PRAGMA encoding"); // there is no database list so $db == DB
+        return $this->connection->result("PRAGMA encoding"); // there is no database list so $db == $this->adminer->database()
     }
 
     public function engines() {

@@ -91,7 +91,7 @@ class Oracle extends AbstractServer
     }
 
     public function get_current_db() {
-        $db = $this->connection->_current_db ? $this->connection->_current_db : DB;
+        $db = $this->connection->_current_db ? $this->connection->_current_db : $this->adminer->database();
         unset($this->connection->_current_db);
         return $db;
     }

@@ -26,8 +26,8 @@ class Driver extends AbstractDriver {
     }
 
     public function slowQuery($query, $timeout) {
-        $this->_conn->query("SET statement_timeout = " . (1000 * $timeout));
-        $this->_conn->timeout = 1000 * $timeout;
+        $this->connection->query("SET statement_timeout = " . (1000 * $timeout));
+        $this->connection->timeout = 1000 * $timeout;
         return $query;
     }
 
@@ -41,11 +41,11 @@ class Driver extends AbstractDriver {
     }
 
     public function quoteBinary($s) {
-        return $this->_conn->quoteBinary($s);
+        return $this->connection->quoteBinary($s);
     }
 
     public function warnings() {
-        return $this->_conn->warnings();
+        return $this->connection->warnings();
     }
 
     public function tableHelp($name) {

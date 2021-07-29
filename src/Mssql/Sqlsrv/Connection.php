@@ -74,7 +74,7 @@ class Connection implements ConnectionInterface
             return false;
         }
         if (sqlsrv_field_metadata($result)) {
-            return new Result($result);
+            return new Statement($result);
         }
         $this->affected_rows = sqlsrv_rows_affected($result);
         return true;

@@ -46,7 +46,7 @@ class Driver extends AbstractDriver {
             $data["query"]["filtered"]["query"] = array("match_all" => array());
         }
         $start = microtime(true);
-        $search = $this->_conn->query($query, $data);
+        $search = $this->connection->query($query, $data);
         if ($print) {
             echo $this->adminer->selectQuery("$query: " . json_encode($data), $start, !$search);
         }
@@ -74,7 +74,7 @@ class Driver extends AbstractDriver {
             }
             $return[] = $row;
         }
-        return new Min_Result($return);
+        return new Statement($return);
     }
 
     public function update($type, $record, $queryWhere, $limit = 0, $separator = "\n") {
@@ -83,7 +83,7 @@ class Driver extends AbstractDriver {
         if (count($parts) == 2) {
             $id = trim($parts[1]);
             $query = "$type/$id";
-            return $this->_conn->query($query, $record, 'POST');
+            return $this->connection->query($query, $record, 'POST');
         }
         return false;
     }
@@ -91,8 +91,8 @@ class Driver extends AbstractDriver {
     public function insert($type, $record) {
         $id = ""; //! user should be able to inform _id
         $query = "$type/$id";
-        $response = $this->_conn->query($query, $record, 'POST');
-        $this->_conn->last_id = $response['_id'];
+        $response = $this->connection->query($query, $record, 'POST');
+        $this->connection->last_id = $response['_id'];
         return $response['created'];
     }
 
@@ -110,14 +110,14 @@ class Driver extends AbstractDriver {
                 }
             }
         }
-        $this->_conn->affected_rows = 0;
+        $this->connection->affected_rows = 0;
         foreach ($ids as $id) {
             $query = "{$type}/{$id}";
-            $response = $this->_conn->query($query, '{}', 'DELETE');
+            $response = $this->connection->query($query, '{}', 'DELETE');
             if (is_array($response) && $response['found'] == true) {
-                $this->_conn->affected_rows++;
+                $this->connection->affected_rows++;
             }
         }
-        return $this->_conn->affected_rows;
+        return $this->connection->affected_rows;
     }
 }

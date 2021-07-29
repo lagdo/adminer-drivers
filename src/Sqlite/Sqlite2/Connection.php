@@ -25,7 +25,7 @@ class Connection extends \Lagdo\Adminer\Drivers\Sqlite\Connection implements Con
             $this->affected_rows = $this->changes();
             return true;
         }
-        return new Result($result);
+        return new Statement($result);
     }
 
     public function quote($string) {

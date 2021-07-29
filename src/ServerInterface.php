@@ -326,7 +326,7 @@ interface ServerInterface
      * Explain select
      * @param Min_DB
      * @param string
-     * @return Result
+     * @return Statement
      */
     public function explain($connection, $query);
 

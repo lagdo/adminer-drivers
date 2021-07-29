@@ -22,7 +22,7 @@ abstract class AbstractServer implements ServerInterface
     /**
      * Execute and remember query
      * @param string or null to return remembered queries, end with ';' to use DELIMITER
-     * @return Min_Result or array($queries, $time) if $query = null
+     * @return Statement or array($queries, $time) if $query = null
      */
     public function queries($query)
     {

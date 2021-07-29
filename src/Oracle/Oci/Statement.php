@@ -2,7 +2,7 @@
 
 namespace Lagdo\Adminer\Drivers\Oracle\Oci;
 
-class Result {
+class Statement {
 	var $_result, $_offset = 1, $num_rows;
 
 	function __construct($result) {

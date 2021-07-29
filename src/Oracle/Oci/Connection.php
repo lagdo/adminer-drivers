@@ -54,7 +54,7 @@ class Connection implements ConnectionInterface
         restore_error_handler();
         if ($return) {
             if (oci_num_fields($result)) {
-                return new Result($result);
+                return new Statement($result);
             }
             $this->affected_rows = oci_num_rows($result);
             oci_free_statement($result);

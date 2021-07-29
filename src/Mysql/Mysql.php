@@ -546,7 +546,7 @@ class Mysql extends AbstractServer
     public function copy_tables($tables, $views, $target) {
         $this->queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
         foreach ($tables as $table) {
-            $name = ($target == DB ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
+            $name = ($target == $this->adminer->database() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
             if (($_POST["overwrite"] && !$this->queries("\nDROP TABLE IF EXISTS $name"))
                 || !$this->queries("CREATE TABLE $name LIKE " . $this->table($table))
                 || !$this->queries("INSERT INTO $name SELECT * FROM " . $this->table($table))
@@ -555,13 +555,13 @@ class Mysql extends AbstractServer
             }
             foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\"))) as $row) {
                 $trigger = $row["Trigger"];
-                if (!$this->queries("CREATE TRIGGER " . ($target == DB ? $this->idf_escape("copy_$trigger") : $this->idf_escape($target) . "." . $this->idf_escape($trigger)) . " $row[Timing] $row[Event] ON $name FOR EACH ROW\n$row[Statement];")) {
+                if (!$this->queries("CREATE TRIGGER " . ($target == $this->adminer->database() ? $this->idf_escape("copy_$trigger") : $this->idf_escape($target) . "." . $this->idf_escape($trigger)) . " $row[Timing] $row[Event] ON $name FOR EACH ROW\n$row[Statement];")) {
                     return false;
                 }
             }
         }
         foreach ($views as $table) {
-            $name = ($target == DB ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
+            $name = ($target == $this->adminer->database() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
             $view = view($table);
             if (($_POST["overwrite"] && !$this->queries("DROP VIEW IF EXISTS $name"))
                 || !$this->queries("CREATE VIEW $name AS $view[select]")) { //! USE to avoid db.table
@@ -686,7 +686,7 @@ class Mysql extends AbstractServer
      * Explain select
      * @param Min_DB
      * @param string
-     * @return Result
+     * @return Statement
      */
     public function explain($connection, $query) {
         return $this->connection->query("EXPLAIN " . (min_version(5.1) && !min_version(5.7) ? "PARTITIONS " : "") . $query);

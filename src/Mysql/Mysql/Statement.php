@@ -2,7 +2,7 @@
 
 namespace Lagdo\Adminer\Drivers\Mysql\Mysql;
 
-class Result {
+class Statement {
     var
         $num_rows, ///< @var int number of rows in the result
         $_result, $_offset = 0 ///< @access private

@@ -75,7 +75,7 @@ class Connection implements ConnectionInterface
             $this->affected_rows = pg_affected_rows($result);
             $return = true;
         } else {
-            $return = new Result($result);
+            $return = new Statement($result);
         }
         if ($this->timeout) {
             $this->timeout = 0;

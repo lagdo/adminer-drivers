@@ -83,7 +83,7 @@ class Connection implements ConnectionInterface
      * Send query
      * @param string
      * @param bool
-     * @return mixed bool or Result
+     * @return mixed bool or Statement
      */
     public function query($query, $unbuffered = false) {
         $result = @($unbuffered ? mysql_unbuffered_query($query, $this->_link) : mysql_query($query, $this->_link)); // @ - mute mysql.trace_mode
@@ -98,7 +98,7 @@ class Connection implements ConnectionInterface
             $this->info = mysql_info($this->_link);
             return true;
         }
-        return new Result($result);
+        return new Statement($result);
     }
 
     /**
@@ -112,7 +112,7 @@ class Connection implements ConnectionInterface
 
     /**
      * Get current resultset
-     * @return Result
+     * @return Statement
      */
     public function store_result() {
         return $this->_result;

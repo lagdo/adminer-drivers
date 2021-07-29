@@ -23,7 +23,7 @@ class Connection extends \Lagdo\Adminer\Drivers\Sqlite\Connection implements Con
             $this->error = $this->_link->lastErrorMsg();
             return false;
         } elseif ($result->numColumns()) {
-            return new Result($result);
+            return new Statement($result);
         }
         $this->affected_rows = $this->_link->changes();
         return true;

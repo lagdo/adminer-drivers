@@ -46,7 +46,7 @@ class Connection implements ConnectionInterface
             $this->affected_rows = mssql_rows_affected($this->_link);
             return true;
         }
-        return new Result($result);
+        return new Statement($result);
     }
 
     public function multi_query($query) {

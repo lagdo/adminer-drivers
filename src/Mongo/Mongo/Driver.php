@@ -22,7 +22,7 @@ class Driver extends AbstractDriver {
             $val = preg_replace('~ DESC$~', '', $val, 1, $count);
             $sort[$val] = ($count ? -1 : 1);
         }
-        return new Result($this->_conn->_db->selectCollection($table)
+        return new Statement($this->connection->_db->selectCollection($table)
             ->find(array(), $select)
             ->sort($sort)
             ->limit($limit != "" ? +$limit : 0)
@@ -32,13 +32,13 @@ class Driver extends AbstractDriver {
 
     public function insert($table, $set) {
         try {
-            $return = $this->_conn->_db->selectCollection($table)->insert($set);
-            $this->_conn->errno = $return['code'];
-            $this->_conn->error = $return['err'];
-            $this->_conn->last_id = $set['_id'];
+            $return = $this->connection->_db->selectCollection($table)->insert($set);
+            $this->connection->errno = $return['code'];
+            $this->connection->error = $return['err'];
+            $this->connection->last_id = $set['_id'];
             return !$return['err'];
         } catch (Exception $ex) {
-            $this->_conn->error = $ex->getMessage();
+            $this->connection->error = $ex->getMessage();
             return false;
         }
     }

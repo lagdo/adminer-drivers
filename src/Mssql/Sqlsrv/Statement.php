@@ -7,7 +7,7 @@
 
 namespace Lagdo\Adminer\Drivers\Mssql\Sqlsrv;
 
-class Result {
+class Statement {
     var $_result, $_offset = 0, $_fields, $num_rows;
 
     public function __construct($result) {

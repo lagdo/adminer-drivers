@@ -2,7 +2,7 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite\Sqlite;
 
-class Result {
+class Statement {
     var $_result, $_offset = 0, $num_rows;
 
     public function __construct($result) {
