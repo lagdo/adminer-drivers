@@ -31,16 +31,16 @@ class Mongo extends MongoDriver implements ServerInterface
     );
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getDriver()
     {
         return "mongo";
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getName()
     {
         return "MongoDB (alpha)";

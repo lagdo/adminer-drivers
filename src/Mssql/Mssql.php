@@ -12,24 +12,24 @@ use Lagdo\Adminer\Drivers\ServerInterface;
 class Mssql implements ServerInterface
 {
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getDriver()
     {
         return "mssql";
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getName()
     {
         return "MS SQL (beta)";
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
-     */
+      * Get a connection to the server, based on the config and available packages
+      */
     protected function createConnection()
     {
         if(extension_loaded("sqlsrv"))
@@ -48,8 +48,8 @@ class Mssql implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function connect()
     {
         global $adminer;
@@ -62,8 +62,8 @@ class Mssql implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function idf_escape($idf)
     {
         return "[" . str_replace("]", "]]", $idf) . "]";

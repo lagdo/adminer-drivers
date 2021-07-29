@@ -7,24 +7,24 @@ use Lagdo\Adminer\Drivers\ServerInterface;
 class Mysql implements ServerInterface
 {
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getDriver()
     {
         return "server";
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getName()
     {
         return "MySQL";
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
-     */
+      * Get a connection to the server, based on the config and available packages
+      */
     protected function createConnection()
     {
         if(extension_loaded("mysqli"))
@@ -43,8 +43,8 @@ class Mysql implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function connect()
     {
         global $adminer, $types, $structured_types;
@@ -67,8 +67,8 @@ class Mysql implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function idf_escape($idf)
     {
         return "`" . str_replace("`", "``", $idf) . "`";
@@ -78,10 +78,11 @@ class Mysql implements ServerInterface
         return idf_escape($idf);
     }
 
-    /** Get cached list of databases
-    * @param bool
-    * @return array
-    */
+    /**
+     * Get cached list of databases
+     * @param bool
+     * @return array
+     */
     public function get_databases($flush) {
         // SHOW DATABASES can take a very long time so it is cached
         $return = get_session("dbs");
@@ -98,34 +99,37 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Formulate SQL query with limit
-    * @param string everything after SELECT
-    * @param string including WHERE
-    * @param int
-    * @param int
-    * @param string
-    * @return string
-    */
+    /**
+     * Formulate SQL query with limit
+     * @param string everything after SELECT
+     * @param string including WHERE
+     * @param int
+     * @param int
+     * @param string
+     * @return string
+     */
     public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
         return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
     }
 
-    /** Formulate SQL modification query with limit 1
-    * @param string
-    * @param string everything after UPDATE or DELETE
-    * @param string
-    * @param string
-    * @return string
-    */
+    /**
+     * Formulate SQL modification query with limit 1
+     * @param string
+     * @param string everything after UPDATE or DELETE
+     * @param string
+     * @param string
+     * @return string
+     */
     public function limit1($table, $query, $where, $separator = "\n") {
         return limit($query, $where, 1, 0, $separator);
     }
 
-    /** Get database collation
-    * @param string
-    * @param array result of collations()
-    * @return string
-    */
+    /**
+     * Get database collation
+     * @param string
+     * @param array result of collations()
+     * @return string
+     */
     public function db_collation($db, $collations) {
         global $connection;
         $return = null;
@@ -139,9 +143,10 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Get supported engines
-    * @return array
-    */
+    /**
+     * Get supported engines
+     * @return array
+     */
     public function engines() {
         $return = array();
         foreach (get_rows("SHOW ENGINES") as $row) {
@@ -152,17 +157,19 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Get logged user
-    * @return string
-    */
+    /**
+     * Get logged user
+     * @return string
+     */
     public function logged_user() {
         global $connection;
         return $connection->result("SELECT USER()");
     }
 
-    /** Get tables list
-    * @return array array($name => $type)
-    */
+    /**
+     * Get tables list
+     * @return array array($name => $type)
+     */
     public function tables_list() {
         return get_key_vals(min_version(5)
             ? "SELECT TABLE_NAME, TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME"
@@ -170,10 +177,11 @@ class Mysql implements ServerInterface
         );
     }
 
-    /** Count tables in all databases
-    * @param array
-    * @return array array($db => $tables)
-    */
+    /**
+     * Count tables in all databases
+     * @param array
+     * @return array array($db => $tables)
+     */
     public function count_tables($databases) {
         $return = array();
         foreach ($databases as $db) {
@@ -182,11 +190,12 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Get table status
-    * @param string
-    * @param bool return only "Name", "Engine" and "Comment" fields
-    * @return array array($name => array("Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => )) or only inner array with $name
-    */
+    /**
+     * Get table status
+     * @param string
+     * @param bool return only "Name", "Engine" and "Comment" fields
+     * @return array array($name => array("Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => )) or only inner array with $name
+     */
     public function table_status($name = "", $fast = false) {
         $return = array();
         foreach (get_rows($fast && min_version(5)
@@ -208,27 +217,30 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Find out whether the identifier is view
-    * @param array
-    * @return bool
-    */
+    /**
+     * Find out whether the identifier is view
+     * @param array
+     * @return bool
+     */
     public function is_view($table_status) {
         return $table_status["Engine"] === null;
     }
 
-    /** Check if table supports foreign keys
-    * @param array result of table_status
-    * @return bool
-    */
+    /**
+     * Check if table supports foreign keys
+     * @param array result of table_status
+     * @return bool
+     */
     public function fk_support($table_status) {
         return preg_match('~InnoDB|IBMDB2I~i', $table_status["Engine"])
             || (preg_match('~NDB~i', $table_status["Engine"]) && min_version(5.6));
     }
 
-    /** Get information about fields
-    * @param string
-    * @return array array($name => array("field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => ))
-    */
+    /**
+     * Get information about fields
+     * @param string
+     * @return array array($name => array("field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => ))
+     */
     public function fields($table) {
         $return = array();
         foreach (get_rows("SHOW FULL COLUMNS FROM " . table($table)) as $row) {
@@ -254,11 +266,12 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Get table indexes
-    * @param string
-    * @param string Min_DB to use
-    * @return array array($key_name => array("type" => , "columns" => array(), "lengths" => array(), "descs" => array()))
-    */
+    /**
+     * Get table indexes
+     * @param string
+     * @param string Min_DB to use
+     * @return array array($key_name => array("type" => , "columns" => array(), "lengths" => array(), "descs" => array()))
+     */
     public function indexes($table, $connection2 = null) {
         $return = array();
         foreach (get_rows("SHOW INDEX FROM " . table($table), $connection2) as $row) {
@@ -271,10 +284,11 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Get foreign keys in table
-    * @param string
-    * @return array array($name => array("db" => , "ns" => , "table" => , "source" => array(), "target" => array(), "on_delete" => , "on_update" => ))
-    */
+    /**
+     * Get foreign keys in table
+     * @param string
+     * @return array array($name => array("db" => , "ns" => , "table" => , "source" => array(), "target" => array(), "on_delete" => , "on_update" => ))
+     */
     public function foreign_keys($table) {
         global $connection, $on_actions;
         static $pattern = '(?:`(?:[^`]|``)+`|"(?:[^"]|"")+")';
@@ -298,18 +312,20 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Get view SELECT
-    * @param string
-    * @return array array("select" => )
-    */
+    /**
+     * Get view SELECT
+     * @param string
+     * @return array array("select" => )
+     */
     public function view($name) {
         global $connection;
         return array("select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', $connection->result("SHOW CREATE VIEW " . table($name), 1)));
     }
 
-    /** Get sorted grouped list of collations
-    * @return array
-    */
+    /**
+     * Get sorted grouped list of collations
+     * @return array
+     */
     public function collations() {
         $return = array();
         foreach (get_rows("SHOW COLLATION") as $row) {
@@ -326,36 +342,40 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Find out if database is information_schema
-    * @param string
-    * @return bool
-    */
+    /**
+     * Find out if database is information_schema
+     * @param string
+     * @return bool
+     */
     public function information_schema($db) {
         return (min_version(5) && $db == "information_schema")
             || (min_version(5.5) && $db == "performance_schema");
     }
 
-    /** Get escaped error message
-    * @return string
-    */
+    /**
+     * Get escaped error message
+     * @return string
+     */
     public function error() {
         global $connection;
         return h(preg_replace('~^You have an error.*syntax to use~U', "Syntax error", $connection->error));
     }
 
-    /** Create database
-    * @param string
-    * @param string
-    * @return string
-    */
+    /**
+     * Create database
+     * @param string
+     * @param string
+     * @return string
+     */
     public function create_database($db, $collation) {
         return queries("CREATE DATABASE " . idf_escape($db) . ($collation ? " COLLATE " . q($collation) : ""));
     }
 
-    /** Drop databases
-    * @param array
-    * @return bool
-    */
+    /**
+     * Drop databases
+     * @param array
+     * @return bool
+     */
     public function drop_databases($databases) {
         $return = apply_queries("DROP DATABASE", $databases, 'idf_escape');
         restart_session();
@@ -363,11 +383,12 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Rename database from DB
-    * @param string new name
-    * @param string
-    * @return bool
-    */
+    /**
+     * Rename database from DB
+     * @param string new name
+     * @param string
+     * @return bool
+     */
     public function rename_database($name, $collation) {
         $return = false;
         if (create_database($name, $collation)) {
@@ -386,9 +407,10 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Generate modifier for auto increment column
-    * @return string
-    */
+    /**
+     * Generate modifier for auto increment column
+     * @return string
+     */
     public function auto_increment() {
         $auto_increment_index = " PRIMARY KEY";
         // don't overwrite primary key by auto_increment
@@ -406,18 +428,19 @@ class Mysql implements ServerInterface
         return " AUTO_INCREMENT$auto_increment_index";
     }
 
-    /** Run commands to create or alter table
-    * @param string "" to create
-    * @param string new name
-    * @param array of array($orig, $process_field, $after)
-    * @param array of strings
-    * @param string
-    * @param string
-    * @param string
-    * @param string number
-    * @param string
-    * @return bool
-    */
+    /**
+     * Run commands to create or alter table
+     * @param string "" to create
+     * @param string new name
+     * @param array of array($orig, $process_field, $after)
+     * @param array of strings
+     * @param string
+     * @param string
+     * @param string
+     * @param string number
+     * @param string
+     * @return bool
+     */
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
         $alter = array();
         foreach ($fields as $field) {
@@ -444,11 +467,12 @@ class Mysql implements ServerInterface
         return ($alter || $partitioning ? queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter) . $partitioning) : true);
     }
 
-    /** Run commands to alter indexes
-    * @param string escaped table name
-    * @param array of array("index type", "name", array("column definition", ...)) or array("index type", "name", "DROP")
-    * @return bool
-    */
+    /**
+     * Run commands to alter indexes
+     * @param string escaped table name
+     * @param array of array("index type", "name", array("column definition", ...)) or array("index type", "name", "DROP")
+     * @return bool
+     */
     public function alter_indexes($table, $alter) {
         foreach ($alter as $key => $val) {
             $alter[$key] = ($val[2] == "DROP"
@@ -459,36 +483,40 @@ class Mysql implements ServerInterface
         return queries("ALTER TABLE " . table($table) . implode(",", $alter));
     }
 
-    /** Run commands to truncate tables
-    * @param array
-    * @return bool
-    */
+    /**
+     * Run commands to truncate tables
+     * @param array
+     * @return bool
+     */
     public function truncate_tables($tables) {
         return apply_queries("TRUNCATE TABLE", $tables);
     }
 
-    /** Drop views
-    * @param array
-    * @return bool
-    */
+    /**
+     * Drop views
+     * @param array
+     * @return bool
+     */
     public function drop_views($views) {
         return queries("DROP VIEW " . implode(", ", array_map('table', $views)));
     }
 
-    /** Drop tables
-    * @param array
-    * @return bool
-    */
+    /**
+     * Drop tables
+     * @param array
+     * @return bool
+     */
     public function drop_tables($tables) {
         return queries("DROP TABLE " . implode(", ", array_map('table', $tables)));
     }
 
-    /** Move tables to other schema
-    * @param array
-    * @param array
-    * @param string
-    * @return bool
-    */
+    /**
+     * Move tables to other schema
+     * @param array
+     * @param array
+     * @param string
+     * @return bool
+     */
     public function move_tables($tables, $views, $target) {
         global $connection;
         $rename = array();
@@ -513,12 +541,13 @@ class Mysql implements ServerInterface
         return false;
     }
 
-    /** Copy tables to other schema
-    * @param array
-    * @param array
-    * @param string
-    * @return bool
-    */
+    /**
+     * Copy tables to other schema
+     * @param array
+     * @param array
+     * @param string
+     * @return bool
+     */
     public function copy_tables($tables, $views, $target) {
         queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
         foreach ($tables as $table) {
@@ -547,10 +576,11 @@ class Mysql implements ServerInterface
         return true;
     }
 
-    /** Get information about trigger
-    * @param string trigger name
-    * @return array array("Trigger" => , "Timing" => , "Event" => , "Of" => , "Type" => , "Statement" => )
-    */
+    /**
+     * Get information about trigger
+     * @param string trigger name
+     * @return array array("Trigger" => , "Timing" => , "Event" => , "Of" => , "Type" => , "Statement" => )
+     */
     public function trigger($name) {
         if ($name == "") {
             return array();
@@ -559,10 +589,11 @@ class Mysql implements ServerInterface
         return reset($rows);
     }
 
-    /** Get defined triggers
-    * @param string
-    * @return array array($name => array($timing, $event))
-    */
+    /**
+     * Get defined triggers
+     * @param string
+     * @return array array($name => array($timing, $event))
+     */
     public function triggers($table) {
         $return = array();
         foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\"))) as $row) {
@@ -571,9 +602,10 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Get trigger options
-    * @return array ("Timing" => array(), "Event" => array(), "Type" => array())
-    */
+    /**
+     * Get trigger options
+     * @return array ("Timing" => array(), "Event" => array(), "Type" => array())
+     */
     public function trigger_options() {
         return array(
             "Timing" => array("BEFORE", "AFTER"),
@@ -582,11 +614,12 @@ class Mysql implements ServerInterface
         );
     }
 
-    /** Get information about stored routine
-    * @param string
-    * @param string "FUNCTION" or "PROCEDURE"
-    * @return array ("fields" => array("field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ), "returns" => , "definition" => , "language" => )
-    */
+    /**
+     * Get information about stored routine
+     * @param string
+     * @param string "FUNCTION" or "PROCEDURE"
+     * @return array ("fields" => array("field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ), "returns" => , "definition" => , "language" => )
+     */
     public function routine($name, $type) {
         global $connection, $enum_length, $inout, $types;
         $aliases = array("bool", "boolean", "integer", "double precision", "real", "dec", "numeric", "fixed", "national char", "national varchar");
@@ -620,91 +653,102 @@ class Mysql implements ServerInterface
         );
     }
 
-    /** Get list of routines
-    * @return array ("SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => )
-    */
+    /**
+     * Get list of routines
+     * @return array ("SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => )
+     */
     public function routines() {
         return get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . q(DB));
     }
 
-    /** Get list of available routine languages
-    * @return array
-    */
+    /**
+     * Get list of available routine languages
+     * @return array
+     */
     public function routine_languages() {
         return array(); // "SQL" not required
     }
 
-    /** Get routine signature
-    * @param string
-    * @param array result of routine()
-    * @return string
-    */
+    /**
+     * Get routine signature
+     * @param string
+     * @param array result of routine()
+     * @return string
+     */
     public function routine_id($name, $row) {
         return idf_escape($name);
     }
 
-    /** Get last auto increment ID
-    * @return string
-    */
+    /**
+     * Get last auto increment ID
+     * @return string
+     */
     public function last_id() {
         global $connection;
         return $connection->result("SELECT LAST_INSERT_ID()"); // mysql_insert_id() truncates bigint
     }
 
-    /** Explain select
-    * @param Min_DB
-    * @param string
-    * @return Result
-    */
+    /**
+     * Explain select
+     * @param Min_DB
+     * @param string
+     * @return Result
+     */
     public function explain($connection, $query) {
         return $connection->query("EXPLAIN " . (min_version(5.1) && !min_version(5.7) ? "PARTITIONS " : "") . $query);
     }
 
-    /** Get approximate number of rows
-    * @param array
-    * @param array
-    * @return int or null if approximate number can't be retrieved
-    */
+    /**
+     * Get approximate number of rows
+     * @param array
+     * @param array
+     * @return int or null if approximate number can't be retrieved
+     */
     public function found_rows($table_status, $where) {
         return ($where || $table_status["Engine"] != "InnoDB" ? null : $table_status["Rows"]);
     }
 
-    /** Get user defined types
-    * @return array
-    */
+    /**
+     * Get user defined types
+     * @return array
+     */
     public function types() {
         return array();
     }
 
-    /** Get existing schemas
-    * @return array
-    */
+    /**
+     * Get existing schemas
+     * @return array
+     */
     public function schemas() {
         return array();
     }
 
-    /** Get current schema
-    * @return string
-    */
+    /**
+     * Get current schema
+     * @return string
+     */
     public function get_schema() {
         return "";
     }
 
-    /** Set current schema
-    * @param string
-    * @param Min_DB
-    * @return bool
-    */
+    /**
+     * Set current schema
+     * @param string
+     * @param Min_DB
+     * @return bool
+     */
     public function set_schema($schema, $connection2 = null) {
         return true;
     }
 
-    /** Get SQL command to create table
-    * @param string
-    * @param bool
-    * @param string
-    * @return string
-    */
+    /**
+     * Get SQL command to create table
+     * @param string
+     * @param bool
+     * @param string
+     * @return string
+     */
     public function create_sql($table, $auto_increment, $style) {
         global $connection;
         $return = $connection->result("SHOW CREATE TABLE " . table($table), 1);
@@ -714,26 +758,29 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Get SQL command to truncate table
-    * @param string
-    * @return string
-    */
+    /**
+     * Get SQL command to truncate table
+     * @param string
+     * @return string
+     */
     public function truncate_sql($table) {
         return "TRUNCATE " . table($table);
     }
 
-    /** Get SQL command to change database
-    * @param string
-    * @return string
-    */
+    /**
+     * Get SQL command to change database
+     * @param string
+     * @return string
+     */
     public function use_sql($database) {
         return "USE " . idf_escape($database);
     }
 
-    /** Get SQL commands to create triggers
-    * @param string
-    * @return string
-    */
+    /**
+     * Get SQL commands to create triggers
+     * @param string
+     * @return string
+     */
     public function trigger_sql($table) {
         $return = "";
         foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\")), null, "-- ") as $row) {
@@ -742,31 +789,35 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Get server variables
-    * @return array ($name => $value)
-    */
+    /**
+     * Get server variables
+     * @return array ($name => $value)
+     */
     public function show_variables() {
         return get_key_vals("SHOW VARIABLES");
     }
 
-    /** Get process list
-    * @return array ($row)
-    */
+    /**
+     * Get process list
+     * @return array ($row)
+     */
     public function process_list() {
         return get_rows("SHOW FULL PROCESSLIST");
     }
 
-    /** Get status variables
-    * @return array ($name => $value)
-    */
+    /**
+     * Get status variables
+     * @return array ($name => $value)
+     */
     public function show_status() {
         return get_key_vals("SHOW STATUS");
     }
 
-    /** Convert field in select and edit
-    * @param array one element from fields()
-    * @return string
-    */
+    /**
+     * Convert field in select and edit
+     * @param array one element from fields()
+     * @return string
+     */
     public function convert_field($field) {
         if (preg_match("~binary~", $field["type"])) {
             return "HEX(" . idf_escape($field["field"]) . ")";
@@ -779,11 +830,12 @@ class Mysql implements ServerInterface
         }
     }
 
-    /** Convert value in edit after applying functions back
-    * @param array one element from fields()
-    * @param string
-    * @return string
-    */
+    /**
+     * Convert value in edit after applying functions back
+     * @param array one element from fields()
+     * @param string
+     * @return string
+     */
     public function unconvert_field($field, $return) {
         if (preg_match("~binary~", $field["type"])) {
             $return = "UNHEX($return)";
@@ -797,40 +849,45 @@ class Mysql implements ServerInterface
         return $return;
     }
 
-    /** Check whether a feature is supported
-    * @param string "comment", "copy", "database", "descidx", "drop_col", "dump", "event", "indexes", "kill", "materializedview", "partitioning", "privileges", "procedure", "processlist", "routine", "scheme", "sequence", "status", "table", "trigger", "type", "variables", "view", "view_trigger"
-    * @return bool
-    */
+    /**
+     * Check whether a feature is supported
+     * @param string "comment", "copy", "database", "descidx", "drop_col", "dump", "event", "indexes", "kill", "materializedview", "partitioning", "privileges", "procedure", "processlist", "routine", "scheme", "sequence", "status", "table", "trigger", "type", "variables", "view", "view_trigger"
+     * @return bool
+     */
     public function support($feature) {
         return !preg_match("~scheme|sequence|type|view_trigger|materializedview" . (min_version(8) ? "" : "|descidx" . (min_version(5.1) ? "" : "|event|partitioning" . (min_version(5) ? "" : "|routine|trigger|view"))) . "~", $feature);
     }
 
-    /** Kill a process
-    * @param int
-    * @return bool
-    */
+    /**
+     * Kill a process
+     * @param int
+     * @return bool
+     */
     public function kill_process($val) {
         return queries("KILL " . number($val));
     }
 
-    /** Return query to get connection ID
-    * @return string
-    */
+    /**
+     * Return query to get connection ID
+     * @return string
+     */
     public function connection_id(){
         return "SELECT CONNECTION_ID()";
     }
 
-    /** Get maximum number of connections
-    * @return int
-    */
+    /**
+     * Get maximum number of connections
+     * @return int
+     */
     public function max_connections() {
         global $connection;
         return $connection->result("SELECT @@max_connections");
     }
 
-    /** Get driver config
-    * @return array array('possible_drivers' => , 'jush' => , 'types' => , 'structured_types' => , 'unsigned' => , 'operators' => , 'functions' => , 'grouping' => , 'edit_functions' => )
-    */
+    /**
+     * Get driver config
+     * @return array array('possible_drivers' => , 'jush' => , 'types' => , 'structured_types' => , 'unsigned' => , 'operators' => , 'functions' => , 'grouping' => , 'edit_functions' => )
+     */
     public function driver_config() {
         $types = array(); ///< @var array ($type => $maximum_unsigned_length, ...)
         $structured_types = array(); ///< @var array ($description => array($type, ...), ...)

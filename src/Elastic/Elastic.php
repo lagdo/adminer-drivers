@@ -7,24 +7,24 @@ use Lagdo\Adminer\Drivers\ServerInterface;
 class Elastic implements ServerInterface
 {
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getDriver()
     {
         return "elastic";
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getName()
     {
         return "Elasticsearch (beta)";
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
-     */
+      * Get a connection to the server, based on the config and available packages
+      */
     protected function createConnection()
     {
         if(function_exists('json_decode') && ini_bool('allow_url_fopen'))
@@ -35,8 +35,8 @@ class Elastic implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function connect()
     {
         global $adminer;
@@ -52,8 +52,8 @@ class Elastic implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function idf_escape($idf)
     {
         return $idf;
@@ -234,19 +234,21 @@ class Elastic implements ServerInterface
         return null;
     }
 
-    /** Create index
-    * @param string
-    * @return mixed
-    */
+    /**
+     * Create index
+     * @param string
+     * @return mixed
+     */
     public function create_database($db, $collation) {
         global $connection;
         return $connection->rootQuery(urlencode($db), null, 'PUT');
     }
 
-    /** Remove index
-    * @param array
-    * @return mixed
-    */
+    /**
+     * Remove index
+     * @param array
+     * @return mixed
+     */
     public function drop_databases($databases) {
         global $connection;
         return $connection->rootQuery(urlencode(implode(',', $databases)), array(), 'DELETE');
@@ -272,10 +274,11 @@ class Elastic implements ServerInterface
         return false;
     }
 
-    /** Alter type
-    * @param array
-    * @return mixed
-    */
+    /**
+     * Alter type
+     * @param array
+     * @return mixed
+     */
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
         global $connection;
         $properties = array();
@@ -292,10 +295,11 @@ class Elastic implements ServerInterface
         return $connection->query("_mapping/{$name}", $properties, 'PUT');
     }
 
-    /** Drop types
-    * @param array
-    * @return bool
-    */
+    /**
+     * Drop types
+     * @param array
+     * @return bool
+     */
     public function drop_tables($tables) {
         global $connection;
         $return = true;

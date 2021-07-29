@@ -5,8 +5,8 @@ namespace Lagdo\Adminer\Drivers\Mongo;
 class Mongo
 {
     /**
-     * Get a connection to the server, based on the config and available packages
-     */
+      * Get a connection to the server, based on the config and available packages
+      */
     protected function createConnection()
     {
         if(class_exists('MongoDB'))
@@ -21,8 +21,8 @@ class Mongo
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function connect()
     {
         global $adminer;
@@ -48,8 +48,8 @@ class Mongo
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function idf_escape($idf)
     {
         return $idf;

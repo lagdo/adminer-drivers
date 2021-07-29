@@ -7,24 +7,24 @@ use Lagdo\Adminer\Drivers\ServerInterface;
 class Sqlite implements ServerInterface
 {
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getDriver()
     {
         return (isset($_GET["sqlite"]) ? "sqlite" : "sqlite2");
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getName()
     {
         return (isset($_GET["sqlite"]) ? "SQLite 3" : "SQLite 2");
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
-     */
+      * Get a connection to the server, based on the config and available packages
+      */
     protected function createConnection()
     {
         if(class_exists("SQLite3"))
@@ -43,8 +43,8 @@ class Sqlite implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function connect()
     {
         global $adminer;
@@ -56,8 +56,8 @@ class Sqlite implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function idf_escape($idf)
     {
         return '"' . str_replace('"', '""', $idf) . '"';

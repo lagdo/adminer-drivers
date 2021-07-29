@@ -8,12 +8,13 @@ class Connection implements ConnectionInterface
 {
     var $extension = "JSON", $server_info, $errno, $error, $_url, $_db;
 
-    /** Performs query
-     * @param string
-     * @param array
-     * @param string
-     * @return mixed
-     */
+    /**
+     * Performs query
+      * @param string
+      * @param array
+      * @param string
+      * @return mixed
+      */
     public function rootQuery($path, $content = array(), $method = 'GET') {
         @ini_set('track_errors', 1); // @ - may be disabled
         $file = @file_get_contents("$this->_url/" . ltrim($path, '/'), false, stream_context_create(array('http' => array(
@@ -48,12 +49,13 @@ class Connection implements ConnectionInterface
         return $return;
     }
 
-    /** Performs query relative to actual selected DB
-     * @param string
-     * @param array
-     * @param string
-     * @return mixed
-     */
+    /**
+     * Performs query relative to actual selected DB
+      * @param string
+      * @param array
+      * @param string
+      * @return mixed
+      */
     public function query($path, $content = array(), $method = 'GET') {
         return $this->rootQuery(($this->_db != "" ? "$this->_db/" : "/") . ltrim($path, '/'), $content, $method);
     }

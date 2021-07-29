@@ -7,24 +7,24 @@ use Lagdo\Adminer\Drivers\ServerInterface;
 class Pgsql implements ServerInterface
 {
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getDriver()
     {
         return "pgsql";
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getName()
     {
         return "PostgreSQL";
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
-     */
+      * Get a connection to the server, based on the config and available packages
+      */
     protected function createConnection()
     {
         if(extension_loaded("pgsql"))
@@ -39,8 +39,8 @@ class Pgsql implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function connect()
     {
         global $adminer, $types, $structured_types;
@@ -64,8 +64,8 @@ class Pgsql implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function idf_escape($idf)
     {
         return '"' . str_replace('"', '""', $idf) . '"';

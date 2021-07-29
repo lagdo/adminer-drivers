@@ -7,24 +7,24 @@ use Lagdo\Adminer\Drivers\ServerInterface;
 class Oracle implements ServerInterface
 {
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getDriver()
     {
         return "oracle";
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getName()
     {
         return "Oracle (beta)";
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
-     */
+      * Get a connection to the server, based on the config and available packages
+      */
     protected function createConnection()
     {
         if(extension_loaded("oci8"))
@@ -39,8 +39,8 @@ class Oracle implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function connect()
     {
         global $adminer;
@@ -53,8 +53,8 @@ class Oracle implements ServerInterface
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function idf_escape($idf)
     {
         return '"' . str_replace('"', '""', $idf) . '"';

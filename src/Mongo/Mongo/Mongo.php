@@ -10,16 +10,16 @@ class Mongo extends MongoDriver implements ServerInterface
     var $operators = array("=");
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getDriver()
     {
         return "mongo";
     }
 
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getName()
     {
         return "MongoDB (alpha)";

@@ -18,12 +18,13 @@ class Connection implements ConnectionInterface
         $_link, $_result ///< @access private
     ;
 
-    /** Connect to server
-    * @param string
-    * @param string
-    * @param string
-    * @return bool
-    */
+    /**
+     * Connect to server
+     * @param string
+     * @param string
+     * @param string
+     * @return bool
+     */
     public function connect($server, $username, $password) {
         if (ini_bool("mysql.allow_local_infile")) {
             $this->error = lang('Disable %s or enable %s or %s extensions.', "'mysql.allow_local_infile'", "MySQLi", "PDO_MySQL");
@@ -44,10 +45,11 @@ class Connection implements ConnectionInterface
         return (bool) $this->_link;
     }
 
-    /** Sets the client character set
-    * @param string
-    * @return bool
-    */
+    /**
+     * Sets the client character set
+     * @param string
+     * @return bool
+     */
     public function set_charset($charset) {
         if (function_exists('mysql_set_charset')) {
             if (mysql_set_charset($charset, $this->_link)) {
@@ -59,27 +61,30 @@ class Connection implements ConnectionInterface
         return $this->query("SET NAMES $charset");
     }
 
-    /** Quote string to use in SQL
-    * @param string
-    * @return string escaped string enclosed in '
-    */
+    /**
+     * Quote string to use in SQL
+     * @param string
+     * @return string escaped string enclosed in '
+     */
     public function quote($string) {
         return "'" . mysql_real_escape_string($string, $this->_link) . "'";
     }
 
-    /** Select database
-    * @param string
-    * @return bool
-    */
+    /**
+     * Select database
+     * @param string
+     * @return bool
+     */
     public function select_db($database) {
         return mysql_select_db($database, $this->_link);
     }
 
-    /** Send query
-    * @param string
-    * @param bool
-    * @return mixed bool or Result
-    */
+    /**
+     * Send query
+     * @param string
+     * @param bool
+     * @return mixed bool or Result
+     */
     public function query($query, $unbuffered = false) {
         $result = @($unbuffered ? mysql_unbuffered_query($query, $this->_link) : mysql_query($query, $this->_link)); // @ - mute mysql.trace_mode
         $this->error = "";
@@ -96,34 +101,38 @@ class Connection implements ConnectionInterface
         return new Result($result);
     }
 
-    /** Send query with more resultsets
-    * @param string
-    * @return bool
-    */
+    /**
+     * Send query with more resultsets
+     * @param string
+     * @return bool
+     */
     public function multi_query($query) {
         return $this->_result = $this->query($query);
     }
 
-    /** Get current resultset
-    * @return Result
-    */
+    /**
+     * Get current resultset
+     * @return Result
+     */
     public function store_result() {
         return $this->_result;
     }
 
-    /** Fetch next resultset
-    * @return bool
-    */
+    /**
+     * Fetch next resultset
+     * @return bool
+     */
     public function next_result() {
         // MySQL extension doesn't support multiple results
         return false;
     }
 
-    /** Get single field from result
-    * @param string
-    * @param int
-    * @return string
-    */
+    /**
+     * Get single field from result
+     * @param string
+     * @param int
+     * @return string
+     */
     public function result($query, $field = 0) {
         $result = $this->query($query);
         if (!$result || !$result->num_rows) {
