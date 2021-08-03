@@ -2,6 +2,8 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite\Sqlite2;
 
+use function Lagdo\Adminer\Drivers\idf_unescape;
+
 class Statement {
     var $_result, $_offset = 0, $num_rows;
 
@@ -17,7 +19,7 @@ class Statement {
         if (!$row) {
             return false;
         }
-        $return = array();
+        $return = [];
         foreach ($row as $key => $val) {
             $return[($key[0] == '"' ? idf_unescape($key) : $key)] = $val;
         }

@@ -26,7 +26,7 @@ class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements Connec
     }
 
     public function quoteBinary($s) {
-        return q($s);
+        return $this->quote($s);
     }
 
     public function query($query, $unbuffered = false) {

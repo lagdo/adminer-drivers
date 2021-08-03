@@ -29,7 +29,7 @@ class Mongo extends AbstractServer
     {
         $connection = $this->createConnection();
         list($server, $username, $password) = $this->adminer->credentials();
-        $options = array();
+        $options = [];
         if ($username . $password != "") {
             $options["username"] = $username;
             $options["password"] = $password;
@@ -69,8 +69,8 @@ class Mongo extends AbstractServer
     }
 
     public function table_status($name = "", $fast = false) {
-        $return = array();
-        foreach (tables_list() as $table => $type) {
+        $return = [];
+        foreach ($this->tables_list() as $table => $type) {
             $return[$table] = array("Name" => $table);
             if ($name == $table) {
                 return $return[$table];
@@ -100,7 +100,7 @@ class Mongo extends AbstractServer
     }
 
     public function collations() {
-        return array();
+        return [];
     }
 
     public function logged_user() {
@@ -114,7 +114,7 @@ class Mongo extends AbstractServer
             if ($set == "DROP") {
                 $return = $this->connection->_db->command(array("deleteIndexes" => $table, "index" => $name));
             } else {
-                $columns = array();
+                $columns = [];
                 foreach ($set as $column) {
                     $column = preg_replace('~ DESC$~', '', $column, 1, $count);
                     $columns[$column] = ($count ? -1 : 1);
@@ -160,7 +160,7 @@ class Mongo extends AbstractServer
     }
 
     public function foreign_keys($table) {
-        return array();
+        return [];
     }
 
     public function fk_support($table_status) {
@@ -168,11 +168,11 @@ class Mongo extends AbstractServer
     }
 
     public function view($name) {
-        return array();
+        return [];
     }
 
     public function engines() {
-        return array();
+        return [];
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
@@ -207,8 +207,8 @@ class Mongo extends AbstractServer
             'possible_drivers' => array("mongo", "mongodb"),
             'jush' => "mongo",
             'operators' => $this->adminer->operators,
-            'functions' => array(),
-            'grouping' => array(),
+            'functions' => [],
+            'grouping' => [],
             'edit_functions' => array(array("json")),
         );
     }
@@ -218,7 +218,7 @@ class Mongo extends AbstractServer
     }
 
     public function schemas() {
-        return array();
+        return [];
     }
 
     public function get_schema() {
@@ -230,10 +230,10 @@ class Mongo extends AbstractServer
     }
 
     public function show_variables() {
-        return array();
+        return [];
     }
 
     public function show_status() {
-        return array();
+        return [];
     }
 }

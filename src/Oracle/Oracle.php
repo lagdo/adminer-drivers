@@ -4,6 +4,9 @@ namespace Lagdo\Adminer\Drivers\Oracle;
 
 use Lagdo\Adminer\Drivers\AbstractServer;
 
+use function Lagdo\Adminer\Drivers\lang;
+use function Lagdo\Adminer\Drivers\idf_unescape;
+
 class Oracle extends AbstractServer
 {
     /**
@@ -64,7 +67,7 @@ class Oracle extends AbstractServer
     }
 
     public function get_databases($flush) {
-        return get_vals("SELECT tablespace_name FROM user_tablespaces ORDER BY 1");
+        return $this->get_vals("SELECT tablespace_name FROM user_tablespaces ORDER BY 1");
     }
 
     public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
@@ -83,7 +86,7 @@ class Oracle extends AbstractServer
     }
 
     public function engines() {
-        return array();
+        return [];
     }
 
     public function logged_user() {
@@ -111,27 +114,27 @@ class Oracle extends AbstractServer
     public function tables_list() {
         $view = views_table("view_name");
         $owner = where_owner(" AND ");
-        return get_key_vals("SELECT table_name, 'table' FROM all_tables WHERE tablespace_name = " . q(DB) . "$owner
+        return $this->get_key_vals("SELECT table_name, 'table' FROM all_tables WHERE tablespace_name = " . $this->q($this->adminer->database()) . "$owner
 UNION SELECT view_name, 'view' FROM $view
 ORDER BY 1"
         ); //! views don't have schema
     }
 
     public function count_tables($databases) {
-        $return = array();
+        $return = [];
         foreach ($databases as $db) {
-            $return[$db] = $this->connection->result("SELECT COUNT(*) FROM all_tables WHERE tablespace_name = " . q($db));
+            $return[$db] = $this->connection->result("SELECT COUNT(*) FROM all_tables WHERE tablespace_name = " . $this->q($db));
         }
         return $return;
     }
 
     public function table_status($name = "", $fast = false) {
-        $return = array();
-        $search = q($name);
+        $return = [];
+        $search = $this->q($name);
         $db = get_current_db();
         $view = views_table("view_name");
         $owner = where_owner(" AND ");
-        foreach (get_rows('SELECT table_name "Name", \'table\' "Engine", avg_row_len * num_rows "Data_length", num_rows "Rows" FROM all_tables WHERE tablespace_name = ' . q($db) . $owner . ($name != "" ? " AND table_name = $search" : "") . "
+        foreach ($this->get_rows('SELECT table_name "Name", \'table\' "Engine", avg_row_len * num_rows "Data_length", num_rows "Rows" FROM all_tables WHERE tablespace_name = ' . $this->q($db) . $owner . ($name != "" ? " AND table_name = $search" : "") . "
 UNION SELECT view_name, 'view', 0, 0 FROM $view" . ($name != "" ? " WHERE view_name = $search" : "") . "
 ORDER BY 1"
         ) as $row) {
@@ -152,9 +155,9 @@ ORDER BY 1"
     }
 
     public function fields($table) {
-        $return = array();
+        $return = [];
         $owner = where_owner(" AND ");
-        foreach (get_rows("SELECT * FROM all_tab_columns WHERE table_name = " . q($table) . "$owner ORDER BY column_id") as $row) {
+        foreach ($this->get_rows("SELECT * FROM all_tab_columns WHERE table_name = " . $this->q($table) . "$owner ORDER BY column_id") as $row) {
             $type = $row["DATA_TYPE"];
             $length = "$row[DATA_PRECISION],$row[DATA_SCALE]";
             if ($length == ",") {
@@ -178,13 +181,13 @@ ORDER BY 1"
     }
 
     public function indexes($table, $connection2 = null) {
-        $return = array();
+        $return = [];
         $owner = where_owner(" AND ", "aic.table_owner");
-        foreach (get_rows("SELECT aic.*, ac.constraint_type, atc.data_default
+        foreach ($this->get_rows("SELECT aic.*, ac.constraint_type, atc.data_default
 FROM all_ind_columns aic
 LEFT JOIN all_constraints ac ON aic.index_name = ac.constraint_name AND aic.table_name = ac.table_name AND aic.index_owner = ac.owner
 LEFT JOIN all_tab_cols atc ON aic.column_name = atc.column_name AND aic.table_name = atc.table_name AND aic.index_owner = atc.owner
-WHERE aic.table_name = " . q($table) . "$owner
+WHERE aic.table_name = " . $this->q($table) . "$owner
 ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
             $index_name = $row["INDEX_NAME"];
             $column_name = $row["DATA_DEFAULT"];
@@ -203,12 +206,12 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
 
     public function view($name) {
         $view = views_table("view_name, text");
-        $rows = get_rows('SELECT text "select" FROM ' . $view . ' WHERE view_name = ' . q($name));
+        $rows = $this->get_rows('SELECT text "select" FROM ' . $view . ' WHERE view_name = ' . $this->q($name));
         return reset($rows);
     }
 
     public function collations() {
-        return array(); //!
+        return []; //!
     }
 
     public function information_schema($db) {
@@ -244,8 +247,8 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
-        $alter = $drop = array();
-        $orig_fields = ($table ? fields($table) : array());
+        $alter = $drop = [];
+        $orig_fields = ($table ? $this->fields($table) : []);
         foreach ($fields as $field) {
             $val = $field[1];
             if ($val && $field[0] != "" && $this->idf_escape($field[0]) != $val[0]) {
@@ -274,8 +277,8 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
     }
 
     public function alter_indexes($table, $alter) {
-        $drop = array();
-        $queries = array();
+        $drop = [];
+        $queries = [];
         foreach ($alter as $val) {
             if ($val[0] != "INDEX") {
                 //! descending UNIQUE indexes results in syntax error
@@ -303,7 +306,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
     }
 
     public function foreign_keys($table) {
-        $return = array();
+        $return = [];
         $query = "SELECT c_list.CONSTRAINT_NAME as NAME,
 c_src.COLUMN_NAME as SRC_COLUMN,
 c_dest.OWNER as DEST_DB,
@@ -314,8 +317,8 @@ FROM ALL_CONSTRAINTS c_list, ALL_CONS_COLUMNS c_src, ALL_CONS_COLUMNS c_dest
 WHERE c_list.CONSTRAINT_NAME = c_src.CONSTRAINT_NAME
 AND c_list.R_CONSTRAINT_NAME = c_dest.CONSTRAINT_NAME
 AND c_list.CONSTRAINT_TYPE = 'R'
-AND c_src.TABLE_NAME = " . q($table);
-        foreach (get_rows($query) as $row) {
+AND c_src.TABLE_NAME = " . $this->q($table);
+        foreach ($this->get_rows($query) as $row) {
             $return[$row['NAME']] = array(
                 "db" => $row['DEST_DB'],
                 "table" => $row['DEST_TABLE'],
@@ -345,8 +348,8 @@ AND c_src.TABLE_NAME = " . q($table);
     }
 
     public function schemas() {
-        $return = get_vals("SELECT DISTINCT owner FROM dba_segments WHERE owner IN (SELECT username FROM dba_users WHERE default_tablespace NOT IN ('SYSTEM','SYSAUX')) ORDER BY 1");
-        return ($return ? $return : get_vals("SELECT DISTINCT owner FROM all_tables WHERE tablespace_name = " . q(DB) . " ORDER BY 1"));
+        $return = $this->get_vals("SELECT DISTINCT owner FROM dba_segments WHERE owner IN (SELECT username FROM dba_users WHERE default_tablespace NOT IN ('SYSTEM','SYSAUX')) ORDER BY 1");
+        return ($return ? $return : $this->get_vals("SELECT DISTINCT owner FROM all_tables WHERE tablespace_name = " . $this->q($this->adminer->database()) . " ORDER BY 1"));
     }
 
     public function get_schema() {
@@ -361,11 +364,11 @@ AND c_src.TABLE_NAME = " . q($table);
     }
 
     public function show_variables() {
-        return get_key_vals('SELECT name, display_value FROM v$parameter');
+        return $this->get_key_vals('SELECT name, display_value FROM v$parameter');
     }
 
     public function process_list() {
-        return get_rows('SELECT sess.process AS "process", sess.username AS "user", sess.schemaname AS "schema", sess.status AS "status", sess.wait_class AS "wait_class", sess.seconds_in_wait AS "seconds_in_wait", sql.sql_text AS "sql_text", sess.machine AS "machine", sess.port AS "port"
+        return $this->get_rows('SELECT sess.process AS "process", sess.username AS "user", sess.schemaname AS "schema", sess.status AS "status", sess.wait_class AS "wait_class", sess.seconds_in_wait AS "seconds_in_wait", sql.sql_text AS "sql_text", sess.machine AS "machine", sess.port AS "port"
 FROM v$session sess LEFT OUTER JOIN v$sql sql
 ON sql.sql_id = sess.sql_id
 WHERE sess.type = \'USER\'
@@ -374,7 +377,7 @@ ORDER BY PROCESS
     }
 
     public function show_status() {
-        $rows = get_rows('SELECT * FROM v$instance');
+        $rows = $this->get_rows('SELECT * FROM v$instance');
         return reset($rows);
     }
 
@@ -390,8 +393,8 @@ ORDER BY PROCESS
     }
 
     public function driver_config() {
-        $types = array();
-        $structured_types = array();
+        $types = [];
+        $structured_types = [];
         foreach (array(
             lang('Numbers') => array("number" => 38, "binary_float" => 12, "binary_double" => 21),
             lang('Date and time') => array("date" => 10, "timestamp" => 29, "interval year" => 12, "interval day" => 28), //! year(), day() to second()
@@ -406,7 +409,7 @@ ORDER BY PROCESS
             'jush' => "oracle",
             'types' => $types,
             'structured_types' => $structured_types,
-            'unsigned' => array(),
+            'unsigned' => [],
             'operators' => array("=", "<", ">", "<=", ">=", "!=", "LIKE", "LIKE %%", "IN", "IS NULL", "NOT LIKE", "NOT REGEXP", "NOT IN", "IS NOT NULL", "SQL"),
             'functions' => array("length", "lower", "round", "upper"),
             'grouping' => array("avg", "count", "count distinct", "max", "min", "sum"),

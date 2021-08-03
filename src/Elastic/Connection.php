@@ -4,6 +4,8 @@ namespace Lagdo\Adminer\Drivers\Elastic;
 
 use Lagdo\Adminer\Drivers\ConnectionInterface;
 
+use function Lagdo\Adminer\Drivers\lang;
+
 class Connection implements ConnectionInterface
 {
     var $extension = "JSON", $server_info, $errno, $error, $_url, $_db;
@@ -15,7 +17,7 @@ class Connection implements ConnectionInterface
      * @param string
      * @return mixed
      */
-    public function rootQuery($path, $content = array(), $method = 'GET') {
+    public function rootQuery($path, $content = [], $method = 'GET') {
         @ini_set('track_errors', 1); // @ - may be disabled
         $file = @file_get_contents("$this->_url/" . ltrim($path, '/'), false, stream_context_create(array('http' => array(
             'method' => $method,
@@ -56,7 +58,7 @@ class Connection implements ConnectionInterface
      * @param string
      * @return mixed
      */
-    public function query($path, $content = array(), $method = 'GET') {
+    public function query($path, $content = [], $method = 'GET') {
         return $this->rootQuery(($this->_db != "" ? "$this->_db/" : "/") . ltrim($path, '/'), $content, $method);
     }
 

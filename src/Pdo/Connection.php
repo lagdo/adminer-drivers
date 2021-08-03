@@ -5,6 +5,8 @@ namespace Lagdo\Adminer\Drivers\Pdo;
 use PDO;
 use Exception;
 
+use function Lagdo\Adminer\Drivers\lang;
+
 class Connection
 {
     var $_result, $server_info, $affected_rows, $errno, $error, $pdo;
@@ -16,7 +18,7 @@ class Connection
         }
     }
 
-    public function dsn($dsn, $username, $password, $options = array()) {
+    public function dsn($dsn, $username, $password, $options = []) {
         try {
             $this->pdo = new PDO($dsn, $username, $password, $options);
         } catch (Exception $ex) {

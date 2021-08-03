@@ -3,11 +3,11 @@
 namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
 
 class Statement {
-    var $num_rows, $_rows = array(), $_offset = 0, $_charset = array();
+    var $num_rows, $_rows = [], $_offset = 0, $_charset = [];
 
     public function __construct($result) {
         foreach ($result as $item) {
-            $row = array();
+            $row = [];
             foreach ($item as $key => $val) {
                 if (is_a($val, 'MongoDB\BSON\Binary')) {
                     $this->_charset[$key] = 63;
@@ -36,7 +36,7 @@ class Statement {
         if (!$row) {
             return $row;
         }
-        $return = array();
+        $return = [];
         foreach ($this->_rows[0] as $key => $val) {
             $return[$key] = $row[$key];
         }

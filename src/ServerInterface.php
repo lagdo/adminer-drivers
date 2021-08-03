@@ -139,15 +139,15 @@ interface ServerInterface
     /**
      * Get table indexes
      * @param string
-     * @param string Min_DB to use
-     * @return array array($key_name => array("type" => , "columns" => array(), "lengths" => array(), "descs" => array()))
+     * @param string ConnectionInterface to use
+     * @return array array($key_name => array("type" => , "columns" => [], "lengths" => [], "descs" => []))
      */
     public function indexes($table, $connection2 = null);
 
     /**
      * Get foreign keys in table
      * @param string
-     * @return array array($name => array("db" => , "ns" => , "table" => , "source" => array(), "target" => array(), "on_delete" => , "on_update" => ))
+     * @return array array($name => array("db" => , "ns" => , "table" => , "source" => [], "target" => [], "on_delete" => , "on_update" => ))
      */
     public function foreign_keys($table);
 
@@ -290,7 +290,7 @@ interface ServerInterface
 
     /**
      * Get trigger options
-     * @return array ("Timing" => array(), "Event" => array(), "Type" => array())
+     * @return array ("Timing" => [], "Event" => [], "Type" => [])
      */
     // public function trigger_options();
 
@@ -324,7 +324,7 @@ interface ServerInterface
 
     /**
      * Explain select
-     * @param Min_DB
+     * @param ConnectionInterface
      * @param string
      * @return Statement
      */
@@ -342,7 +342,7 @@ interface ServerInterface
      * Get user defined types
      * @return array
      */
-    // public function types() ;
+    public function types() ;
 
     /**
      * Get existing schemas
@@ -359,7 +359,7 @@ interface ServerInterface
     /**
      * Set current schema
      * @param string
-     * @param Min_DB
+     * @param ConnectionInterface
      * @return bool
      */
     public function set_schema($schema, $connection2 = null);
@@ -414,14 +414,14 @@ interface ServerInterface
 
     /**
      * Convert field in select and edit
-     * @param array one element from fields()
+     * @param array one element from $this->fields()
      * @return string
      */
     public function convert_field($field);
 
     /**
      * Convert value in edit after applying functions back
-     * @param array one element from fields()
+     * @param array one element from $this->fields()
      * @param string
      * @return string
      */

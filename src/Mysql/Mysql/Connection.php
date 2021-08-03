@@ -86,7 +86,8 @@ class Connection implements ConnectionInterface
      * @return mixed bool or Statement
      */
     public function query($query, $unbuffered = false) {
-        $result = @($unbuffered ? mysql_unbuffered_query($query, $this->_link) : mysql_query($query, $this->_link)); // @ - mute mysql.trace_mode
+        // @ - mute mysql.trace_mode
+        $result = @($unbuffered ? mysql_unbuffered_query($query, $this->_link) : mysql_query($query, $this->_link));
         $this->error = "";
         if (!$result) {
             $this->errno = mysql_errno($this->_link);

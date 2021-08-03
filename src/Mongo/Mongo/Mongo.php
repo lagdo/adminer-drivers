@@ -25,7 +25,7 @@ class Mongo extends MongoServer
     }
 
     public function get_databases($flush) {
-        $return = array();
+        $return = [];
         $dbs = $this->connection->_link->listDBs();
         foreach ($dbs['databases'] as $db) {
             $return[] = $db['name'];
@@ -34,7 +34,7 @@ class Mongo extends MongoServer
     }
 
     public function count_tables($databases) {
-        $return = array();
+        $return = [];
         foreach ($databases as $db) {
             $return[$db] = count($this->connection->_link->selectDB($db)->getCollectionNames(true));
         }
@@ -56,16 +56,16 @@ class Mongo extends MongoServer
     }
 
     public function indexes($table, $connection2 = null) {
-        $return = array();
+        $return = [];
         foreach ($this->connection->_db->selectCollection($table)->getIndexInfo() as $index) {
-            $descs = array();
+            $descs = [];
             foreach ($index["key"] as $column => $type) {
                 $descs[] = ($type == -1 ? '1' : null);
             }
             $return[$index["name"]] = array(
                 "type" => ($index["name"] == "_id_" ? "PRIMARY" : ($index["unique"] ? "UNIQUE" : "INDEX")),
                 "columns" => array_keys($index["key"]),
-                "lengths" => array(),
+                "lengths" => [],
                 "descs" => $descs,
             );
         }

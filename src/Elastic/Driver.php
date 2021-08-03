@@ -8,14 +8,14 @@ use Lagdo\Adminer\Drivers\DriverTrait;
 class Driver extends AbstractDriver {
     use DriverTrait;
 
-    public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
-        $data = array();
+    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0, $print = false) {
+        $data = [];
         $query = "$table/_search";
         if ($select != array("*")) {
             $data["fields"] = $select;
         }
         if ($order) {
-            $sort = array();
+            $sort = [];
             foreach ($order as $col) {
                 $col = preg_replace('~ DESC$~', '', $col, 1, $count);
                 $sort[] = ($count ? array($col => "desc") : $col);
@@ -43,7 +43,7 @@ class Driver extends AbstractDriver {
             }
         }
         if ($data["query"] && !$data["query"]["filtered"]["query"] && !$data["query"]["ids"]) {
-            $data["query"]["filtered"]["query"] = array("match_all" => array());
+            $data["query"]["filtered"]["query"] = array("match_all" => []);
         }
         $start = microtime(true);
         $search = $this->connection->query($query, $data);
@@ -53,15 +53,15 @@ class Driver extends AbstractDriver {
         if (!$search) {
             return false;
         }
-        $return = array();
+        $return = [];
         foreach ($search['hits']['hits'] as $hit) {
-            $row = array();
+            $row = [];
             if ($select == array("*")) {
                 $row["_id"] = $hit["_id"];
             }
             $fields = $hit['_source'];
             if ($select != array("*")) {
-                $fields = array();
+                $fields = [];
                 foreach ($select as $key) {
                     $fields[$key] = $hit['fields'][$key];
                 }
@@ -98,7 +98,7 @@ class Driver extends AbstractDriver {
 
     public function delete($type, $queryWhere, $limit = 0) {
         //! use $limit
-        $ids = array();
+        $ids = [];
         if (is_array($_GET["where"]) && $_GET["where"]["_id"]) {
             $ids[] = $_GET["where"]["_id"];
         }

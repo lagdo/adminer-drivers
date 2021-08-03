@@ -2,7 +2,7 @@
 
 namespace Lagdo\Adminer\Drivers;
 
-$drivers = array();
+$drivers = [];
 
 /**
      * Add a driver
@@ -39,7 +39,7 @@ abstract class AbstractDriver implements DriverInterface
 
     /**
      * Create object for performing database operations
-     * @param Min_DB
+     * @param ConnectionInterface
      */
     public function __construct($connection) {
         $this->connection = $connection;
@@ -66,15 +66,17 @@ abstract class AbstractDriver implements DriverInterface
      * @param bool whether to print the query
      * @return Statement
      */
-    public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
+    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0, $print = false) {
         $is_group = (count($group) < count($select));
         $query = $this->adminer->selectQueryBuild($select, $where, $group, $order, $limit, $page);
         if (!$query) {
             $query = "SELECT" . $this->server->limit(
-                ($_GET["page"] != "last" && $limit != "" && $group && $is_group && $this->jush == "sql" ? "SQL_CALC_FOUND_ROWS " : "") . implode(", ", $select) . "\nFROM " . $this->server->table($table),
-                ($where ? "\nWHERE " . implode(" AND ", $where) : "") . ($group && $is_group ? "\nGROUP BY " . implode(", ", $group) : "") . ($order ? "\nORDER BY " . implode(", ", $order) : ""),
-                ($limit != "" ? +$limit : null),
-                ($page ? $limit * $page : 0),
+                ($_GET["page"] != "last" && $limit != "" && $group && $is_group && $this->jush == "sql" ?
+                "SQL_CALC_FOUND_ROWS " : "") . implode(", ", $select) . "\nFROM " .
+                $this->server->table($table),
+                ($where ? "\nWHERE " . implode(" AND ", $where) : "") . ($group && $is_group ?
+                "\nGROUP BY " . implode(", ", $group) : "") . ($order ? "\nORDER BY " .
+                implode(", ", $order) : ""), ($limit != "" ? +$limit : null), ($page ? $limit * $page : 0),
                 "\n"
             );
         }
@@ -108,12 +110,13 @@ abstract class AbstractDriver implements DriverInterface
      * @return bool
      */
     public function update($table, $set, $queryWhere, $limit = 0, $separator = "\n") {
-        $values = array();
+        $values = [];
         foreach ($set as $key => $val) {
             $values[] = "$key = $val";
         }
         $query = $this->server->table($table) . " SET$separator" . implode(",$separator", $values);
-        return $this->server->queries("UPDATE" . ($limit ? $this->server->limit1($table, $query, $queryWhere, $separator) : " $query$queryWhere"));
+        return $this->server->queries("UPDATE" .
+            ($limit ? $this->server->limit1($table, $query, $queryWhere, $separator) : " $query$queryWhere"));
     }
 
     /**

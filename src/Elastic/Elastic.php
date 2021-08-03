@@ -4,6 +4,8 @@ namespace Lagdo\Adminer\Drivers\Elastic;
 
 use Lagdo\Adminer\Drivers\AbstractServer;
 
+use function Lagdo\Adminer\Drivers\lang;
+
 class Elastic extends AbstractServer
 {
     /**
@@ -81,18 +83,18 @@ class Elastic extends AbstractServer
     }
 
     public function collations() {
-        return array();
+        return [];
     }
 
     public function db_collation($db, $collations) {
     }
 
     public function engines() {
-        return array();
+        return [];
     }
 
     public function count_tables($databases) {
-        $return = array();
+        $return = [];
         $result = $this->connection->query('_stats');
         if ($result && $result['indices']) {
             $indices = $result['indices'];
@@ -105,7 +107,7 @@ class Elastic extends AbstractServer
     }
 
     public function tables_list() {
-        if (min_version(6)) {
+        if ($this->min_version(6)) {
             return array('_doc' => 'table');
         }
 
@@ -127,7 +129,7 @@ class Elastic extends AbstractServer
                 )
             )
         ), "POST");
-        $return = array();
+        $return = [];
         if ($search) {
             $tables = $search["aggregations"]["count_by_type"]["buckets"];
             foreach ($tables as $table) {
@@ -163,8 +165,8 @@ class Elastic extends AbstractServer
     }
 
     public function fields($table) {
-        $mappings = array();
-        if (min_version(6)) {
+        $mappings = [];
+        if ($this->min_version(6)) {
             $result = $this->connection->query("_mapping");
             if ($result) {
                 $mappings = $result[$this->connection->_db]['mappings']['properties'];
@@ -179,7 +181,7 @@ class Elastic extends AbstractServer
             }
         }
 
-        $return = array();
+        $return = [];
         if ($mappings) {
             foreach ($mappings as $name => $field) {
                 $return[$name] = array(
@@ -198,7 +200,7 @@ class Elastic extends AbstractServer
     }
 
     public function foreign_keys($table) {
-        return array();
+        return [];
     }
 
     public function table($idf) {
@@ -217,7 +219,7 @@ class Elastic extends AbstractServer
     }
 
     public function view($name) {
-        return array();
+        return [];
     }
 
     public function found_rows($table_status, $where) {
@@ -239,7 +241,7 @@ class Elastic extends AbstractServer
      * @return mixed
      */
     public function drop_databases($databases) {
-        return $this->connection->rootQuery(urlencode(implode(',', $databases)), array(), 'DELETE');
+        return $this->connection->rootQuery(urlencode(implode(',', $databases)), [], 'DELETE');
     }
 
     public function rename_database($name, $collation) {
@@ -268,7 +270,7 @@ class Elastic extends AbstractServer
      * @return mixed
      */
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
-        $properties = array();
+        $properties = [];
         foreach ($fields as $f) {
             $field_name = trim($f[1][0]);
             $field_type = trim($f[1][1] ? $f[1][1] : "text");
@@ -290,7 +292,7 @@ class Elastic extends AbstractServer
     public function drop_tables($tables) {
         $return = true;
         foreach ($tables as $table) { //! convert to bulk api
-            $return = $return && $this->connection->query(urlencode($table), array(), 'DELETE');
+            $return = $return && $this->connection->query(urlencode($table), [], 'DELETE');
         }
         return $return;
     }
@@ -300,10 +302,11 @@ class Elastic extends AbstractServer
     }
 
     public function driver_config() {
-        $types = array();
-        $structured_types = array();
+        $types = [];
+        $structured_types = [];
         foreach (array(
-            lang('Numbers') => array("long" => 3, "integer" => 5, "short" => 8, "byte" => 10, "double" => 20, "float" => 66, "half_float" => 12, "scaled_float" => 21),
+            lang('Numbers') => array("long" => 3, "integer" => 5, "short" => 8, "byte" => 10,
+                "double" => 20, "float" => 66, "half_float" => 12, "scaled_float" => 21),
             lang('Date and time') => array("date" => 10),
             lang('Strings') => array("string" => 65535, "text" => 65535),
             lang('Binary') => array("binary" => 255),
@@ -315,8 +318,8 @@ class Elastic extends AbstractServer
             'possible_drivers' => array("json + allow_url_fopen"),
             'jush' => "elastic",
             'operators' => array("=", "query"),
-            'functions' => array(),
-            'grouping' => array(),
+            'functions' => [],
+            'grouping' => [],
             'edit_functions' => array(array("json")),
             'types' => $types,
             'structured_types' => $structured_types,
@@ -328,7 +331,7 @@ class Elastic extends AbstractServer
     }
 
     public function schemas() {
-        return array();
+        return [];
     }
 
     public function get_schema() {
@@ -340,10 +343,10 @@ class Elastic extends AbstractServer
     }
 
     public function show_variables() {
-        return array();
+        return [];
     }
 
     public function show_status() {
-        return array();
+        return [];
     }
 }

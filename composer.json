@@ -21,6 +21,10 @@
     "autoload": {
         "psr-4": {
             "Lagdo\\Adminer\\Drivers": "src/"
-        }
+        },
+        "files": [
+            "src/functions.php",
+            "src/lang.php"
+        ]
     }
 }

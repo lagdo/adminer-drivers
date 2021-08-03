@@ -4,6 +4,8 @@ namespace Lagdo\Adminer\Drivers\Mongo\Mongo;
 
 use Lagdo\Adminer\Drivers\ConnectionInterface;
 
+use function Lagdo\Adminer\Drivers\lang;
+
 class Connection implements ConnectionInterface
 {
     var $extension = "Mongo", $server_info = MongoClient::VERSION, $error, $last_id, $_link, $_db;

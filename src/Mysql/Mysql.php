@@ -4,6 +4,11 @@ namespace Lagdo\Adminer\Drivers\Mysql;
 
 use Lagdo\Adminer\Drivers\AbstractServer;
 
+use function Lagdo\Adminer\Drivers\lang;
+use function Lagdo\Adminer\Drivers\is_utf8;
+use function Lagdo\Adminer\Drivers\idf_unescape;
+use function Lagdo\Adminer\Drivers\number_type;
+
 class Mysql extends AbstractServer
 {
     /**
@@ -53,7 +58,7 @@ class Mysql extends AbstractServer
         if ($this->connection->connect($credentials[0], $credentials[1], $credentials[2])) {
             $this->connection->set_charset(charset($connection)); // available in MySQLi since PHP 5.0.5
             $this->connection->query("SET sql_quote_show_create = 1, autocommit = 1");
-            if (min_version('5.7.8', 10.2, $connection)) {
+            if ($this->min_version('5.7.8', 10.2, $connection)) {
                 $structured_types[lang('Strings')][] = "json";
                 $types["json"] = 4294967295;
             }
@@ -87,11 +92,11 @@ class Mysql extends AbstractServer
         // SHOW DATABASES can take a very long time so it is cached
         $return = get_session("dbs");
         if ($return === null) {
-            $query = (min_version(5)
+            $query = ($this->min_version(5)
                 ? "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME"
                 : "SHOW DATABASES"
             ); // SHOW DATABASES can be disabled by skip_show_database
-            $return = ($flush ? slow_query($query) : get_vals($query));
+            $return = ($flush ? slow_query($query) : $this->get_vals($query));
             restart_session();
             set_session("dbs", $return);
             stop_session();
@@ -147,8 +152,8 @@ class Mysql extends AbstractServer
      * @return array
      */
     public function engines() {
-        $return = array();
-        foreach (get_rows("SHOW ENGINES") as $row) {
+        $return = [];
+        foreach ($this->get_rows("SHOW ENGINES") as $row) {
             if (preg_match("~YES|DEFAULT~", $row["Support"])) {
                 $return[] = $row["Engine"];
             }
@@ -169,7 +174,7 @@ class Mysql extends AbstractServer
      * @return array array($name => $type)
      */
     public function tables_list() {
-        return get_key_vals(min_version(5)
+        return $this->get_key_vals($this->min_version(5)
             ? "SELECT TABLE_NAME, TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME"
             : "SHOW TABLES"
         );
@@ -181,9 +186,9 @@ class Mysql extends AbstractServer
      * @return array array($db => $tables)
      */
     public function count_tables($databases) {
-        $return = array();
+        $return = [];
         foreach ($databases as $db) {
-            $return[$db] = count(get_vals("SHOW TABLES IN " . $this->idf_escape($db)));
+            $return[$db] = count($this->get_vals("SHOW TABLES IN " . $this->idf_escape($db)));
         }
         return $return;
     }
@@ -195,10 +200,10 @@ class Mysql extends AbstractServer
      * @return array array($name => array("Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => )) or only inner array with $name
      */
     public function table_status($name = "", $fast = false) {
-        $return = array();
-        foreach (get_rows($fast && min_version(5)
-            ? "SELECT TABLE_NAME AS Name, ENGINE AS Engine, TABLE_COMMENT AS Comment FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() " . ($name != "" ? "AND TABLE_NAME = " . q($name) : "ORDER BY Name")
-            : "SHOW TABLE STATUS" . ($name != "" ? " LIKE " . q(addcslashes($name, "%_\\")) : "")
+        $return = [];
+        foreach ($this->get_rows($fast && $this->min_version(5)
+            ? "SELECT TABLE_NAME AS Name, ENGINE AS Engine, TABLE_COMMENT AS Comment FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() " . ($name != "" ? "AND TABLE_NAME = " . $this->q($name) : "ORDER BY Name")
+            : "SHOW TABLE STATUS" . ($name != "" ? " LIKE " . $this->q(addcslashes($name, "%_\\")) : "")
         ) as $row) {
             if ($row["Engine"] == "InnoDB") {
                 // ignore internal comment, unnecessary since MySQL 5.1.21
@@ -231,7 +236,7 @@ class Mysql extends AbstractServer
      */
     public function fk_support($table_status) {
         return preg_match('~InnoDB|IBMDB2I~i', $table_status["Engine"])
-            || (preg_match('~NDB~i', $table_status["Engine"]) && min_version(5.6));
+            || (preg_match('~NDB~i', $table_status["Engine"]) && $this->min_version(5.6));
     }
 
     /**
@@ -240,8 +245,8 @@ class Mysql extends AbstractServer
      * @return array array($name => array("field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => ))
      */
     public function fields($table) {
-        $return = array();
-        foreach (get_rows("SHOW FULL COLUMNS FROM " . $this->table($table)) as $row) {
+        $return = [];
+        foreach ($this->get_rows("SHOW FULL COLUMNS FROM " . $this->table($table)) as $row) {
             preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $row["Type"], $match);
             $return[$row["Field"]] = array(
                 "field" => $row["Field"],
@@ -267,12 +272,12 @@ class Mysql extends AbstractServer
     /**
      * Get table indexes
      * @param string
-     * @param string Min_DB to use
-     * @return array array($key_name => array("type" => , "columns" => array(), "lengths" => array(), "descs" => array()))
+     * @param string ConnectionInterface to use
+     * @return array array($key_name => array("type" => , "columns" => [], "lengths" => [], "descs" => []))
      */
     public function indexes($table, $connection2 = null) {
-        $return = array();
-        foreach (get_rows("SHOW INDEX FROM " . $this->table($table), $connection2) as $row) {
+        $return = [];
+        foreach ($this->get_rows("SHOW INDEX FROM " . $this->table($table), $connection2) as $row) {
             $name = $row["Key_name"];
             $return[$name]["type"] = ($name == "PRIMARY" ? "PRIMARY" : ($row["Index_type"] == "FULLTEXT" ? "FULLTEXT" : ($row["Non_unique"] ? ($row["Index_type"] == "SPATIAL" ? "SPATIAL" : "INDEX") : "UNIQUE")));
             $return[$name]["columns"][] = $row["Column_name"];
@@ -285,12 +290,12 @@ class Mysql extends AbstractServer
     /**
      * Get foreign keys in table
      * @param string
-     * @return array array($name => array("db" => , "ns" => , "table" => , "source" => array(), "target" => array(), "on_delete" => , "on_update" => ))
+     * @return array array($name => array("db" => , "ns" => , "table" => , "source" => [], "target" => [], "on_delete" => , "on_update" => ))
      */
     public function foreign_keys($table) {
         global $on_actions;
         static $pattern = '(?:`(?:[^`]|``)+`|"(?:[^"]|"")+")';
-        $return = array();
+        $return = [];
         $create_table = $this->connection->result("SHOW CREATE TABLE " . $this->table($table), 1);
         if ($create_table) {
             preg_match_all("~CONSTRAINT ($pattern) FOREIGN KEY ?\\(((?:$pattern,? ?)+)\\) REFERENCES ($pattern)(?:\\.($pattern))? \\(((?:$pattern,? ?)+)\\)(?: ON DELETE ($on_actions))?(?: ON UPDATE ($on_actions))?~", $create_table, $matches, PREG_SET_ORDER);
@@ -324,8 +329,8 @@ class Mysql extends AbstractServer
      * @return array
      */
     public function collations() {
-        $return = array();
-        foreach (get_rows("SHOW COLLATION") as $row) {
+        $return = [];
+        foreach ($this->get_rows("SHOW COLLATION") as $row) {
             if ($row["Default"]) {
                 $return[$row["Charset"]][-1] = $row["Collation"];
             } else {
@@ -345,8 +350,8 @@ class Mysql extends AbstractServer
      * @return bool
      */
     public function information_schema($db) {
-        return (min_version(5) && $db == "information_schema")
-            || (min_version(5.5) && $db == "performance_schema");
+        return ($this->min_version(5) && $db == "information_schema")
+            || ($this->min_version(5.5) && $db == "performance_schema");
     }
 
     /**
@@ -364,7 +369,7 @@ class Mysql extends AbstractServer
      * @return string
      */
     public function create_database($db, $collation) {
-        return $this->queries("CREATE DATABASE " . $this->idf_escape($db) . ($collation ? " COLLATE " . q($collation) : ""));
+        return $this->queries("CREATE DATABASE " . $this->idf_escape($db) . ($collation ? " COLLATE " . $this->q($collation) : ""));
     }
 
     /**
@@ -388,9 +393,9 @@ class Mysql extends AbstractServer
     public function rename_database($name, $collation) {
         $return = false;
         if (create_database($name, $collation)) {
-            $tables = array();
-            $views = array();
-            foreach (tables_list() as $table => $type) {
+            $tables = [];
+            $views = [];
+            foreach ($this->tables_list() as $table => $type) {
                 if ($type == 'VIEW') {
                     $views[] = $table;
                 } else {
@@ -398,7 +403,7 @@ class Mysql extends AbstractServer
                 }
             }
             $return = (!$tables && !$views) || move_tables($tables, $views, $name);
-            drop_databases($return ? array(DB) : array());
+            drop_databases($return ? array($this->adminer->database()) : []);
         }
         return $return;
     }
@@ -411,7 +416,7 @@ class Mysql extends AbstractServer
         $auto_increment_index = " PRIMARY KEY";
         // don't overwrite primary key by auto_increment
         if ($_GET["create"] != "" && $_POST["auto_increment_col"]) {
-            foreach (indexes($_GET["create"]) as $index) {
+            foreach ($this->indexes($_GET["create"]) as $index) {
                 if (in_array($_POST["fields"][$_POST["auto_increment_col"]]["orig"], $index["columns"], true)) {
                     $auto_increment_index = "";
                     break;
@@ -438,7 +443,7 @@ class Mysql extends AbstractServer
      * @return bool
      */
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
-        $alter = array();
+        $alter = [];
         foreach ($fields as $field) {
             $alter[] = ($field[1]
                 ? ($table != "" ? ($field[0] != "" ? "CHANGE " . $this->idf_escape($field[0]) : "ADD") : " ") . " " . implode($field[1]) . ($table != "" ? $field[2] : "")
@@ -446,9 +451,9 @@ class Mysql extends AbstractServer
             );
         }
         $alter = array_merge($alter, $foreign);
-        $status = ($comment !== null ? " COMMENT=" . q($comment) : "")
-            . ($engine ? " ENGINE=" . q($engine) : "")
-            . ($collation ? " COLLATE " . q($collation) : "")
+        $status = ($comment !== null ? " COMMENT=" . $this->q($comment) : "")
+            . ($engine ? " ENGINE=" . $this->q($engine) : "")
+            . ($collation ? " COLLATE " . $this->q($collation) : "")
             . ($auto_increment != "" ? " AUTO_INCREMENT=$auto_increment" : "")
         ;
         if ($table == "") {
@@ -514,17 +519,17 @@ class Mysql extends AbstractServer
      * @return bool
      */
     public function move_tables($tables, $views, $target) {
-        $rename = array();
+        $rename = [];
         foreach ($tables as $table) {
             $rename[] = $this->table($table) . " TO " . $this->idf_escape($target) . "." . $this->table($table);
         }
         if (!$rename || $this->queries("RENAME TABLE " . implode(", ", $rename))) {
-            $definitions = array();
+            $definitions = [];
             foreach ($views as $table) {
-                $definitions[table($table)] = view($table);
+                $definitions[table($table)] = $this->view($table);
             }
             $this->connection->select_db($target);
-            $db = $this->idf_escape(DB);
+            $db = $this->idf_escape($this->adminer->database());
             foreach ($definitions as $name => $view) {
                 if (!$this->server->queries("CREATE VIEW $name AS " . str_replace(" $db.", " ", $view["select"])) || !$this->queries("DROP VIEW $db.$name")) {
                     return false;
@@ -553,7 +558,7 @@ class Mysql extends AbstractServer
             ) {
                 return false;
             }
-            foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\"))) as $row) {
+            foreach ($this->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\"))) as $row) {
                 $trigger = $row["Trigger"];
                 if (!$this->queries("CREATE TRIGGER " . ($target == $this->adminer->database() ? $this->idf_escape("copy_$trigger") : $this->idf_escape($target) . "." . $this->idf_escape($trigger)) . " $row[Timing] $row[Event] ON $name FOR EACH ROW\n$row[Statement];")) {
                     return false;
@@ -562,7 +567,7 @@ class Mysql extends AbstractServer
         }
         foreach ($views as $table) {
             $name = ($target == $this->adminer->database() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
-            $view = view($table);
+            $view = $this->view($table);
             if (($_POST["overwrite"] && !$this->queries("DROP VIEW IF EXISTS $name"))
                 || !$this->queries("CREATE VIEW $name AS $view[select]")) { //! USE to avoid db.table
                 return false;
@@ -578,9 +583,9 @@ class Mysql extends AbstractServer
      */
     public function trigger($name) {
         if ($name == "") {
-            return array();
+            return [];
         }
-        $rows = get_rows("SHOW TRIGGERS WHERE `Trigger` = " . q($name));
+        $rows = $this->get_rows("SHOW TRIGGERS WHERE `Trigger` = " . $this->q($name));
         return reset($rows);
     }
 
@@ -590,8 +595,8 @@ class Mysql extends AbstractServer
      * @return array array($name => array($timing, $event))
      */
     public function triggers($table) {
-        $return = array();
-        foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\"))) as $row) {
+        $return = [];
+        foreach ($this->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\"))) as $row) {
             $return[$row["Trigger"]] = array($row["Timing"], $row["Event"]);
         }
         return $return;
@@ -599,7 +604,7 @@ class Mysql extends AbstractServer
 
     /**
      * Get trigger options
-     * @return array ("Timing" => array(), "Event" => array(), "Type" => array())
+     * @return array ("Timing" => [], "Event" => [], "Type" => [])
      */
     public function trigger_options() {
         return array(
@@ -623,7 +628,7 @@ class Mysql extends AbstractServer
         $pattern = "$space*(" . ($type == "FUNCTION" ? "" : $inout) . ")?\\s*(?:`((?:[^`]|``)*)`\\s*|\\b(\\S+)\\s+)$type_pattern";
         $create = $this->connection->result("SHOW CREATE $type " . $this->idf_escape($name), 2);
         preg_match("~\\(((?:$pattern\\s*,?)*)\\)\\s*" . ($type == "FUNCTION" ? "RETURNS\\s+$type_pattern\\s+" : "") . "(.*)~is", $create, $match);
-        $fields = array();
+        $fields = [];
         preg_match_all("~$pattern\\s*,?~is", $match[1], $matches, PREG_SET_ORDER);
         foreach ($matches as $param) {
             $fields[] = array(
@@ -653,7 +658,7 @@ class Mysql extends AbstractServer
      * @return array ("SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => )
      */
     public function routines() {
-        return get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . q(DB));
+        return $this->get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . $this->q($this->adminer->database()));
     }
 
     /**
@@ -661,7 +666,7 @@ class Mysql extends AbstractServer
      * @return array
      */
     public function routine_languages() {
-        return array(); // "SQL" not required
+        return []; // "SQL" not required
     }
 
     /**
@@ -684,12 +689,12 @@ class Mysql extends AbstractServer
 
     /**
      * Explain select
-     * @param Min_DB
+     * @param ConnectionInterface
      * @param string
      * @return Statement
      */
     public function explain($connection, $query) {
-        return $this->connection->query("EXPLAIN " . (min_version(5.1) && !min_version(5.7) ? "PARTITIONS " : "") . $query);
+        return $this->connection->query("EXPLAIN " . ($this->min_version(5.1) && !$this->min_version(5.7) ? "PARTITIONS " : "") . $query);
     }
 
     /**
@@ -700,40 +705,6 @@ class Mysql extends AbstractServer
      */
     public function found_rows($table_status, $where) {
         return ($where || $table_status["Engine"] != "InnoDB" ? null : $table_status["Rows"]);
-    }
-
-    /**
-     * Get user defined types
-     * @return array
-     */
-    public function types() {
-        return array();
-    }
-
-    /**
-     * Get existing schemas
-     * @return array
-     */
-    public function schemas() {
-        return array();
-    }
-
-    /**
-     * Get current schema
-     * @return string
-     */
-    public function get_schema() {
-        return "";
-    }
-
-    /**
-     * Set current schema
-     * @param string
-     * @param Min_DB
-     * @return bool
-     */
-    public function set_schema($schema, $connection2 = null) {
-        return true;
     }
 
     /**
@@ -776,7 +747,7 @@ class Mysql extends AbstractServer
      */
     public function trigger_sql($table) {
         $return = "";
-        foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\")), null, "-- ") as $row) {
+        foreach ($this->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\")), null, "-- ") as $row) {
             $return .= "\nCREATE TRIGGER " . $this->idf_escape($row["Trigger"]) . " $row[Timing] $row[Event] ON " . $this->table($row["Table"]) . " FOR EACH ROW\n$row[Statement];;\n";
         }
         return $return;
@@ -787,7 +758,7 @@ class Mysql extends AbstractServer
      * @return array ($name => $value)
      */
     public function show_variables() {
-        return get_key_vals("SHOW VARIABLES");
+        return $this->get_key_vals("SHOW VARIABLES");
     }
 
     /**
@@ -795,7 +766,7 @@ class Mysql extends AbstractServer
      * @return array ($row)
      */
     public function process_list() {
-        return get_rows("SHOW FULL PROCESSLIST");
+        return $this->get_rows("SHOW FULL PROCESSLIST");
     }
 
     /**
@@ -803,12 +774,12 @@ class Mysql extends AbstractServer
      * @return array ($name => $value)
      */
     public function show_status() {
-        return get_key_vals("SHOW STATUS");
+        return $this->get_key_vals("SHOW STATUS");
     }
 
     /**
      * Convert field in select and edit
-     * @param array one element from fields()
+     * @param array one element from $this->fields()
      * @return string
      */
     public function convert_field($field) {
@@ -819,13 +790,13 @@ class Mysql extends AbstractServer
             return "BIN(" . $this->idf_escape($field["field"]) . " + 0)"; // + 0 is required outside MySQLnd
         }
         if (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
-            return (min_version(8) ? "ST_" : "") . "AsWKT(" . $this->idf_escape($field["field"]) . ")";
+            return ($this->min_version(8) ? "ST_" : "") . "AsWKT(" . $this->idf_escape($field["field"]) . ")";
         }
     }
 
     /**
      * Convert value in edit after applying functions back
-     * @param array one element from fields()
+     * @param array one element from $this->fields()
      * @param string
      * @return string
      */
@@ -837,7 +808,7 @@ class Mysql extends AbstractServer
             $return = "CONV($return, 2, 10) + 0";
         }
         if (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
-            $return = (min_version(8) ? "ST_" : "") . "GeomFromText($return, SRID($field[field]))";
+            $return = ($this->min_version(8) ? "ST_" : "") . "GeomFromText($return, SRID($field[field]))";
         }
         return $return;
     }
@@ -848,7 +819,7 @@ class Mysql extends AbstractServer
      * @return bool
      */
     public function support($feature) {
-        return !preg_match("~scheme|sequence|type|view_trigger|materializedview" . (min_version(8) ? "" : "|descidx" . (min_version(5.1) ? "" : "|event|partitioning" . (min_version(5) ? "" : "|routine|trigger|view"))) . "~", $feature);
+        return !preg_match("~scheme|sequence|type|view_trigger|materializedview" . ($this->min_version(8) ? "" : "|descidx" . ($this->min_version(5.1) ? "" : "|event|partitioning" . ($this->min_version(5) ? "" : "|routine|trigger|view"))) . "~", $feature);
     }
 
     /**
@@ -881,8 +852,8 @@ class Mysql extends AbstractServer
      * @return array array('possible_drivers' => , 'jush' => , 'types' => , 'structured_types' => , 'unsigned' => , 'operators' => , 'functions' => , 'grouping' => , 'edit_functions' => )
      */
     public function driver_config() {
-        $types = array(); ///< @var array ($type => $maximum_unsigned_length, ...)
-        $structured_types = array(); ///< @var array ($description => array($type, ...), ...)
+        $types = []; ///< @var array ($type => $maximum_unsigned_length, ...)
+        $structured_types = []; ///< @var array ($description => array($type, ...), ...)
         foreach (array(
             lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "mediumint" => 8, "int" => 10, "bigint" => 20, "decimal" => 66, "float" => 12, "double" => 21),
             lang('Date and time') => array("date" => 10, "datetime" => 19, "timestamp" => 19, "time" => 10, "year" => 4),

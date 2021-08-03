@@ -5,6 +5,8 @@ namespace Lagdo\Adminer\Drivers\Sqlite\Sqlite;
 use Lagdo\Adminer\Drivers\ConnectionInterface;
 use SQLite3;
 
+use function Lagdo\Adminer\Drivers\is_utf8;
+
 class Connection extends \Lagdo\Adminer\Drivers\Sqlite\Connection implements ConnectionInterface
 {
     var $extension = "SQLite3", $server_info, $affected_rows, $errno, $error, $_link;

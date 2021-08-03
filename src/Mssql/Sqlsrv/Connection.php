@@ -47,7 +47,7 @@ class Connection implements ConnectionInterface
     }
 
     public function query($query, $unbuffered = false) {
-        $result = sqlsrv_query($this->_link, $query); //! , array(), ($unbuffered ? array() : array("Scrollable" => "keyset"))
+        $result = sqlsrv_query($this->_link, $query); //! , [], ($unbuffered ? [] : array("Scrollable" => "keyset"))
         $this->error = "";
         if (!$result) {
             $this->_get_error();

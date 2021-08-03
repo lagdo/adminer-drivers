@@ -10,16 +10,16 @@ class Driver extends AbstractDriver {
 
     public $primary = "_id";
 
-    public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
+    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0, $print = false) {
         $select = ($select == array("*")
-            ? array()
+            ? []
             : array_fill_keys($select, 1)
         );
         if (count($select) && !isset($select['_id'])) {
             $select['_id'] = 0;
         }
-        $where = where_to_query($where);
-        $sort = array();
+        $where = $this->connection->where_to_query($where);
+        $sort = [];
         foreach ($order as $val) {
             $val = preg_replace('~ DESC$~', '', $val, 1, $count);
             $sort[$val] = ($count ? -1 : 1);
@@ -46,7 +46,7 @@ class Driver extends AbstractDriver {
         if (isset($set['_id'])) {
             unset($set['_id']);
         }
-        $removeFields = array();
+        $removeFields = [];
         foreach ($set as $key => $value) {
             if ($value == 'NULL') {
                 $removeFields[$key] = 1;

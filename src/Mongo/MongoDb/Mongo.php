@@ -46,7 +46,7 @@ class Mongo extends MongoServer
     }
 
     public function get_databases($flush) {
-        $return = array();
+        $return = [];
         foreach ($this->connection->executeCommand('admin', array('listDatabases' => 1)) as $dbs) {
             foreach ($dbs->databases as $db) {
                 $return[] = $db->name;
@@ -56,12 +56,12 @@ class Mongo extends MongoServer
     }
 
     public function count_tables($databases) {
-        $return = array();
+        $return = [];
         return $return;
     }
 
     public function tables_list() {
-        $collections = array();
+        $collections = [];
         foreach ($this->connection->executeCommand($this->connection->_db_name, array('listCollections' => 1)) as $result) {
             $collections[$result->name] = 'table';
         }
@@ -73,10 +73,10 @@ class Mongo extends MongoServer
     }
 
     public function indexes($table, $connection2 = null) {
-        $return = array();
+        $return = [];
         foreach ($this->connection->executeCommand($this->connection->_db_name, array('listIndexes' => $table)) as $index) {
-            $descs = array();
-            $columns = array();
+            $descs = [];
+            $columns = [];
             foreach (get_object_vars($index->key) as $column => $type) {
                 $descs[] = ($type == -1 ? '1' : null);
                 $columns[] = $column;
@@ -84,7 +84,7 @@ class Mongo extends MongoServer
             $return[$index->name] = array(
                 "type" => ($index->name == "_id_" ? "PRIMARY" : (isset($index->unique) ? "UNIQUE" : "INDEX")),
                 "columns" => $columns,
-                "lengths" => array(),
+                "lengths" => [],
                 "descs" => $descs,
             );
         }
@@ -94,7 +94,7 @@ class Mongo extends MongoServer
     public function fields($table) {
         $fields = fields_from_edit();
         if (!$fields) {
-            $result = $this->driver->select($table, array("*"), null, null, array(), 10);
+            $result = $this->driver->select($table, array("*"), null, null, [], 10);
             if ($result) {
                 while ($row = $result->fetch_assoc()) {
                     foreach ($row as $key => $val) {
@@ -118,7 +118,7 @@ class Mongo extends MongoServer
     }
 
     public function found_rows($table_status, $where) {
-        $where = where_to_query($where);
+        $where = $this->where_to_query($where);
         $toArray = $this->connection->executeCommand($this->connection->_db_name, array('count' => $table_status['Name'], 'query' => $where))->toArray();
         return $toArray[0]->n;
     }
@@ -127,20 +127,20 @@ class Mongo extends MongoServer
         $queryWhere = preg_replace('~^\sWHERE \(?\(?(.+?)\)?\)?$~', '\1', $queryWhere);
         $wheres = explode(' AND ', $queryWhere);
         $wheresOr = explode(') OR (', $queryWhere);
-        $where = array();
+        $where = [];
         foreach ($wheres as $whereStr) {
             $where[] = trim($whereStr);
         }
         if (count($wheresOr) == 1) {
-            $wheresOr = array();
+            $wheresOr = [];
         } elseif (count($wheresOr) > 1) {
-            $where = array();
+            $where = [];
         }
-        return where_to_query($where, $wheresOr);
+        return $this->where_to_query($where, $wheresOr);
     }
 
-    public function where_to_query($whereAnd = array(), $whereOr = array()) {
-        $data = array();
+    public function where_to_query($whereAnd = [], $whereOr = []) {
+        $data = [];
         foreach (array('and' => $whereAnd, 'or' => $whereOr) as $type => $where) {
             if (is_array($where)) {
                 foreach ($where as $expression) {

@@ -7,7 +7,7 @@ use Lagdo\Adminer\Drivers\AbstractDriver;
 class Driver extends AbstractDriver {
 
     public function insertUpdate($table, $rows, $primary) {
-        $values = array();
+        $values = [];
         foreach ($rows as $set) {
             $values[] = "(" . implode(", ", $set) . ")";
         }

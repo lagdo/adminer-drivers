@@ -4,20 +4,26 @@ namespace Lagdo\Adminer\Drivers\Pgsql;
 
 use Lagdo\Adminer\Drivers\AbstractDriver;
 
-class Driver extends AbstractDriver {
+use function Lagdo\Adminer\Drivers\idf_unescape;
+use function Lagdo\Adminer\Drivers\number_type;
 
+class Driver extends AbstractDriver
+{
     public function insertUpdate($table, $rows, $primary) {
         foreach ($rows as $set) {
-            $update = array();
-            $where = array();
+            $update = [];
+            $where = [];
             foreach ($set as $key => $val) {
                 $update[] = "$key = $val";
                 if (isset($primary[idf_unescape($key)])) {
                     $where[] = "$key = $val";
                 }
             }
-            if (!(($where && $this->server->queries("UPDATE " . $this->server->table($table) . " SET " . implode(", ", $update) . " WHERE " . implode(" AND ", $where)) && $this->connection->affected_rows)
-                || $this->server->queries("INSERT INTO " . $this->server->table($table) . " (" . implode(", ", array_keys($set)) . ") VALUES (" . implode(", ", $set) . ")")
+            if (!(($where && $this->server->queries("UPDATE " . $this->server->table($table) .
+                " SET " . implode(", ", $update) . " WHERE " . implode(" AND ", $where)) &&
+                $this->connection->affected_rows)
+                || $this->server->queries("INSERT INTO " . $this->server->table($table) .
+                " (" . implode(", ", array_keys($set)) . ") VALUES (" . implode(", ", $set) . ")")
             )) {
                 return false;
             }
@@ -32,11 +38,9 @@ class Driver extends AbstractDriver {
     }
 
     public function convertSearch($idf, $val, $field) {
-        return (preg_match('~char|text'
-                . (!preg_match('~LIKE~', $val["op"]) ? '|date|time(stamp)?|boolean|uuid|' . number_type() : '')
-                . '~', $field["type"])
-            ? $idf
-            : "CAST($idf AS text)"
+        return (preg_match('~char|text' . (!preg_match('~LIKE~', $val["op"]) ?
+            '|date|time(stamp)?|boolean|uuid|' . number_type() : '') . '~', $field["type"]) ?
+            $idf : "CAST($idf AS text)"
         );
     }
 

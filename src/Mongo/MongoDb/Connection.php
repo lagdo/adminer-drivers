@@ -22,7 +22,7 @@ class Connection implements ConnectionInterface
             return $this->_link->executeCommand($db, new $class($command));
         } catch (Exception $e) {
             $this->error = $e->getMessage();
-            return array();
+            return [];
         }
     }
 

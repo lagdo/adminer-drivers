@@ -14,12 +14,12 @@ class Driver extends AbstractDriver {
     public function insertUpdate($table, $rows, $primary) {
         $columns = array_keys(reset($rows));
         $prefix = "INSERT INTO " . $this->server->table($table) . " (" . implode(", ", $columns) . ") VALUES\n";
-        $values = array();
+        $values = [];
         foreach ($columns as $key) {
             $values[$key] = "$key = VALUES($key)";
         }
         $suffix = "\nON DUPLICATE KEY UPDATE " . implode(", ", $values);
-        $values = array();
+        $values = [];
         $length = 0;
         foreach ($rows as $set) {
             $value = "(" . implode(", ", $set) . ")";
@@ -27,7 +27,7 @@ class Driver extends AbstractDriver {
                 if (!$this->server->queries($prefix . implode(",\n", $values) . $suffix)) {
                     return false;
                 }
-                $values = array();
+                $values = [];
                 $length = 0;
             }
             $values[] = $value;
@@ -37,7 +37,7 @@ class Driver extends AbstractDriver {
     }
 
     public function slowQuery($query, $timeout) {
-        if (min_version('5.7.8', '10.1.2')) {
+        if ($this->server->min_version('5.7.8', '10.1.2')) {
             if (preg_match('~MariaDB~', $this->connection->server_info)) {
                 return "SET STATEMENT max_statement_time=$timeout FOR $query";
             } elseif (preg_match('~^(SELECT\b)(.+)~is', $query, $match)) {
@@ -47,9 +47,9 @@ class Driver extends AbstractDriver {
     }
 
     public function convertSearch($idf, $val, $field) {
-        return (preg_match('~char|text|enum|set~', $field["type"]) && !preg_match("~^utf8~", $field["collation"]) && preg_match('~[\x80-\xFF]~', $val['val'])
-            ? "CONVERT($idf USING " . charset($this->connection) . ")"
-            : $idf
+        return (preg_match('~char|text|enum|set~', $field["type"]) &&
+            !preg_match("~^utf8~", $field["collation"]) && preg_match('~[\x80-\xFF]~', $val['val']) ?
+            "CONVERT($idf USING " . charset($this->connection) . ")" : $idf
         );
     }
 
@@ -64,10 +64,10 @@ class Driver extends AbstractDriver {
 
     public function tableHelp($name) {
         $maria = preg_match('~MariaDB~', $this->connection->server_info);
-        if ($this->server->information_schema(DB)) {
+        if ($this->server->information_schema($this->adminer->database())) {
             return strtolower(($maria ? "information-schema-$name-table/" : str_replace("_", "-", $name) . "-table.html"));
         }
-        if (DB == "mysql") {
+        if ($this->adminer->database() == "mysql") {
             return ($maria ? "mysql$name-table/" : "system-database.html"); //! more precise link
         }
     }

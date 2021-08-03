@@ -12,12 +12,12 @@ class Driver extends AbstractDriver {
 
     public $primary = "_id";
 
-    public function select($table, $select, $where, $group, $order = array(), $limit = 1, $page = 0, $print = false) {
+    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0, $print = false) {
         $select = ($select == array("*")
-            ? array()
+            ? []
             : array_fill_keys($select, true)
         );
-        $sort = array();
+        $sort = [];
         foreach ($order as $val) {
             $val = preg_replace('~ DESC$~', '', $val, 1, $count);
             $sort[$val] = ($count ? -1 : 1);
