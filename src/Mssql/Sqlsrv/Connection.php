@@ -13,7 +13,7 @@ class Connection implements ConnectionInterface
 {
     var $extension = "sqlsrv", $_link, $_result, $server_info, $affected_rows, $errno, $error;
 
-    public function _get_error() {
+    protected function _get_error() {
         $this->error = "";
         foreach (sqlsrv_errors() as $error) {
             $this->errno = $error["code"];

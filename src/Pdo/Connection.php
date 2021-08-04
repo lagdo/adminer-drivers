@@ -2,6 +2,7 @@
 
 namespace Lagdo\Adminer\Drivers\Pdo;
 
+use Lagdo\Adminer\Drivers\AuthException;
 use PDO;
 use Exception;
 
@@ -22,7 +23,8 @@ class Connection
         try {
             $this->pdo = new PDO($dsn, $username, $password, $options);
         } catch (Exception $ex) {
-            auth_error(h($ex->getMessage()));
+            // auth_error(h($ex->getMessage()));
+            throw new AuthException($ex->getMessage());
         }
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
         $this->pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, array(Statement::class));

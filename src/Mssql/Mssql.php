@@ -9,6 +9,7 @@ namespace Lagdo\Adminer\Drivers\Mssql;
 
 use Lagdo\Adminer\Drivers\AbstractServer;
 
+use function Lagdo\Adminer\Drivers\h;
 use function Lagdo\Adminer\Drivers\lang;
 use function Lagdo\Adminer\Drivers\idf_unescape;
 

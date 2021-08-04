@@ -4,6 +4,7 @@ namespace Lagdo\Adminer\Drivers\Mysql;
 
 use Lagdo\Adminer\Drivers\AbstractServer;
 
+use function Lagdo\Adminer\Drivers\h;
 use function Lagdo\Adminer\Drivers\lang;
 use function Lagdo\Adminer\Drivers\is_utf8;
 use function Lagdo\Adminer\Drivers\idf_unescape;

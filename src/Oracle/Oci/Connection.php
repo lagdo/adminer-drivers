@@ -12,7 +12,7 @@ class Connection implements ConnectionInterface
     var $extension = "oci8", $_link, $_result, $server_info, $affected_rows, $errno, $error;
     var $_current_db;
 
-    public function _error($errno, $error) {
+    protected function _error($errno, $error) {
         if (ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));
         }

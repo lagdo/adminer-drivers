@@ -4,6 +4,8 @@ namespace Lagdo\Adminer\Drivers\Pgsql\Pgsql;
 
 use Lagdo\Adminer\Drivers\ConnectionInterface;
 
+use function Lagdo\Adminer\Drivers\h;
+
 /**
  * PostgreSQL driver to be used with the pgsql PHP extension.
  */
@@ -11,7 +13,7 @@ class Connection implements ConnectionInterface
 {
     var $extension = "PgSQL", $_link, $_result, $_string, $_database = true, $server_info, $affected_rows, $error, $timeout;
 
-    public function _error($errno, $error) {
+    protected function _error($errno, $error) {
         if (ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));
         }
@@ -22,8 +24,10 @@ class Connection implements ConnectionInterface
     public function connect($server, $username, $password) {
         $db = $this->adminer->database();
         set_error_handler(array($this, '_error'));
-        $this->_string = "host='" . str_replace(":", "' port='", addcslashes($server, "'\\")) . "' user='" . addcslashes($username, "'\\") . "' password='" . addcslashes($password, "'\\") . "'";
-        $this->_link = @pg_connect("$this->_string dbname='" . ($db != "" ? addcslashes($db, "'\\") : "postgres") . "'", PGSQL_CONNECT_FORCE_NEW);
+        $this->_string = "host='" . str_replace(":", "' port='", addcslashes($server, "'\\")) .
+            "' user='" . addcslashes($username, "'\\") . "' password='" . addcslashes($password, "'\\") . "'";
+        $this->_link = @pg_connect("$this->_string dbname='" .
+            ($db != "" ? addcslashes($db, "'\\") : "postgres") . "'", PGSQL_CONNECT_FORCE_NEW);
         if (!$this->_link && $db != "") {
             // try to connect directly with database for performance
             $this->_database = false;
