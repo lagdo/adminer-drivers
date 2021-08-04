@@ -7,55 +7,28 @@
 
 namespace Lagdo\Adminer\Drivers\Mssql\Mssql;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\AbstractConnection;
 
-class Connection implements ConnectionInterface
+class Connection extends AbstractConnection
 {
     /**
-     * The extension name
-     *
-     * @var string
+     * The constructor
      */
-    protected $extension = "MSSQL";
+    public function __construct()
+    {
+        $this->extension = 'MSSQL';
+    }
 
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
+     /**
+     * @inheritDoc
      */
-    protected $_link;
+    public function connect($server, array $options)
+    {
+        $username = $options['username'];
+        $password = $options['password'];
 
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $_result;
-
-    /**
-     * The server description
-     *
-     * @var string
-     */
-    protected $server_info;
-
-    /**
-     * Undocumented variable
-     *
-     * @var int
-     */
-    protected $affected_rows;
-
-    /**
-     * Undocumented variable
-     *
-     * @var string
-     */
-    protected $error;
-
-    public function connect($server, $username, $password) {
-        $this->_link = @mssql_connect($server, $username, $password);
-        if ($this->_link) {
+        $this->client = @mssql_connect($server, $username, $password);
+        if ($this->client) {
             $result = $this->query("SELECT SERVERPROPERTY('ProductLevel'), SERVERPROPERTY('Edition')");
             if ($result) {
                 $row = $result->fetch_row();
@@ -64,7 +37,7 @@ class Connection implements ConnectionInterface
         } else {
             $this->error = mssql_get_last_message();
         }
-        return (bool) $this->_link;
+        return (bool) $this->client;
     }
 
     public function quote($string) {
@@ -76,14 +49,14 @@ class Connection implements ConnectionInterface
     }
 
     public function query($query, $unbuffered = false) {
-        $result = @mssql_query($query, $this->_link); //! $unbuffered
+        $result = @mssql_query($query, $this->client); //! $unbuffered
         $this->error = "";
         if (!$result) {
             $this->error = mssql_get_last_message();
             return false;
         }
         if ($result === true) {
-            $this->affected_rows = mssql_rows_affected($this->_link);
+            $this->affected_rows = mssql_rows_affected($this->client);
             return true;
         }
         return new Statement($result);

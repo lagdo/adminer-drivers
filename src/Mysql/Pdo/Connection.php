@@ -2,21 +2,29 @@
 
 namespace Lagdo\Adminer\Drivers\Mysql\Pdo;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\Pdo\Connection as PdoConnection;
 
 /**
  * MySQL driver to be used with the pdo_mysql PHP extension.
  */
-class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements ConnectionInterface
+class Connection extends PdoConnection
 {
     /**
-     * The extension name
-     *
-     * @var string
+     * The constructor
      */
-    protected $extension = "PDO_MySQL";
+    public function __construct()
+    {
+        $this->extension = 'PDO_MySQL';
+    }
 
-    public function connect($server, $username, $password) {
+     /**
+     * @inheritDoc
+     */
+    public function connect($server, array $options)
+    {
+        $username = $options['username'];
+        $password = $options['password'];
+
         $options = array(PDO::MYSQL_ATTR_LOCAL_INFILE => false);
         $ssl = $this->adminer->connectSsl();
         if ($ssl) {

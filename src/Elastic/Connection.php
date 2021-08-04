@@ -2,40 +2,12 @@
 
 namespace Lagdo\Adminer\Drivers\Elastic;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\AbstractConnection;
 
 use function Lagdo\Adminer\Drivers\lang;
 
-class Connection implements ConnectionInterface
+class Connection extends AbstractConnection
 {
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $extension = "JSON";
-
-    /**
-     * The server description
-     *
-     * @var string
-     */
-    protected $server_info;
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $errno;
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $error;
-
     /**
      * Undocumented variable
      *
@@ -49,6 +21,14 @@ class Connection implements ConnectionInterface
      * @var [type]
      */
     protected $_db;
+
+    /**
+     * The constructor
+     */
+    public function __construct()
+    {
+        $this->extension = 'JSON';
+    }
 
     /**
      * Performs query
@@ -102,7 +82,14 @@ class Connection implements ConnectionInterface
         return $this->rootQuery(($this->_db != "" ? "$this->_db/" : "/") . ltrim($path, '/'), $content, $method);
     }
 
-    public function connect($server, $username, $password) {
+    /**
+     * @inheritDoc
+     */
+    public function connect($server, array $options)
+    {
+        $username = $options['username'];
+        $password = $options['password'];
+
         preg_match('~^(https?://)?(.*)~', $server, $match);
         $this->_url = ($match[1] ? $match[1] : "http://") . "$username:$password@$match[2]";
         $return = $this->query('');
@@ -116,9 +103,4 @@ class Connection implements ConnectionInterface
         $this->_db = $database;
         return true;
     }
-
-    public function quote($string) {
-        return $string;
-    }
-
 }

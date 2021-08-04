@@ -31,7 +31,7 @@ class Mongo extends MongoServer
 
     public function get_databases($flush) {
         $return = [];
-        $dbs = $this->connection->_link->listDBs();
+        $dbs = $this->connection->getClient()->listDBs();
         foreach ($dbs['databases'] as $db) {
             $return[] = $db['name'];
         }
@@ -41,7 +41,7 @@ class Mongo extends MongoServer
     public function count_tables($databases) {
         $return = [];
         foreach ($databases as $db) {
-            $return[$db] = count($this->connection->_link->selectDB($db)->getCollectionNames(true));
+            $return[$db] = count($this->connection->getClient()->selectDB($db)->getCollectionNames(true));
         }
         return $return;
     }
@@ -52,7 +52,7 @@ class Mongo extends MongoServer
 
     public function drop_databases($databases) {
         foreach ($databases as $db) {
-            $response = $this->connection->_link->selectDB($db)->drop();
+            $response = $this->connection->getClient()->selectDB($db)->drop();
             if (!$response['ok']) {
                 return false;
             }

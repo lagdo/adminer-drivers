@@ -2,68 +2,27 @@
 
 namespace Lagdo\Adminer\Drivers\Oracle\Oci;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\AbstractConnection;
 
 /**
  * Oracle driver to be used with the oci8 PHP extension.
  */
-class Connection implements ConnectionInterface
+class Connection extends AbstractConnection
 {
-    /**
-     * The extension name
-     *
-     * @var string
-     */
-    protected $extension = "oci8";
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $_link;
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $_result;
-
-    /**
-     * The server description
-     *
-     * @var string
-     */
-    protected $server_info;
-
-    /**
-     * Undocumented variable
-     *
-     * @var int
-     */
-    protected $affected_rows;
-
-    /**
-     * Undocumented variable
-     *
-     * @var int
-     */
-    protected $errno;
-
-    /**
-     * Undocumented variable
-     *
-     * @var string
-     */
-    protected $error;
-
     /**
      * Undocumented variable
      *
      * @var string
      */
     protected $_current_db;
+
+    /**
+     * The constructor
+     */
+    public function __construct()
+    {
+        $this->extension = 'oci8';
+    }
 
     protected function _error($errno, $error) {
         if (ini_bool("html_errors")) {
@@ -73,10 +32,17 @@ class Connection implements ConnectionInterface
         $this->error = $error;
     }
 
-    public function connect($server, $username, $password) {
-        $this->_link = @oci_new_connect($username, $password, $server, "AL32UTF8");
-        if ($this->_link) {
-            $this->server_info = oci_server_version($this->_link);
+     /**
+     * @inheritDoc
+     */
+    public function connect($server, array $options)
+    {
+        $username = $options['username'];
+        $password = $options['password'];
+
+        $this->client = @oci_new_connect($username, $password, $server, "AL32UTF8");
+        if ($this->client) {
+            $this->server_info = oci_server_version($this->client);
             return true;
         }
         $error = oci_error();
@@ -94,10 +60,10 @@ class Connection implements ConnectionInterface
     }
 
     public function query($query, $unbuffered = false) {
-        $result = oci_parse($this->_link, $query);
+        $result = oci_parse($this->client, $query);
         $this->error = "";
         if (!$result) {
-            $error = oci_error($this->_link);
+            $error = oci_error($this->client);
             $this->errno = $error["code"];
             $this->error = $error["message"];
             return false;

@@ -2,36 +2,15 @@
 
 namespace Lagdo\Adminer\Drivers\Pgsql\Pgsql;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\AbstractConnection;
 
 use function Lagdo\Adminer\Drivers\h;
 
 /**
  * PostgreSQL driver to be used with the pgsql PHP extension.
  */
-class Connection implements ConnectionInterface
+class Connection extends AbstractConnection
 {
-    /**
-     * The extension name
-     *
-     * @var string
-     */
-    protected $extension = "PgSQL";
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $_link;
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $_result;
-
     /**
      * Undocumented variable
      *
@@ -47,32 +26,19 @@ class Connection implements ConnectionInterface
     protected $_database = true;
 
     /**
-     * The server description
-     *
-     * @var string
-     */
-    protected $server_info;
-
-    /**
-     * Undocumented variable
-     *
-     * @var int
-     */
-    protected $affected_rows;
-
-    /**
-     * Undocumented variable
-     *
-     * @var string
-     */
-    protected $error;
-
-    /**
      * Undocumented variable
      *
      * @var int
      */
     protected $timeout;
+
+    /**
+     * The constructor
+     */
+    public function __construct()
+    {
+        $this->extension = 'PgSQL';
+    }
 
     protected function _error($errno, $error) {
         if (ini_bool("html_errors")) {
@@ -82,29 +48,39 @@ class Connection implements ConnectionInterface
         $this->error = $error;
     }
 
-    public function connect($server, $username, $password) {
+    /**
+     * @inheritDoc
+     */
+    public function connect($server, array $options)
+    {
+        $username = $options['username'];
+        $password = $options['password'];
+
         $db = $this->adminer->database();
         set_error_handler(array($this, '_error'));
         $this->_string = "host='" . str_replace(":", "' port='", addcslashes($server, "'\\")) .
             "' user='" . addcslashes($username, "'\\") . "' password='" . addcslashes($password, "'\\") . "'";
-        $this->_link = @pg_connect("$this->_string dbname='" .
+        $this->client = @pg_connect("$this->_string dbname='" .
             ($db != "" ? addcslashes($db, "'\\") : "postgres") . "'", PGSQL_CONNECT_FORCE_NEW);
-        if (!$this->_link && $db != "") {
+        if (!$this->client && $db != "") {
             // try to connect directly with database for performance
             $this->_database = false;
-            $this->_link = @pg_connect("$this->_string dbname='postgres'", PGSQL_CONNECT_FORCE_NEW);
+            $this->client = @pg_connect("$this->_string dbname='postgres'", PGSQL_CONNECT_FORCE_NEW);
         }
         restore_error_handler();
-        if ($this->_link) {
-            $version = pg_version($this->_link);
+        if ($this->client) {
+            $version = pg_version($this->client);
             $this->server_info = $version["server"];
-            pg_set_client_encoding($this->_link, "UTF8");
+            pg_set_client_encoding($this->client, "UTF8");
         }
-        return (bool) $this->_link;
+        return (bool) $this->client;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function quote($string) {
-        return "'" . pg_escape_string($this->_link, $string) . "'";
+        return "'" . pg_escape_string($this->client, $string) . "'";
     }
 
     public function value($val, $field) {
@@ -112,29 +88,32 @@ class Connection implements ConnectionInterface
     }
 
     public function quoteBinary($string) {
-        return "'" . pg_escape_bytea($this->_link, $string) . "'";
+        return "'" . pg_escape_bytea($this->client, $string) . "'";
     }
 
+    /**
+     * @inheritDoc
+     */
     public function select_db($database) {
         if ($database == $this->adminer->database()) {
             return $this->_database;
         }
         $return = @pg_connect("$this->_string dbname='" . addcslashes($database, "'\\") . "'", PGSQL_CONNECT_FORCE_NEW);
         if ($return) {
-            $this->_link = $return;
+            $this->client = $return;
         }
         return $return;
     }
 
     public function close() {
-        $this->_link = @pg_connect("$this->_string dbname='postgres'");
+        $this->client = @pg_connect("$this->_string dbname='postgres'");
     }
 
     public function query($query, $unbuffered = false) {
-        $result = @pg_query($this->_link, $query);
+        $result = @pg_query($this->client, $query);
         $this->error = "";
         if (!$result) {
-            $this->error = pg_last_error($this->_link);
+            $this->error = pg_last_error($this->client);
             $return = false;
         } elseif (!pg_num_fields($result)) {
             $this->affected_rows = pg_affected_rows($result);
@@ -171,6 +150,6 @@ class Connection implements ConnectionInterface
     }
 
     public function warnings() {
-        return h(pg_last_notice($this->_link)); // second parameter is available since PHP 7.1.0
+        return h(pg_last_notice($this->client)); // second parameter is available since PHP 7.1.0
     }
 }

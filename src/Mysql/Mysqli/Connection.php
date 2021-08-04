@@ -3,6 +3,8 @@
 namespace Lagdo\Adminer\Drivers\Mysql\Mysqli;
 
 use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\ConnectionTrait;
+
 use MySQLi;
 
 /**
@@ -10,18 +12,24 @@ use MySQLi;
  */
 class Connection extends MySQLi implements ConnectionInterface
 {
-    /**
-     * The extension name
-     *
-     * @var string
-     */
-    protected $extension = "MySQLi";
+    use ConnectionTrait;
 
     public function __construct() {
         parent::init();
+        $this->extension = 'MySQLi';
     }
 
-    public function connect($server = "", $username = "", $password = "", $database = null, $port = null, $socket = null) {
+     /**
+     * @inheritDoc
+     */
+    public function connect($server, array $options)
+    {
+        $username = $options['username'];
+        $password = $options['password'];
+        $database = null;
+        $port = null;
+        $socket = null;
+
         mysqli_report(MYSQLI_REPORT_OFF); // stays between requests, not required since PHP 5.3.4
         list($host, $port) = explode(":", $server, 2); // part after : is used for port or socket
         $ssl = $this->adminer->connectSsl();

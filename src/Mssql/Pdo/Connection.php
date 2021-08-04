@@ -7,18 +7,26 @@
 
 namespace Lagdo\Adminer\Drivers\Mssql\Pdo;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\Pdo\Connection as PdoConnection;
 
-class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements ConnectionInterface
+class Connection extends PdoConnection
 {
     /**
-     * The extension name
-     *
-     * @var string
+     * The constructor
      */
-    protected $extension = "PDO_DBLIB";
+    public function __construct()
+    {
+        $this->extension = 'PDO_DBLIB';
+    }
 
-    public function connect($server, $username, $password) {
+     /**
+     * @inheritDoc
+     */
+    public function connect($server, array $options)
+    {
+        $username = $options['username'];
+        $password = $options['password'];
+
         $this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=",
             preg_replace('~:(\d)~', ';port=\1', $server)), $username, $password);
         return true;

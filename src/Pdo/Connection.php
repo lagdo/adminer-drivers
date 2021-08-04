@@ -3,55 +3,15 @@
 namespace Lagdo\Adminer\Drivers\Pdo;
 
 use Lagdo\Adminer\Drivers\AuthException;
+use Lagdo\Adminer\Drivers\AbstractConnection;
+
 use PDO;
 use Exception;
 
 use function Lagdo\Adminer\Drivers\lang;
 
-class Connection
+class Connection extends AbstractConnection
 {
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $_result;
-
-    /**
-     * The server description
-     *
-     * @var string
-     */
-    protected $server_info;
-
-    /**
-     * Undocumented variable
-     *
-     * @var int
-     */
-    protected $affected_rows;
-
-    /**
-     * Undocumented variable
-     *
-     * @var int
-     */
-    protected $errno;
-
-    /**
-     * Undocumented variable
-     *
-     * @var string
-     */
-    protected $error;
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $pdo;
-
     public function __construct() {
         $pos = array_search("SQL", $this->adminer->operators);
         if ($pos !== false) {
@@ -61,27 +21,25 @@ class Connection
 
     public function dsn($dsn, $username, $password, $options = []) {
         try {
-            $this->pdo = new PDO($dsn, $username, $password, $options);
+            $this->client = new PDO($dsn, $username, $password, $options);
         } catch (Exception $ex) {
             // auth_error(h($ex->getMessage()));
             throw new AuthException($ex->getMessage());
         }
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
-        $this->pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, array(Statement::class));
-        $this->server_info = @$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+        $this->client->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+        $this->client->setAttribute(PDO::ATTR_STATEMENT_CLASS, array(Statement::class));
+        $this->server_info = @$this->client->getAttribute(PDO::ATTR_SERVER_VERSION);
     }
 
-    /*abstract function select_db($database);*/
-
     public function quote($string) {
-        return $this->pdo->quote($string);
+        return $this->client->quote($string);
     }
 
     public function query($query, $unbuffered = false) {
-        $result = $this->pdo->query($query);
+        $result = $this->client->query($query);
         $this->error = "";
         if (!$result) {
-            list(, $this->errno, $this->error) = $this->pdo->errorInfo();
+            list(, $this->errno, $this->error) = $this->client->errorInfo();
             if (!$this->error) {
                 $this->error = lang('Unknown error.');
             }

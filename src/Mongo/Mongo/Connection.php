@@ -2,33 +2,12 @@
 
 namespace Lagdo\Adminer\Drivers\Mongo\Mongo;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\AbstractConnection;
 
 use function Lagdo\Adminer\Drivers\lang;
 
-class Connection implements ConnectionInterface
+class Connection extends AbstractConnection
 {
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $extension = "Mongo";
-
-    /**
-     * The server description
-     *
-     * @var string
-     */
-    protected $server_info = MongoClient::VERSION;
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $error;
-
     /**
      * Undocumented variable
      *
@@ -41,22 +20,28 @@ class Connection implements ConnectionInterface
      *
      * @var [type]
      */
-    protected $_link;
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
     protected $_db;
 
-    public function connect($uri, $options) {
+    /**
+     * The constructor
+     */
+    public function __construct()
+    {
+        $this->extension = 'Mongo';
+        $this->server_info = MongoClient::VERSION;
+    }
+
+     /**
+     * @inheritDoc
+     */
+    public function connect($server, array $options)
+    {
         try {
-            $this->_link = new MongoClient($uri, $options);
+            $this->client = new MongoClient($server, $options);
             if ($options["password"] != "") {
                 $options["password"] = "";
                 try {
-                    new MongoClient($uri, $options);
+                    new MongoClient($server, $options);
                     $this->error = lang('Database does not support password.');
                 } catch (Exception $e) {
                     // this is what we want
@@ -67,21 +52,17 @@ class Connection implements ConnectionInterface
         }
     }
 
-    public function query($query) {
+    public function query($query, $unbuffered = false) {
         return false;
     }
 
     public function select_db($database) {
         try {
-            $this->_db = $this->_link->selectDB($database);
+            $this->_db = $this->client->selectDB($database);
             return true;
         } catch (Exception $ex) {
             $this->error = $ex->getMessage();
             return false;
         }
-    }
-
-    public function quote($string) {
-        return $string;
     }
 }

@@ -2,78 +2,41 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite\Sqlite;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\Sqlite\Connection as SqliteConnection;
+
 use SQLite3;
 
 use function Lagdo\Adminer\Drivers\is_utf8;
 
-class Connection extends \Lagdo\Adminer\Drivers\Sqlite\Connection implements ConnectionInterface
+class Connection extends SqliteConnection
 {
     /**
-     * The extension name
-     *
-     * @var string
+     * The constructor
      */
-    protected $extension = "SQLite3";
-
-    /**
-     * The server description
-     *
-     * @var string
-     */
-    protected $server_info;
-
-    /**
-     * Undocumented variable
-     *
-     * @var int
-     */
-    protected $affected_rows;
-
-    /**
-     * Undocumented variable
-     *
-     * @var int
-     */
-    protected $errno;
-
-    /**
-     * Undocumented variable
-     *
-     * @var string
-     */
-    protected $error;
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $_link;
-
     public function __construct($filename) {
-        $this->_link = new SQLite3($filename);
-        $version = $this->_link->version();
+        $this->client = new SQLite3($filename);
+        $version = $this->client->version();
         $this->server_info = $version["versionString"];
+        $this->extension = 'SQLite3';
     }
 
-    public function query($query) {
-        $result = @$this->_link->query($query);
+    public function query($query, $unbuffered = false) {
+        $result = @$this->client->query($query);
         $this->error = "";
         if (!$result) {
-            $this->errno = $this->_link->lastErrorCode();
-            $this->error = $this->_link->lastErrorMsg();
+            $this->errno = $this->client->lastErrorCode();
+            $this->error = $this->client->lastErrorMsg();
             return false;
         } elseif ($result->numColumns()) {
             return new Statement($result);
         }
-        $this->affected_rows = $this->_link->changes();
+        $this->affected_rows = $this->client->changes();
         return true;
     }
 
     public function quote($string) {
         return (is_utf8($string)
-            ? "'" . $this->_link->escapeString($string) . "'"
+            ? "'" . $this->client->escapeString($string) . "'"
             : "x'" . reset(unpack('H*', $string)) . "'"
         );
     }

@@ -7,58 +7,17 @@
 
 namespace Lagdo\Adminer\Drivers\Mssql\Sqlsrv;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\AbstractConnection;
 
-class Connection implements ConnectionInterface
+class Connection extends AbstractConnection
 {
     /**
-     * The extension name
-     *
-     * @var string
+     * The constructor
      */
-    protected $extension = "sqlsrv";
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $_link;
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $_result;
-
-    /**
-     * The server description
-     *
-     * @var string
-     */
-    protected $server_info;
-
-    /**
-     * Undocumented variable
-     *
-     * @var int
-     */
-    protected $affected_rows;
-
-    /**
-     * Undocumented variable
-     *
-     * @var int
-     */
-    protected $errno;
-
-    /**
-     * Undocumented variable
-     *
-     * @var string
-     */
-    protected $error;
+    public function __construct()
+    {
+        $this->extension = 'sqlsrv';
+    }
 
     protected function _get_error() {
         $this->error = "";
@@ -69,20 +28,27 @@ class Connection implements ConnectionInterface
         $this->error = rtrim($this->error);
     }
 
-    public function connect($server, $username, $password) {
+     /**
+     * @inheritDoc
+     */
+    public function connect($server, array $options)
+    {
+        $username = $options['username'];
+        $password = $options['password'];
+
         $db = $this->adminer->database();
         $connection_info = array("UID" => $username, "PWD" => $password, "CharacterSet" => "UTF-8");
         if ($db != "") {
             $connection_info["Database"] = $db;
         }
-        $this->_link = @sqlsrv_connect(preg_replace('~:~', ',', $server), $connection_info);
-        if ($this->_link) {
-            $info = sqlsrv_server_info($this->_link);
+        $this->client = @sqlsrv_connect(preg_replace('~:~', ',', $server), $connection_info);
+        if ($this->client) {
+            $info = sqlsrv_server_info($this->client);
             $this->server_info = $info['SQLServerVersion'];
         } else {
             $this->_get_error();
         }
-        return (bool) $this->_link;
+        return (bool) $this->client;
     }
 
     public function quote($string) {
@@ -94,7 +60,7 @@ class Connection implements ConnectionInterface
     }
 
     public function query($query, $unbuffered = false) {
-        $result = sqlsrv_query($this->_link, $query); //! , [], ($unbuffered ? [] : array("Scrollable" => "keyset"))
+        $result = sqlsrv_query($this->client, $query); //! , [], ($unbuffered ? [] : array("Scrollable" => "keyset"))
         $this->error = "";
         if (!$result) {
             $this->_get_error();
@@ -104,7 +70,7 @@ class Connection implements ConnectionInterface
     }
 
     public function multi_query($query) {
-        $this->_result = sqlsrv_query($this->_link, $query);
+        $this->_result = sqlsrv_query($this->client, $query);
         $this->error = "";
         if (!$this->_result) {
             $this->_get_error();

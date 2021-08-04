@@ -2,34 +2,13 @@
 
 namespace Lagdo\Adminer\Drivers\Mysql\Mysql;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\AbstractConnection;
 
 /**
  * MySQL driver to be used with the mysql PHP extension.
  */
-class Connection implements ConnectionInterface
+class Connection extends AbstractConnection
 {
-    /**
-     * The extension name
-     *
-     * @var string
-     */
-    protected $extension = "MySQL";
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $_link;
-
-    /**
-     * Undocumented variable
-     *
-     * @var [type]
-     */
-    protected $_result;
-
     /**
      * Undocumented variable
      *
@@ -38,58 +17,38 @@ class Connection implements ConnectionInterface
     protected $_database = true;
 
     /**
-     * The server description
-     *
-     * @var string
+     * The constructor
      */
-    protected $server_info;
+    public function __construct()
+    {
+        $this->extension = 'MySQL';
+    }
 
-    /**
-     * Undocumented variable
-     *
-     * @var int
+     /**
+     * @inheritDoc
      */
-    protected $affected_rows;
+    public function connect($server, array $options)
+    {
+        $username = $options['username'];
+        $password = $options['password'];
 
-    /**
-     * Undocumented variable
-     *
-     * @var int
-     */
-    protected $errno;
-
-    /**
-     * Undocumented variable
-     *
-     * @var string
-     */
-    protected $error;
-
-    /**
-     * Connect to server
-     * @param string
-     * @param string
-     * @param string
-     * @return bool
-     */
-    public function connect($server, $username, $password) {
         if (ini_bool("mysql.allow_local_infile")) {
             $this->error = lang('Disable %s or enable %s or %s extensions.', "'mysql.allow_local_infile'", "MySQLi", "PDO_MySQL");
             return false;
         }
-        $this->_link = @mysql_connect(
+        $this->client = @mysql_connect(
             ($server != "" ? $server : ini_get("mysql.default_host")),
             ("$server$username" != "" ? $username : ini_get("mysql.default_user")),
             ("$server$username$password" != "" ? $password : ini_get("mysql.default_password")),
             true,
             131072 // CLIENT_MULTI_RESULTS for CALL
         );
-        if ($this->_link) {
-            $this->server_info = mysql_get_server_info($this->_link);
+        if ($this->client) {
+            $this->server_info = mysql_get_server_info($this->client);
         } else {
             $this->error = mysql_error();
         }
-        return (bool) $this->_link;
+        return (bool) $this->client;
     }
 
     /**
@@ -99,11 +58,11 @@ class Connection implements ConnectionInterface
      */
     public function set_charset($charset) {
         if (function_exists('mysql_set_charset')) {
-            if (mysql_set_charset($charset, $this->_link)) {
+            if (mysql_set_charset($charset, $this->client)) {
                 return true;
             }
             // the client library may not support utf8mb4
-            mysql_set_charset('utf8', $this->_link);
+            mysql_set_charset('utf8', $this->client);
         }
         return $this->query("SET NAMES $charset");
     }
@@ -114,7 +73,7 @@ class Connection implements ConnectionInterface
      * @return string escaped string enclosed in '
      */
     public function quote($string) {
-        return "'" . mysql_real_escape_string($string, $this->_link) . "'";
+        return "'" . mysql_real_escape_string($string, $this->client) . "'";
     }
 
     /**
@@ -123,7 +82,7 @@ class Connection implements ConnectionInterface
      * @return bool
      */
     public function select_db($database) {
-        return mysql_select_db($database, $this->_link);
+        return mysql_select_db($database, $this->client);
     }
 
     /**
@@ -134,16 +93,16 @@ class Connection implements ConnectionInterface
      */
     public function query($query, $unbuffered = false) {
         // @ - mute mysql.trace_mode
-        $result = @($unbuffered ? mysql_unbuffered_query($query, $this->_link) : mysql_query($query, $this->_link));
+        $result = @($unbuffered ? mysql_unbuffered_query($query, $this->client) : mysql_query($query, $this->client));
         $this->error = "";
         if (!$result) {
-            $this->errno = mysql_errno($this->_link);
-            $this->error = mysql_error($this->_link);
+            $this->errno = mysql_errno($this->client);
+            $this->error = mysql_error($this->client);
             return false;
         }
         if ($result === true) {
-            $this->affected_rows = mysql_affected_rows($this->_link);
-            $this->info = mysql_info($this->_link);
+            $this->affected_rows = mysql_affected_rows($this->client);
+            $this->info = mysql_info($this->client);
             return true;
         }
         return new Statement($result);

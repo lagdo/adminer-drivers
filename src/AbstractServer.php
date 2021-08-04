@@ -358,7 +358,7 @@ abstract class AbstractServer implements ServerInterface
         if (!$connection2) {
             $connection2 = $this->connection;
         }
-        $server_info = $connection2->server_info;
+        $server_info = $connection2->getServerInfo();
         if ($maria_db && preg_match('~([\d.]+)-MariaDB~', $server_info, $match)) {
             $server_info = $match[1];
             $version = $maria_db;

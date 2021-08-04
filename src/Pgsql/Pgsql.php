@@ -49,8 +49,8 @@ class Pgsql extends AbstractServer
     {
         global $types, $structured_types;
         $connection = $this->createConnection();
-        $credentials = $this->adminer->credentials();
-        if ($this->connection->connect($credentials[0], $credentials[1], $credentials[2])) {
+        list($server, $username, $password) = $this->adminer->credentials();
+        if ($this->connection->connect($server, \compact('username', 'password'))) {
             if ($this->min_version(9, 0, $connection)) {
                 $this->connection->query("SET application_name = 'Adminer'");
                 if ($this->min_version(9.2, 0, $connection)) {

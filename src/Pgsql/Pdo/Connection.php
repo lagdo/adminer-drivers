@@ -2,20 +2,13 @@
 
 namespace Lagdo\Adminer\Drivers\Pgsql\Pdo;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\Pdo\Connection as PdoConnection;
 
 /**
  * PostgreSQL driver to be used with the pdo_pgsql PHP extension.
  */
-class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements ConnectionInterface
+class Connection extends PdoConnection
 {
-    /**
-     * The extension name
-     *
-     * @var string
-     */
-    protected $extension = "PDO_PgSQL";
-
     /**
      * Undocumented variable
      *
@@ -23,7 +16,22 @@ class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements Connec
      */
     protected $timeout;
 
-    public function connect($server, $username, $password) {
+    /**
+     * The constructor
+     */
+    public function __construct()
+    {
+        $this->extension = 'PDO_PgSQL';
+    }
+
+     /**
+     * @inheritDoc
+     */
+    public function connect($server, array $options)
+    {
+        $username = $options['username'];
+        $password = $options['password'];
+
         $db = $this->adminer->database();
         //! client_encoding is supported since 9.1 but we can't yet use min_version here
         $this->dsn("pgsql:host='" . str_replace(":", "' port='", addcslashes($server, "'\\")) .

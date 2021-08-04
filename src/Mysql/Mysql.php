@@ -55,8 +55,8 @@ class Mysql extends AbstractServer
     {
         global $types, $structured_types;
         $connection = $this->createConnection();
-        $credentials = $this->adminer->credentials();
-        if ($this->connection->connect($credentials[0], $credentials[1], $credentials[2])) {
+        list($server, $username, $password) = $this->adminer->credentials();
+        if ($this->connection->connect($server, \compact('username', 'password'))) {
             $this->connection->set_charset(charset($connection)); // available in MySQLi since PHP 5.0.5
             $this->connection->query("SET sql_quote_show_create = 1, autocommit = 1");
             if ($this->min_version('5.7.8', 10.2, $connection)) {

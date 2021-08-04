@@ -47,8 +47,8 @@ class Oracle extends AbstractServer
     public function connect()
     {
         $connection = $this->createConnection();
-        $credentials = $this->adminer->credentials();
-        if ($this->connection->connect($credentials[0], $credentials[1], $credentials[2])) {
+        list($server, $username, $password) = $this->adminer->credentials();
+        if ($this->connection->connect($server, \compact('username', 'password'))) {
             return $connection;
         }
         return $this->connection->error;

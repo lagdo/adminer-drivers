@@ -31,7 +31,7 @@ class Driver extends AbstractDriver {
         $skip = $page * $limit;
         $class = 'MongoDB\Driver\Query';
         try {
-            return new Statement($this->connection->_link->executeQuery("$this->connection->_db_name.$table", new $class($where, array('projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort))));
+            return new Statement($this->connection->getClient()->executeQuery("$this->connection->_db_name.$table", new $class($where, array('projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort))));
         } catch (Exception $e) {
             $this->connection->error = $e->getMessage();
             return false;

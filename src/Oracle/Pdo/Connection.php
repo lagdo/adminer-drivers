@@ -2,20 +2,13 @@
 
 namespace Lagdo\Adminer\Drivers\Oracle\Pdo;
 
-use Lagdo\Adminer\Drivers\ConnectionInterface;
+use Lagdo\Adminer\Drivers\Pdo\Connection as PdoConnection;
 
 /**
  * Oracle driver to be used with the pdo_oci PHP extension.
  */
-class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements ConnectionInterface
+class Connection extends PdoConnection
 {
-    /**
-     * The extension name
-     *
-     * @var string
-     */
-    protected $extension = "PDO_OCI";
-
     /**
      * Undocumented variable
      *
@@ -23,7 +16,22 @@ class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements Connec
      */
     protected $_current_db;
 
-    public function connect($server, $username, $password) {
+    /**
+     * The constructor
+     */
+    public function __construct()
+    {
+        $this->extension = 'PDO_OCI';
+    }
+
+     /**
+     * @inheritDoc
+     */
+    public function connect($server, array $options)
+    {
+        $username = $options['username'];
+        $password = $options['password'];
+
         $this->dsn("oci:dbname=//$server;charset=AL32UTF8", $username, $password);
         return true;
     }
