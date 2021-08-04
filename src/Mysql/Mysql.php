@@ -89,19 +89,25 @@ class Mysql extends AbstractServer
      * @return array
      */
     public function get_databases($flush) {
+        // !!! Caching and slow query handling are temporarily disabled !!!
+        $query = $this->min_version(5) ?
+            "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME" :
+            "SHOW DATABASES";
+        return $this->get_vals($query);
+
         // SHOW DATABASES can take a very long time so it is cached
-        $return = get_session("dbs");
-        if ($return === null) {
-            $query = ($this->min_version(5)
-                ? "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME"
-                : "SHOW DATABASES"
-            ); // SHOW DATABASES can be disabled by skip_show_database
-            $return = ($flush ? slow_query($query) : $this->get_vals($query));
-            restart_session();
-            set_session("dbs", $return);
-            stop_session();
-        }
-        return $return;
+        // $return = get_session("dbs");
+        // if ($return === null) {
+        //     $query = ($this->min_version(5)
+        //         ? "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME"
+        //         : "SHOW DATABASES"
+        //     ); // SHOW DATABASES can be disabled by skip_show_database
+        //     $return = ($flush ? slow_query($query) : $this->get_vals($query));
+        //     restart_session();
+        //     set_session("dbs", $return);
+        //     stop_session();
+        // }
+        // return $return;
     }
 
     /**
@@ -126,7 +132,7 @@ class Mysql extends AbstractServer
      * @return string
      */
     public function limit1($table, $query, $where, $separator = "\n") {
-        return limit($query, $where, 1, 0, $separator);
+        return $this->limit($query, $where, 1, 0, $separator);
     }
 
     /**

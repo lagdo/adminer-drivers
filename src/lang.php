@@ -2,6 +2,8 @@
 
 namespace Lagdo\Adminer\Drivers;
 
+use function Lagdo\Adminer\Drivers\format_number;
+
 // not used in a single language version
 
 $langs = array(

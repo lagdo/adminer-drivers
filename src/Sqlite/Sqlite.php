@@ -78,10 +78,11 @@ class Sqlite extends AbstractServer
     }
 
     public function limit1($table, $query, $where, $separator = "\n") {
-        return (preg_match('~^INTO~', $query) || $this->connection->result("SELECT sqlite_compileoption_used('ENABLE_UPDATE_DELETE_LIMIT')")
-            ? limit($query, $where, 1, 0, $separator)
-            : " $query WHERE rowid = (SELECT rowid FROM " . $this->table($table) . $where . $separator . "LIMIT 1)" //! use primary key in tables with WITHOUT rowid
-        );
+        return preg_match('~^INTO~', $query) ||
+            $this->connection->result("SELECT sqlite_compileoption_used('ENABLE_UPDATE_DELETE_LIMIT')") ?
+            $this->limit($query, $where, 1, 0, $separator) :
+            //! use primary key in tables with WITHOUT rowid
+            " $query WHERE rowid = (SELECT rowid FROM " . $this->table($table) . $where . $separator . "LIMIT 1)";
     }
 
     public function db_collation($db, $collations) {
