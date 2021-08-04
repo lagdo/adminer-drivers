@@ -7,19 +7,24 @@ use Lagdo\Adminer\Drivers\AbstractServer;
 class Mongo extends AbstractServer
 {
     /**
-     * Get a connection to the server, based on the config and available packages
+     * @inheritDoc
      */
     protected function createConnection()
     {
+        if(($this->connection))
+        {
+            // Do not create if it already exists
+            return;
+        }
+
         if(class_exists('MongoDB'))
         {
-            return new Mongo\Connection();
+            $this->connection = new Mongo\Connection();
         }
         if(class_exists('MongoDB\Driver\Manager'))
         {
-            return new MongoDb\Connection();
+            $this->connection = new MongoDb\Connection();
         }
-        return null;
     }
 
     /**
@@ -27,7 +32,7 @@ class Mongo extends AbstractServer
      */
     public function connect()
     {
-        $connection = $this->createConnection();
+        $this->createConnection();
         list($server, $username, $password) = $this->adminer->credentials();
         $options = [];
         if ($username . $password != "") {
@@ -45,7 +50,7 @@ class Mongo extends AbstractServer
         if ($this->connection->error) {
             return $this->connection->error;
         }
-        return $connection;
+        return $this->connection;
     }
 
     public function table_status($name = "", $fast = false) {

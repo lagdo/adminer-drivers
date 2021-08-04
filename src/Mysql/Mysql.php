@@ -29,24 +29,29 @@ class Mysql extends AbstractServer
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
+     * @inheritDoc
      */
     protected function createConnection()
     {
+        if(($this->connection))
+        {
+            // Do not create if it already exists
+            return;
+        }
+
         if(extension_loaded("mysqli"))
         {
-            return new Mysqli\Connection();
+            $this->connection = new Mysqli\Connection();
         }
         if(extension_loaded("mysql") && !((ini_bool("sql.safe_mode") ||
             ini_bool("mysql.allow_local_infile")) && extension_loaded("pdo_mysql")))
         {
-            return new Mysql\Connection();
+            $this->connection = new Mysql\Connection();
         }
         if(extension_loaded("pdo_mysql"))
         {
-            return new Pdo\Connection();
+            $this->connection = new Pdo\Connection();
         }
-        return null;
     }
 
     /**
@@ -55,16 +60,16 @@ class Mysql extends AbstractServer
     public function connect()
     {
         global $types, $structured_types;
-        $connection = $this->createConnection();
+        $this->createConnection();
         list($server, $username, $password) = $this->adminer->credentials();
         if ($this->connection->open($server, \compact('username', 'password'))) {
-            $this->connection->set_charset(charset($connection)); // available in MySQLi since PHP 5.0.5
+            $this->connection->set_charset(charset($this->connection)); // available in MySQLi since PHP 5.0.5
             $this->connection->query("SET sql_quote_show_create = 1, autocommit = 1");
-            if ($this->min_version('5.7.8', 10.2, $connection)) {
+            if ($this->min_version('5.7.8', 10.2, $this->connection)) {
                 $structured_types[lang('Strings')][] = "json";
                 $types["json"] = 4294967295;
             }
-            return $connection;
+            return $this->connection;
         }
         $return = $this->connection->error;
         if (function_exists('iconv') && !is_utf8($return) && strlen($s = iconv("windows-1250", "utf-8", $return)) > strlen($return)) { // windows-1250 - most common Windows encoding
@@ -687,7 +692,7 @@ class Mysql extends AbstractServer
      * @return Statement
      */
     public function explain($connection, $query) {
-        return $this->connection->query("EXPLAIN " . ($this->min_version(5.1) && !$this->min_version(5.7) ? "PARTITIONS " : "") . $query);
+        return $connection->query("EXPLAIN " . ($this->min_version(5.1) && !$this->min_version(5.7) ? "PARTITIONS " : "") . $query);
     }
 
     /**

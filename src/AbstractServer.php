@@ -15,10 +15,12 @@ abstract class AbstractServer implements ServerInterface
     /**
      * @var ConnectionInterface
      */
-    protected $connection;
+    protected $connection = null;
 
     /**
-     * Get a connection to the server, based on the config and available packages
+     * Create a connection to the server, based on the config and available packages
+     *
+     * @return void
      */
     abstract protected function createConnection();
 

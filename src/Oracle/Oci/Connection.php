@@ -24,7 +24,7 @@ class Connection extends AbstractConnection
         $this->extension = 'oci8';
     }
 
-    protected function _error($errno, $error) {
+    public function _error($errno, $error) {
         if (ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));
         }

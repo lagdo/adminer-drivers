@@ -32,23 +32,28 @@ class Mssql extends AbstractServer
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
+     * @inheritDoc
      */
     protected function createConnection()
     {
+        if(($this->connection))
+        {
+            // Do not create if it already exists
+            return;
+        }
+
         if(extension_loaded("sqlsrv"))
         {
-            return new Sqlsrv\Connection();
+            $this->connection = new Sqlsrv\Connection();
         }
         if(extension_loaded("mssql"))
         {
-            return new Mssql\Connection();
+            $this->connection = new Mssql\Connection();
         }
         if(extension_loaded("pdo_dblib"))
         {
-            return new Pdo\Connection();
+            $this->connection = new Pdo\Connection();
         }
-        return null;
     }
 
     /**
@@ -56,10 +61,10 @@ class Mssql extends AbstractServer
      */
     public function connect()
     {
-        $connection = $this->createConnection();
+        $this->createConnection();
         list($server, $username, $password) = $this->adminer->credentials();
         if ($this->connection->open($server, \compact('username', 'password'))) {
-            return $connection;
+            return $this->connection;
         }
         return $this->connection->error;
     }
@@ -284,9 +289,9 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table)
     }
 
     public function explain($connection, $query) {
-        $this->connection->query("SET SHOWPLAN_ALL ON");
-        $return = $this->connection->query($query);
-        $this->connection->query("SET SHOWPLAN_ALL OFF"); // connection is used also for indexes
+        $connection->query("SET SHOWPLAN_ALL ON");
+        $return = $connection->query($query);
+        $connection->query("SET SHOWPLAN_ALL OFF"); // connection is used also for indexes
         return $return;
     }
 

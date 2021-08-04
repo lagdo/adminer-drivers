@@ -27,19 +27,24 @@ class Pgsql extends AbstractServer
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
+     * @inheritDoc
      */
     protected function createConnection()
     {
+        if(($this->connection))
+        {
+            // Do not create if it already exists
+            return;
+        }
+
         if(extension_loaded("pgsql"))
         {
-            return new Pgsql\Connection();
+            $this->connection = new Pgsql\Connection();
         }
         if(extension_loaded("pdo_pgsql"))
         {
-            return new Pdo\Connection();
+            $this->connection = new Pdo\Connection();
         }
-        return null;
     }
 
     /**
@@ -48,21 +53,21 @@ class Pgsql extends AbstractServer
     public function connect()
     {
         global $types, $structured_types;
-        $connection = $this->createConnection();
+        $this->createConnection();
         list($server, $username, $password) = $this->adminer->credentials();
         if ($this->connection->open($server, \compact('username', 'password'))) {
-            if ($this->min_version(9, 0, $connection)) {
+            if ($this->min_version(9, 0, $this->connection)) {
                 $this->connection->query("SET application_name = 'Adminer'");
-                if ($this->min_version(9.2, 0, $connection)) {
+                if ($this->min_version(9.2, 0, $this->connection)) {
                     $structured_types[lang('Strings')][] = "json";
                     $types["json"] = 4294967295;
-                    if ($this->min_version(9.4, 0, $connection)) {
+                    if ($this->min_version(9.4, 0, $this->connection)) {
                         $structured_types[lang('Strings')][] = "jsonb";
                         $types["jsonb"] = 4294967295;
                     }
                 }
             }
-            return $connection;
+            return $this->connection;
         }
         return $this->connection->error;
     }
@@ -185,7 +190,7 @@ ORDER BY a.attnum"
 
     public function indexes($table, $connection2 = null) {
         if (!is_object($connection2)) {
-            $connection2 = $connection;
+            $connection2 = $this->connection;
         }
         $return = [];
         $table_oid = $connection2->result("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . $this->q($table));
@@ -475,7 +480,7 @@ ORDER BY SPECIFIC_NAME');
     }
 
     public function explain($connection, $query) {
-        return $this->connection->query("EXPLAIN $query");
+        return $connection->query("EXPLAIN $query");
     }
 
     public function found_rows($table_status, $where) {
@@ -509,7 +514,7 @@ AND typelem = 0"
     public function set_schema($schema, $connection2 = null) {
         global $types, $structured_types;
         if (!$connection2) {
-            $connection2 = $connection;
+            $connection2 = $this->connection;
         }
         $return = $connection2->query("SET search_path TO " . $this->idf_escape($schema));
         foreach ($this->types() as $type) { //! get types from current_schemas('t')

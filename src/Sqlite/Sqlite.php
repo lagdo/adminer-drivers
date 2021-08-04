@@ -26,23 +26,28 @@ class Sqlite extends AbstractServer
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
+     * @inheritDoc
      */
     protected function createConnection()
     {
+        if(($this->connection))
+        {
+            // Do not create if it already exists
+            return;
+        }
+
         if(class_exists("SQLite3"))
         {
-            return new Sqlite\Connection();
+            $this->connection = new Sqlite\Connection();
         }
         if(class_exists("SQLiteDatabase"))
         {
-            return new Sqlite2\Connection();
+            $this->connection = new Sqlite2\Connection();
         }
         if(extension_loaded("pdo_sqlite"))
         {
-            return new Pdo\Connection();
+            $this->connection = new Pdo\Connection();
         }
-        return null;
     }
 
     /**
@@ -54,7 +59,8 @@ class Sqlite extends AbstractServer
         if ($password != "") {
             return lang('Database does not support password.');
         }
-        return $this->createConnection();
+        $this->createConnection();
+        return $this->connection;
     }
 
     /**
@@ -155,7 +161,7 @@ class Sqlite extends AbstractServer
 
     public function indexes($table, $connection2 = null) {
         if (!is_object($connection2)) {
-            $connection2 = $connection;
+            $connection2 = $this->connection;
         }
         $return = [];
         $sql = $connection2->result("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = " . $this->q($table));
@@ -507,7 +513,7 @@ class Sqlite extends AbstractServer
     }
 
     public function explain($connection, $query) {
-        return $this->connection->query("EXPLAIN QUERY PLAN $query");
+        return $connection->query("EXPLAIN QUERY PLAN $query");
     }
 
     public function create_sql($table, $auto_increment, $style) {

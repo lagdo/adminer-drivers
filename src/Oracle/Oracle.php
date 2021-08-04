@@ -26,19 +26,24 @@ class Oracle extends AbstractServer
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
+     * @inheritDoc
      */
     protected function createConnection()
     {
+        if(($this->connection))
+        {
+            // Do not create if it already exists
+            return;
+        }
+
         if(extension_loaded("oci8"))
         {
-            return new Oci\Connection();
+            $this->connection = new Oci\Connection();
         }
         if(extension_loaded("pdo_oci"))
         {
-            return new Pdo\Connection();
+            $this->connection = new Pdo\Connection();
         }
-        return null;
     }
 
     /**
@@ -46,10 +51,10 @@ class Oracle extends AbstractServer
      */
     public function connect()
     {
-        $connection = $this->createConnection();
+        $this->createConnection();
         list($server, $username, $password) = $this->adminer->credentials();
         if ($this->connection->open($server, \compact('username', 'password'))) {
-            return $connection;
+            return $this->connection;
         }
         return $this->connection->error;
     }
@@ -67,9 +72,10 @@ class Oracle extends AbstractServer
     }
 
     public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
-        return ($offset ? " * FROM (SELECT t.*, rownum AS rnum FROM (SELECT $query$where) t WHERE rownum <= " . ($limit + $offset) . ") WHERE rnum > $offset"
-            : ($limit !== null ? " * FROM (SELECT $query$where) WHERE rownum <= " . ($limit + $offset)
-            : " $query$where"
+        return ($offset ? " * FROM (SELECT t.*, rownum AS rnum FROM (SELECT $query$where) t " .
+            "WHERE rownum <= " . ($limit + $offset) . ") WHERE rnum > $offset" :
+            ($limit !== null ? " * FROM (SELECT $query$where) WHERE rownum <= " . ($limit + $offset) :
+            " $query$where"
         ));
     }
 
@@ -215,8 +221,8 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
     }
 
     public function explain($connection, $query) {
-        $this->connection->query("EXPLAIN PLAN FOR $query");
-        return $this->connection->query("SELECT * FROM plan_table");
+        $connection->query("EXPLAIN PLAN FOR $query");
+        return $connection->query("SELECT * FROM plan_table");
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
@@ -331,7 +337,7 @@ AND c_src.TABLE_NAME = " . $this->q($table);
 
     public function set_schema($scheme, $connection2 = null) {
         if (!$connection2) {
-            $connection2 = $connection;
+            $connection2 = $this->connection;
         }
         return $connection2->query("ALTER SESSION SET CURRENT_SCHEMA = " . $this->idf_escape($scheme));
     }

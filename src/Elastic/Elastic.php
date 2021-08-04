@@ -25,15 +25,20 @@ class Elastic extends AbstractServer
     }
 
     /**
-     * Get a connection to the server, based on the config and available packages
+     * @inheritDoc
      */
     protected function createConnection()
     {
+        if(($this->connection))
+        {
+            // Do not create if it already exists
+            return;
+        }
+
         if(function_exists('json_decode') && ini_bool('allow_url_fopen'))
         {
-            return new Connection();
+            $this->connection = new Connection();
         }
-        return null;
     }
 
     /**
@@ -41,7 +46,7 @@ class Elastic extends AbstractServer
      */
     public function connect()
     {
-        $connection = $this->createConnection();
+        $this->createConnection();
         list($server, $username, $password) = $this->adminer->credentials();
         if ($password != "" &&
             $this->connection->open($server, ['username' => $username, 'password' => ""]))
@@ -49,7 +54,7 @@ class Elastic extends AbstractServer
             return lang('Database does not support password.');
         }
         if ($this->connection->open($server, \compact('username', 'password'))) {
-            return $connection;
+            return $this->connection;
         }
         return $this->connection->error;
     }
