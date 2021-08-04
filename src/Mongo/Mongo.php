@@ -48,26 +48,6 @@ class Mongo extends AbstractServer
         return $connection;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function idf_escape($idf)
-    {
-        return $idf;
-    }
-
-    public function table($idf) {
-        return $idf;
-    }
-
-    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
-        return "";
-    }
-
-    public function limit1($table, $query, $where, $separator = "\n") {
-        return "";
-    }
-
     public function table_status($name = "", $fast = false) {
         $return = [];
         foreach ($this->tables_list() as $table => $type) {
@@ -81,26 +61,6 @@ class Mongo extends AbstractServer
 
     public function create_database($db, $collation) {
         return true;
-    }
-
-    public function rename_database($name, $collation) {
-        return false;
-    }
-
-    public function auto_increment() {
-        return "";
-    }
-
-    public function last_id() {
-        return $this->connection->last_id;
-    }
-
-    public function error() {
-        return h($this->connection->error);
-    }
-
-    public function collations() {
-        return [];
     }
 
     public function logged_user() {
@@ -133,46 +93,8 @@ class Mongo extends AbstractServer
         return true;
     }
 
-    public function drop_views($views) {
-        return false;
-    }
-
     public function support($feature) {
         return preg_match("~database|indexes|descidx~", $feature);
-    }
-
-    public function db_collation($db, $collations) {
-    }
-
-    public function information_schema($db) {
-        return null;
-    }
-
-    public function is_view($table_status) {
-        return false;
-    }
-
-    public function convert_field($field) {
-    }
-
-    public function unconvert_field($field, $return) {
-        return $return;
-    }
-
-    public function foreign_keys($table) {
-        return [];
-    }
-
-    public function fk_support($table_status) {
-        return false;
-    }
-
-    public function view($name) {
-        return [];
-    }
-
-    public function engines() {
-        return [];
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
@@ -211,29 +133,5 @@ class Mongo extends AbstractServer
             'grouping' => [],
             'edit_functions' => array(array("json")),
         );
-    }
-
-    public function explain($connection, $query) {
-        return null;
-    }
-
-    public function schemas() {
-        return [];
-    }
-
-    public function get_schema() {
-        return "";
-    }
-
-    public function set_schema($schema, $connection2 = null) {
-        return true;
-    }
-
-    public function show_variables() {
-        return [];
-    }
-
-    public function show_status() {
-        return [];
     }
 }

@@ -65,10 +65,6 @@ class Sqlite extends AbstractServer
         return '"' . str_replace('"', '""', $idf) . '"';
     }
 
-    public function table($idf) {
-        return $this->idf_escape($idf);
-    }
-
     public function get_databases($flush) {
         return [];
     }
@@ -87,10 +83,6 @@ class Sqlite extends AbstractServer
 
     public function db_collation($db, $collations) {
         return $this->connection->result("PRAGMA encoding"); // there is no database list so $db == $this->adminer->database()
-    }
-
-    public function engines() {
-        return [];
     }
 
     public function logged_user() {
@@ -222,19 +214,13 @@ class Sqlite extends AbstractServer
     }
 
     public function view($name) {
-        return array("select" => preg_replace('~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU', '', $this->connection->result("SELECT sql FROM sqlite_master WHERE name = " . $this->q($name)))); //! identifiers may be inside []
+        return array("select" => preg_replace('~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU', '',
+            $this->connection->result("SELECT sql FROM sqlite_master WHERE name = " .
+            $this->q($name)))); //! identifiers may be inside []
     }
 
     public function collations() {
         return (isset($_GET["create"]) ? $this->get_vals("PRAGMA collation_list", 1) : []);
-    }
-
-    public function information_schema($db) {
-        return false;
-    }
-
-    public function error() {
-        return h($this->connection->error);
     }
 
     public function check_sqlite_name($name) {
@@ -524,17 +510,6 @@ class Sqlite extends AbstractServer
         return $this->connection->query("EXPLAIN QUERY PLAN $query");
     }
 
-    public function found_rows($table_status, $where) {
-    }
-
-    public function get_schema() {
-        return "";
-    }
-
-    public function set_schema($schema, $connection2 = null) {
-        return true;
-    }
-
     public function create_sql($table, $auto_increment, $style) {
         $return = $this->connection->result("SELECT sql FROM sqlite_master WHERE type IN ('table', 'view') AND name = " . $this->q($table));
         foreach ($this->indexes($table) as $name => $index) {
@@ -549,9 +524,6 @@ class Sqlite extends AbstractServer
 
     public function truncate_sql($table) {
         return "DELETE FROM " . $this->table($table);
-    }
-
-    public function use_sql($database) {
     }
 
     public function trigger_sql($table) {
@@ -572,13 +544,6 @@ class Sqlite extends AbstractServer
             list($key, $val) = explode("=", $option, 2);
             $return[$key] = $val;
         }
-        return $return;
-    }
-
-    public function convert_field($field) {
-    }
-
-    public function unconvert_field($field, $return) {
         return $return;
     }
 

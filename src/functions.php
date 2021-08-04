@@ -7,6 +7,16 @@ use function str_replace;
 use function Lagdo\Adminer\Drivers\lang;
 
 /**
+ * Escape for HTML
+ * @param string
+ * @return string
+ */
+function h($string)
+{
+    return str_replace("\0", "&#0;", htmlspecialchars($string, ENT_QUOTES, 'utf-8'));
+}
+
+/**
  * Check whether the string is in UTF-8
  * @param string
  * @return bool
@@ -77,17 +87,4 @@ function unique_array($row, $indexes)
             return $return;
         }
     }
-}
-
-/**
- * Escape column key used in where()
- * @param string
- * @return string
- */
-function escape_key($key)
-{
-    if (preg_match('(^([\w(]+)(' . str_replace("_", ".*", preg_quote(idf_escape("_"))) . ')([ \w)]+)$)', $key, $match)) { //! columns looking like functions
-        return $match[1] . idf_escape(idf_unescape($match[2])) . $match[3]; //! SQL injection
-    }
-    return idf_escape($key);
 }

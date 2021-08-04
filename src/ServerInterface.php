@@ -181,7 +181,7 @@ interface ServerInterface
      * Create database
      * @param string
      * @param string
-     * @return string
+     * @return string|boolean
      */
     public function create_database($db, $collation) ;
 
@@ -326,7 +326,7 @@ interface ServerInterface
      * Explain select
      * @param ConnectionInterface
      * @param string
-     * @return Statement
+     * @return Statement|null
      */
     public function explain($connection, $query);
 
@@ -385,7 +385,7 @@ interface ServerInterface
      * @param string
      * @return string
      */
-    // public function use_sql($database);
+    public function use_sql($database);
 
     /**
      * Get SQL commands to create triggers

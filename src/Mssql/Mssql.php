@@ -83,16 +83,8 @@ class Mssql extends AbstractServer
         return ($limit !== null ? " TOP (" . ($limit + $offset) . ")" : "") . " $query$where"; // seek later
     }
 
-    public function limit1($table, $query, $where, $separator = "\n") {
-        return $this->limit($query, $where, 1, 0, $separator);
-    }
-
     public function db_collation($db, $collations) {
         return $this->connection->result("SELECT collation_name FROM sys.databases WHERE name = " . $this->q($db));
-    }
-
-    public function engines() {
-        return [];
     }
 
     public function logged_user() {
@@ -100,7 +92,8 @@ class Mssql extends AbstractServer
     }
 
     public function tables_list() {
-        return $this->get_key_vals("SELECT name, type_desc FROM sys.all_objects WHERE schema_id = SCHEMA_ID(" . $this->q(get_schema()) . ") AND type IN ('S', 'U', 'V') ORDER BY name");
+        return $this->get_key_vals("SELECT name, type_desc FROM sys.all_objects WHERE schema_id = SCHEMA_ID(" .
+            $this->q($this->get_schema()) . ") AND type IN ('S', 'U', 'V') ORDER BY name");
     }
 
     public function count_tables($databases) {
@@ -114,7 +107,11 @@ class Mssql extends AbstractServer
 
     public function table_status($name = "", $fast = false) {
         $return = [];
-        foreach ($this->get_rows("SELECT ao.name AS Name, ao.type_desc AS Engine, (SELECT value FROM fn_listextendedproperty(default, 'SCHEMA', schema_name(schema_id), 'TABLE', ao.name, null, null)) AS Comment FROM sys.all_objects AS ao WHERE schema_id = SCHEMA_ID(" . $this->q(get_schema()) . ") AND type IN ('S', 'U', 'V') " . ($name != "" ? "AND name = " . $this->q($name) : "ORDER BY name")) as $row) {
+        foreach ($this->get_rows("SELECT ao.name AS Name, ao.type_desc AS Engine, " .
+            "(SELECT value FROM fn_listextendedproperty(default, 'SCHEMA', schema_name(schema_id), " .
+            "'TABLE', ao.name, null, null)) AS Comment FROM sys.all_objects AS ao WHERE schema_id = SCHEMA_ID(" .
+            $this->q(get_schema()) . ") AND type IN ('S', 'U', 'V') " . ($name != "" ? "AND name = " .
+            $this->q($name) : "ORDER BY name")) as $row) {
             if ($name != "") {
                 return $row;
             }
@@ -188,10 +185,6 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table)
             $return[preg_replace('~_.*~', '', $collation)][] = $collation;
         }
         return $return;
-    }
-
-    public function information_schema($db) {
-        return false;
     }
 
     public function error() {
@@ -296,9 +289,6 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table)
         return $return;
     }
 
-    public function found_rows($table_status, $where) {
-    }
-
     public function foreign_keys($table) {
         $return = [];
         foreach ($this->get_rows("EXEC sp_fkeys @fktable_name = " . $this->q($table)) as $row) {
@@ -385,21 +375,6 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . $this->q($table)
 
     public function use_sql($database) {
         return "USE " . $this->idf_escape($database);
-    }
-
-    public function show_variables() {
-        return [];
-    }
-
-    public function show_status() {
-        return [];
-    }
-
-    public function convert_field($field) {
-    }
-
-    public function unconvert_field($field, $return) {
-        return $return;
     }
 
     public function support($feature) {

@@ -52,14 +52,6 @@ class Elastic extends AbstractServer
         return $this->connection->error;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function idf_escape($idf)
-    {
-        return $idf;
-    }
-
     public function support($feature) {
         return preg_match("~database|table|columns~", $feature);
     }
@@ -76,21 +68,6 @@ class Elastic extends AbstractServer
             sort($return, SORT_STRING);
         }
         return $return;
-    }
-
-    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
-        return "";
-    }
-
-    public function collations() {
-        return [];
-    }
-
-    public function db_collation($db, $collations) {
-    }
-
-    public function engines() {
-        return [];
     }
 
     public function count_tables($databases) {
@@ -146,18 +123,6 @@ class Elastic extends AbstractServer
         return $return;
     }
 
-    public function error() {
-        return h($this->connection->error);
-    }
-
-    public function information_schema($db) {
-        return null;
-    }
-
-    public function is_view($table_status) {
-        return false;
-    }
-
     public function indexes($table, $connection2 = null) {
         return array(
             array("type" => "PRIMARY", "columns" => array("_id")),
@@ -199,33 +164,6 @@ class Elastic extends AbstractServer
         return $return;
     }
 
-    public function foreign_keys($table) {
-        return [];
-    }
-
-    public function table($idf) {
-        return $idf;
-    }
-
-    public function convert_field($field) {
-    }
-
-    public function unconvert_field($field, $return) {
-        return $return;
-    }
-
-    public function fk_support($table_status) {
-        return false;
-    }
-
-    public function view($name) {
-        return [];
-    }
-
-    public function found_rows($table_status, $where) {
-        return null;
-    }
-
     /**
      * Create index
      * @param string
@@ -242,26 +180,6 @@ class Elastic extends AbstractServer
      */
     public function drop_databases($databases) {
         return $this->connection->rootQuery(urlencode(implode(',', $databases)), [], 'DELETE');
-    }
-
-    public function rename_database($name, $collation) {
-        return false;
-    }
-
-    public function auto_increment() {
-        return "";
-    }
-
-    public function alter_indexes($table, $alter) {
-        return false;
-    }
-
-    public function drop_views($views) {
-        return false;
-    }
-
-    public function truncate_tables($tables) {
-        return false;
     }
 
     /**
@@ -297,10 +215,6 @@ class Elastic extends AbstractServer
         return $return;
     }
 
-    public function last_id() {
-        return $this->connection->last_id;
-    }
-
     public function driver_config() {
         $types = [];
         $structured_types = [];
@@ -324,29 +238,5 @@ class Elastic extends AbstractServer
             'types' => $types,
             'structured_types' => $structured_types,
         );
-    }
-
-    public function explain($connection, $query) {
-        return null;
-    }
-
-    public function schemas() {
-        return [];
-    }
-
-    public function get_schema() {
-        return "";
-    }
-
-    public function set_schema($schema, $connection2 = null) {
-        return true;
-    }
-
-    public function show_variables() {
-        return [];
-    }
-
-    public function show_status() {
-        return [];
     }
 }

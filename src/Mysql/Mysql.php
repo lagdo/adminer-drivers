@@ -79,10 +79,6 @@ class Mysql extends AbstractServer
         return "`" . str_replace("`", "``", $idf) . "`";
     }
 
-    public function table($idf) {
-        return $this->idf_escape($idf);
-    }
-
     /**
      * Get cached list of databases
      * @param bool
@@ -121,18 +117,6 @@ class Mysql extends AbstractServer
      */
     public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
         return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
-    }
-
-    /**
-     * Formulate SQL modification query with limit 1
-     * @param string
-     * @param string everything after UPDATE or DELETE
-     * @param string
-     * @param string
-     * @return string
-     */
-    public function limit1($table, $query, $where, $separator = "\n") {
-        return $this->limit($query, $where, 1, 0, $separator);
     }
 
     /**
@@ -327,7 +311,8 @@ class Mysql extends AbstractServer
      * @return array array("select" => )
      */
     public function view($name) {
-        return array("select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', $this->connection->result("SHOW CREATE VIEW " . $this->table($name), 1)));
+        return array("select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '',
+            $this->connection->result("SHOW CREATE VIEW " . $this->table($name), 1)));
     }
 
     /**
@@ -385,8 +370,8 @@ class Mysql extends AbstractServer
      */
     public function drop_databases($databases) {
         $return = $this->apply_queries("DROP DATABASE", $databases, 'idf_escape');
-        restart_session();
-        set_session("dbs", null);
+        // restart_session();
+        // set_session("dbs", null);
         return $return;
     }
 
@@ -398,7 +383,7 @@ class Mysql extends AbstractServer
      */
     public function rename_database($name, $collation) {
         $return = false;
-        if (create_database($name, $collation)) {
+        if ($this->create_database($name, $collation)) {
             $tables = [];
             $views = [];
             foreach ($this->tables_list() as $table => $type) {
@@ -408,8 +393,8 @@ class Mysql extends AbstractServer
                     $tables[] = $table;
                 }
             }
-            $return = (!$tables && !$views) || move_tables($tables, $views, $name);
-            drop_databases($return ? array($this->adminer->database()) : []);
+            $return = (!$tables && !$views) || $this->move_tables($tables, $views, $name);
+            $this->drop_databases($return ? array($this->adminer->database()) : []);
         }
         return $return;
     }

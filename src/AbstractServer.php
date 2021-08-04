@@ -2,6 +2,7 @@
 
 namespace Lagdo\Adminer\Drivers;
 
+use function Lagdo\Adminer\Drivers\h;
 use function Lagdo\Adminer\Drivers\format_time;
 
 abstract class AbstractServer implements ServerInterface
@@ -21,11 +22,63 @@ abstract class AbstractServer implements ServerInterface
      */
     abstract protected function createConnection();
 
+    public function error() {
+        return h($this->connection->error);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function idf_escape($idf)
+    {
+        return $idf;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function table($idf)
+    {
+        return $this->idf_escape($idf);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function view($name)
+    {
+        return [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function engines()
+    {
+        return [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function collations()
+    {
+        return [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function db_collation($db, $collations) {
+        return "";
+    }
+
     /**
      * Get user defined types
      * @return array
      */
-    public function types() {
+    public function types()
+    {
         return [];
     }
 
@@ -33,7 +86,8 @@ abstract class AbstractServer implements ServerInterface
      * Get existing schemas
      * @return array
      */
-    public function schemas() {
+    public function schemas()
+    {
         return [];
     }
 
@@ -41,7 +95,8 @@ abstract class AbstractServer implements ServerInterface
      * Get current schema
      * @return string
      */
-    public function get_schema() {
+    public function get_schema()
+    {
         return "";
     }
 
@@ -51,8 +106,141 @@ abstract class AbstractServer implements ServerInterface
      * @param ConnectionInterface
      * @return bool
      */
-    public function set_schema($schema, $connection2 = null) {
+    public function set_schema($schema, $connection2 = null)
+    {
         return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function information_schema($db) {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function is_view($table_status) {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function foreign_keys($table) {
+        return [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function fk_support($table_status) {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function convert_field($field) {
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function unconvert_field($field, $return) {
+        return $return;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function show_variables() {
+        return [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function show_status() {
+        return [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function explain($connection, $query) {
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function use_sql($database) {
+        return "";
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function last_id() {
+        return $this->connection->last_id;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function found_rows($table_status, $where) {
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function rename_database($name, $collation) {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function auto_increment() {
+        return "";
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function alter_indexes($table, $alter) {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function drop_views($views) {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function truncate_tables($tables) {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
+        return "";
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function limit1($table, $query, $where, $separator = "\n") {
+        return $this->limit($query, $where, 1, 0, $separator);
     }
 
     /**
@@ -231,7 +419,7 @@ abstract class AbstractServer implements ServerInterface
                 $return[] = $row;
             }
         } elseif (!$result && !is_object($connection2) && $error && defined("PAGE_HEADER")) {
-            echo $error . error() . "\n";
+            // echo $error . $this->error() . "\n";
         }
         return $return;
     }

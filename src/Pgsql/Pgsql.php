@@ -75,10 +75,6 @@ class Pgsql extends AbstractServer
         return '"' . str_replace('"', '""', $idf) . '"';
     }
 
-    public function table($idf) {
-        return $this->idf_escape($idf);
-    }
-
     public function get_databases($flush) {
         return $this->get_vals("SELECT datname FROM pg_database WHERE has_database_privilege(datname, 'CONNECT') ORDER BY datname");
     }
@@ -96,10 +92,6 @@ class Pgsql extends AbstractServer
 
     public function db_collation($db, $collations) {
         return $this->connection->result("SELECT datcollate FROM pg_database WHERE datname = " . $this->q($db));
-    }
-
-    public function engines() {
-        return [];
     }
 
     public function logged_user() {
@@ -271,7 +263,7 @@ ORDER BY connamespace, conname") as $row) {
     }
 
     public function error() {
-        $return = h($this->connection->error);
+        $return = parent::error();
         if (preg_match('~^(.*\n)?([^\n]*)\n( *)\^(\n.*)?$~s', $return, $match)) {
             $return = $match[1] . preg_replace('~((?:[^&]|&[^;]*;){' .
                 strlen($match[3]) . '})(.*)~', '\1<b>\2</b>', $match[2]) . $match[4];
@@ -293,10 +285,6 @@ ORDER BY connamespace, conname") as $row) {
         //! current database cannot be renamed
         return $this->queries("ALTER DATABASE " . $this->idf_escape($this->adminer->database()) .
             " RENAME TO " . $this->idf_escape($name));
-    }
-
-    public function auto_increment() {
-        return "";
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
@@ -677,13 +665,6 @@ AND typelem = 0"
     }
 
     public function show_status() {
-    }
-
-    public function convert_field($field) {
-    }
-
-    public function unconvert_field($field, $return) {
-        return $return;
     }
 
     public function support($feature) {

@@ -62,10 +62,6 @@ class Oracle extends AbstractServer
         return '"' . str_replace('"', '""', $idf) . '"';
     }
 
-    public function table($idf) {
-        return $this->idf_escape($idf);
-    }
-
     public function get_databases($flush) {
         return $this->get_vals("SELECT tablespace_name FROM user_tablespaces ORDER BY 1");
     }
@@ -83,10 +79,6 @@ class Oracle extends AbstractServer
 
     public function db_collation($db, $collations) {
         return $this->connection->result("SELECT value FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'"); //! respect $db
-    }
-
-    public function engines() {
-        return [];
     }
 
     public function logged_user() {
@@ -214,14 +206,6 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
         return []; //!
     }
 
-    public function information_schema($db) {
-        return false;
-    }
-
-    public function error() {
-        return h($this->connection->error); //! highlight sqltext from offset
-    }
-
     public function create_database($db, $collation) {
         return false;
     }
@@ -230,20 +214,9 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
         return false;
     }
 
-    public function rename_database($name, $collation) {
-        return false;
-    }
-
     public function explain($connection, $query) {
         $this->connection->query("EXPLAIN PLAN FOR $query");
         return $this->connection->query("SELECT * FROM plan_table");
-    }
-
-    public function found_rows($table_status, $where) {
-    }
-
-    public function auto_increment() {
-        return "";
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
@@ -379,13 +352,6 @@ ORDER BY PROCESS
     public function show_status() {
         $rows = $this->get_rows('SELECT * FROM v$instance');
         return reset($rows);
-    }
-
-    public function convert_field($field) {
-    }
-
-    public function unconvert_field($field, $return) {
-        return $return;
     }
 
     public function support($feature) {
