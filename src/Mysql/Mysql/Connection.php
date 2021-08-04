@@ -9,14 +9,61 @@ use Lagdo\Adminer\Drivers\ConnectionInterface;
  */
 class Connection implements ConnectionInterface
 {
-    var
-        $extension = "MySQL", ///< @var string extension name
-        $server_info, ///< @var string server version
-        $affected_rows, ///< @var int number of affected rows
-        $errno, ///< @var int last error code
-        $error, ///< @var string last error message
-        $_link, $_result ///< @access private
-    ;
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "MySQL";
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_link;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_result;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $_database = true;
+
+    /**
+     * The server description
+     *
+     * @var string
+     */
+    protected $server_info;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $affected_rows;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $errno;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $error;
 
     /**
      * Connect to server

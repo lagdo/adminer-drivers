@@ -11,7 +11,54 @@ use Lagdo\Adminer\Drivers\ConnectionInterface;
 
 class Connection implements ConnectionInterface
 {
-    var $extension = "sqlsrv", $_link, $_result, $server_info, $affected_rows, $errno, $error;
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "sqlsrv";
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_link;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_result;
+
+    /**
+     * The server description
+     *
+     * @var string
+     */
+    protected $server_info;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $affected_rows;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $errno;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $error;
 
     protected function _get_error() {
         $this->error = "";

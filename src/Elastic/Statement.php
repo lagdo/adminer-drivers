@@ -3,7 +3,20 @@
 namespace Lagdo\Adminer\Drivers\Elastic;
 
 class Statement {
-    var $num_rows, $_rows;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $num_rows;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_rows;
 
     public function __construct($rows) {
         $this->num_rows = count($rows);

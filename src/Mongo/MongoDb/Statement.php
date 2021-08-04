@@ -2,8 +2,35 @@
 
 namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
 
-class Statement {
-    var $num_rows, $_rows = [], $_offset = 0, $_charset = [];
+class Statement
+{
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $num_rows;
+
+    /**
+     * Undocumented variable
+     *
+     * @var array
+     */
+    protected $_rows = [];
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $_offset = 0;
+
+    /**
+     * Undocumented variable
+     *
+     * @var array
+     */
+    protected $_charset = [];
 
     public function __construct($result) {
         foreach ($result as $item) {

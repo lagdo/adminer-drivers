@@ -9,7 +9,19 @@ use Lagdo\Adminer\Drivers\ConnectionInterface;
  */
 class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements ConnectionInterface
 {
-    var $extension = "PDO_PgSQL", $timeout;
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "PDO_PgSQL";
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $timeout;
 
     public function connect($server, $username, $password) {
         $db = $this->adminer->database();

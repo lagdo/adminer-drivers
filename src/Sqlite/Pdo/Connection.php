@@ -6,7 +6,12 @@ use Lagdo\Adminer\Drivers\ConnectionInterface;
 
 class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements ConnectionInterface
 {
-    var $extension = "PDO_SQLite";
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "PDO_SQLite";
 
     public function __construct($filename) {
         $this->dsn(DRIVER . ":$filename", "", "");

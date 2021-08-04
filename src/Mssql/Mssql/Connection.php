@@ -11,7 +11,47 @@ use Lagdo\Adminer\Drivers\ConnectionInterface;
 
 class Connection implements ConnectionInterface
 {
-    var $extension = "MSSQL", $_link, $_result, $server_info, $affected_rows, $error;
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "MSSQL";
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_link;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_result;
+
+    /**
+     * The server description
+     *
+     * @var string
+     */
+    protected $server_info;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $affected_rows;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $error;
 
     public function connect($server, $username, $password) {
         $this->_link = @mssql_connect($server, $username, $password);

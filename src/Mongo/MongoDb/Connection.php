@@ -4,11 +4,60 @@ namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
 
 class Connection implements ConnectionInterface
 {
-    var $extension = "MongoDB", $server_info = MONGODB_VERSION, $affected_rows, $error, $last_id;
     /**
-     * @var MongoDB\Driver\Manager */
-    var $_link;
-    var $_db, $_db_name;
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $extension = "MongoDB";
+
+    /**
+     * The server description
+     *
+     * @var string
+     */
+    protected $server_info = MONGODB_VERSION;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $affected_rows;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $error;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+
+     protected $last_id;
+
+    /**
+     * @var MongoDB\Driver\Manager
+     */
+    protected $_link;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_db;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $_db_name;
 
     public function connect($uri, $options) {
         $class = 'MongoDB\Driver\Manager';

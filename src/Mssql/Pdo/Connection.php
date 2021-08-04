@@ -11,7 +11,12 @@ use Lagdo\Adminer\Drivers\ConnectionInterface;
 
 class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements ConnectionInterface
 {
-    var $extension = "PDO_DBLIB";
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "PDO_DBLIB";
 
     public function connect($server, $username, $password) {
         $this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=",

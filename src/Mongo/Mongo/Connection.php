@@ -8,7 +8,47 @@ use function Lagdo\Adminer\Drivers\lang;
 
 class Connection implements ConnectionInterface
 {
-    var $extension = "Mongo", $server_info = MongoClient::VERSION, $error, $last_id, $_link, $_db;
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $extension = "Mongo";
+
+    /**
+     * The server description
+     *
+     * @var string
+     */
+    protected $server_info = MongoClient::VERSION;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $error;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $last_id;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_link;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_db;
 
     public function connect($uri, $options) {
         try {

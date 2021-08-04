@@ -4,8 +4,28 @@ namespace Lagdo\Adminer\Drivers\Sqlite\Sqlite2;
 
 use function Lagdo\Adminer\Drivers\idf_unescape;
 
-class Statement {
-    var $_result, $_offset = 0, $num_rows;
+class Statement
+{
+    /**
+     * Undocumented variable
+     *
+     * @var object
+     */
+    protected $_result;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $_offset = 0;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $num_rows;
 
     public function __construct($result) {
         $this->_result = $result;

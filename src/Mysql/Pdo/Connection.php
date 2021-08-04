@@ -9,7 +9,12 @@ use Lagdo\Adminer\Drivers\ConnectionInterface;
  */
 class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements ConnectionInterface
 {
-    var $extension = "PDO_MySQL";
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "PDO_MySQL";
 
     public function connect($server, $username, $password) {
         $options = array(PDO::MYSQL_ATTR_LOCAL_INFILE => false);

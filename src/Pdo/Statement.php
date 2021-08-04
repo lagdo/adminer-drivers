@@ -7,7 +7,19 @@ use PDO;
 
 class Statement extends PDOStatement
 {
-    var $_offset = 0, $num_rows;
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $_offset = 0;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $num_rows;
 
     public function fetch_assoc() {
         return $this->fetch(PDO::FETCH_ASSOC);

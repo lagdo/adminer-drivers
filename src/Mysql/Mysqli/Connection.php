@@ -10,7 +10,12 @@ use MySQLi;
  */
 class Connection extends MySQLi implements ConnectionInterface
 {
-    var $extension = "MySQLi";
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "MySQLi";
 
     public function __construct() {
         parent::init();

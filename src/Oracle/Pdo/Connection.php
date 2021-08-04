@@ -9,8 +9,19 @@ use Lagdo\Adminer\Drivers\ConnectionInterface;
  */
 class Connection extends \Lagdo\Adminer\Drivers\Pdo\Connection implements ConnectionInterface
 {
-    var $extension = "PDO_OCI";
-    var $_current_db;
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "PDO_OCI";
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $_current_db;
 
     public function connect($server, $username, $password) {
         $this->dsn("oci:dbname=//$server;charset=AL32UTF8", $username, $password);

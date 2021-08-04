@@ -7,7 +7,40 @@ use SQLiteDatabase;
 
 class Connection extends \Lagdo\Adminer\Drivers\Sqlite\Connection implements ConnectionInterface
 {
-    var $extension = "SQLite", $server_info, $affected_rows, $error, $_link;
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "SQLite";
+
+    /**
+     * The server description
+     *
+     * @var string
+     */
+    protected $server_info;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $affected_rows;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $error;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_link;
 
     public function __construct($filename) {
         $this->server_info = sqlite_libversion();

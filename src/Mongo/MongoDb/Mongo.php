@@ -6,8 +6,12 @@ use Lagdo\Adminer\Drivers\Mongo\Mongo as MongoServer;
 
 class Mongo extends MongoServer
 {
-
-    var $operators = array(
+    /**
+     * Undocumented variable
+     *
+     * @var array
+     */
+    protected $operators = array(
         "=",
         "!=",
         ">",

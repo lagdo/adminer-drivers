@@ -8,7 +8,47 @@ use function Lagdo\Adminer\Drivers\lang;
 
 class Connection implements ConnectionInterface
 {
-    var $extension = "JSON", $server_info, $errno, $error, $_url, $_db;
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $extension = "JSON";
+
+    /**
+     * The server description
+     *
+     * @var string
+     */
+    protected $server_info;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $errno;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $error;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_url;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_db;
 
     /**
      * Performs query

@@ -10,7 +10,47 @@ use function Lagdo\Adminer\Drivers\lang;
 
 class Connection
 {
-    var $_result, $server_info, $affected_rows, $errno, $error, $pdo;
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_result;
+
+    /**
+     * The server description
+     *
+     * @var string
+     */
+    protected $server_info;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $affected_rows;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $errno;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $error;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $pdo;
 
     public function __construct() {
         $pos = array_search("SQL", $this->adminer->operators);

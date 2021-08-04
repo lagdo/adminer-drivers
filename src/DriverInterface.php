@@ -1,6 +1,6 @@
 <?php
 
-namespace Lagdo\Adminer\Drivers\Pgsql;
+namespace Lagdo\Adminer\Drivers;
 
 interface DriverInterface
 {}

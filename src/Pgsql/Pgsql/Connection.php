@@ -11,7 +11,68 @@ use function Lagdo\Adminer\Drivers\h;
  */
 class Connection implements ConnectionInterface
 {
-    var $extension = "PgSQL", $_link, $_result, $_string, $_database = true, $server_info, $affected_rows, $error, $timeout;
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "PgSQL";
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_link;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_result;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $_string;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $_database = true;
+
+    /**
+     * The server description
+     *
+     * @var string
+     */
+    protected $server_info;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $affected_rows;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $error;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $timeout;
 
     protected function _error($errno, $error) {
         if (ini_bool("html_errors")) {

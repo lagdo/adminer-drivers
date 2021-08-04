@@ -9,8 +9,61 @@ use Lagdo\Adminer\Drivers\ConnectionInterface;
  */
 class Connection implements ConnectionInterface
 {
-    var $extension = "oci8", $_link, $_result, $server_info, $affected_rows, $errno, $error;
-    var $_current_db;
+    /**
+     * The extension name
+     *
+     * @var string
+     */
+    protected $extension = "oci8";
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_link;
+
+    /**
+     * Undocumented variable
+     *
+     * @var [type]
+     */
+    protected $_result;
+
+    /**
+     * The server description
+     *
+     * @var string
+     */
+    protected $server_info;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $affected_rows;
+
+    /**
+     * Undocumented variable
+     *
+     * @var int
+     */
+    protected $errno;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $error;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
+    protected $_current_db;
 
     protected function _error($errno, $error) {
         if (ini_bool("html_errors")) {
