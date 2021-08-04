@@ -43,7 +43,7 @@ class Connection extends AbstractConnection
     /**
      * @inheritDoc
      */
-    public function connect($server, array $options)
+    public function open($server, array $options)
     {
         // $class = 'MongoDB\Driver\Manager';
         // $this->client = new $class($server, $options);

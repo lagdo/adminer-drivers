@@ -22,7 +22,7 @@ class Connection extends AbstractConnection
      /**
      * @inheritDoc
      */
-    public function connect($server, array $options)
+    public function open($server, array $options)
     {
         $username = $options['username'];
         $password = $options['password'];

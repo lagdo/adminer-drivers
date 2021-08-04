@@ -41,7 +41,7 @@ class Mongo extends AbstractServer
         if (($auth_source = getenv("MONGO_AUTH_SOURCE"))) {
             $options["authSource"] = $auth_source;
         }
-        $this->connection->connect("mongodb://$server", $options);
+        $this->connection->open("mongodb://$server", $options);
         if ($this->connection->error) {
             return $this->connection->error;
         }

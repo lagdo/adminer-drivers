@@ -44,11 +44,11 @@ class Elastic extends AbstractServer
         $connection = $this->createConnection();
         list($server, $username, $password) = $this->adminer->credentials();
         if ($password != "" &&
-            $this->connection->connect($server, ['username' => $username, 'password' => ""]))
+            $this->connection->open($server, ['username' => $username, 'password' => ""]))
         {
             return lang('Database does not support password.');
         }
-        if ($this->connection->connect($server, \compact('username', 'password'))) {
+        if ($this->connection->open($server, \compact('username', 'password'))) {
             return $connection;
         }
         return $this->connection->error;

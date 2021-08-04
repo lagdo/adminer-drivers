@@ -58,7 +58,7 @@ class Mssql extends AbstractServer
     {
         $connection = $this->createConnection();
         list($server, $username, $password) = $this->adminer->credentials();
-        if ($this->connection->connect($server, \compact('username', 'password'))) {
+        if ($this->connection->open($server, \compact('username', 'password'))) {
             return $connection;
         }
         return $this->connection->error;

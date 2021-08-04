@@ -61,7 +61,7 @@ interface ConnectionInterface
      *
      * @return mixed
      */
-    public function connect($server, array $options);
+    public function open($server, array $options);
 
     /**
      * Get the client

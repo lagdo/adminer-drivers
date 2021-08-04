@@ -37,7 +37,8 @@ class Mysql extends AbstractServer
         {
             return new Mysqli\Connection();
         }
-        if(extension_loaded("mysql") && !((ini_bool("sql.safe_mode") || ini_bool("mysql.allow_local_infile")) && extension_loaded("pdo_mysql")))
+        if(extension_loaded("mysql") && !((ini_bool("sql.safe_mode") ||
+            ini_bool("mysql.allow_local_infile")) && extension_loaded("pdo_mysql")))
         {
             return new Mysql\Connection();
         }
@@ -56,7 +57,7 @@ class Mysql extends AbstractServer
         global $types, $structured_types;
         $connection = $this->createConnection();
         list($server, $username, $password) = $this->adminer->credentials();
-        if ($this->connection->connect($server, \compact('username', 'password'))) {
+        if ($this->connection->open($server, \compact('username', 'password'))) {
             $this->connection->set_charset(charset($connection)); // available in MySQLi since PHP 5.0.5
             $this->connection->query("SET sql_quote_show_create = 1, autocommit = 1");
             if ($this->min_version('5.7.8', 10.2, $connection)) {
