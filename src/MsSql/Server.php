@@ -78,7 +78,7 @@ class Server extends AbstractServer
     }
 
     public function table($idf) {
-        return ($_GET["ns"] != "" ? $this->idf_escape($_GET["ns"]) . "." : "") . $this->idf_escape($idf);
+        return ($this->schema != "" ? $this->idf_escape($this->schema) . "." : "") . $this->idf_escape($idf);
     }
 
     public function get_databases($flush) {
@@ -369,8 +369,8 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . $this->q($table)
     }
 
     public function get_schema() {
-        if ($_GET["ns"] != "") {
-            return $_GET["ns"];
+        if ($this->schema != "") {
+            return $this->schema;
         }
         return $this->connection->result("SELECT SCHEMA_NAME()");
     }

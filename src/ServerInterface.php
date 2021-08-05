@@ -19,12 +19,36 @@ interface ServerInterface
     public function getName();
 
     /**
-     * Connect to the database
+     * Connect to the database server
      * Return a string for error
      *
      * @return ConnectionInterface|string
      */
     public function connect();
+
+    /**
+     * Select the database and schema
+     *
+     * @param string $database  The database name
+     * @param string $schema    The database schema
+     *
+     * @return array
+     */
+    public function selectDatabase(string $database, string $schema);
+
+    /**
+     * Select the database and schema
+     *
+     * @return string
+     */
+    public function getCurrentDatabase();
+
+    /**
+     * Select the database and schema
+     *
+     * @return string
+     */
+    public function getCurrentSchema();
 
     /**
      * Escape database identifier

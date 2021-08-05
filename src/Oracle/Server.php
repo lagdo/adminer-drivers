@@ -98,7 +98,7 @@ class Server extends AbstractServer
     }
 
     public function where_owner($prefix, $owner = "owner") {
-        if (!$_GET["ns"]) {
+        if (!$this->schema) {
             return '';
         }
         return "$prefix$owner = sys_context('USERENV', 'CURRENT_SCHEMA')";

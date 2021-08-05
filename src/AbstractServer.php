@@ -18,11 +18,54 @@ abstract class AbstractServer implements ServerInterface
     protected $connection = null;
 
     /**
+     * @var string
+     */
+    protected $database = '';
+
+    /**
+     * @var string
+     */
+    protected $schema = '';
+
+    /**
      * Create a connection to the server, based on the config and available packages
      *
      * @return void
      */
     abstract protected function createConnection();
+
+    /**
+     * @inheritDoc
+     */
+    public function selectDatabase(string $database, string $schema)
+    {
+        $this->database = $database;
+        $this->schema = $schema;
+        if($database !== '')
+        {
+            $this->connection->select_db($database);
+            if($schema !== '')
+            {
+                $this->set_schema($schema);
+            }
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getCurrentDatabase()
+    {
+        return $this->database;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getCurrentSchema()
+    {
+        return $this->schema;
+    }
 
     public function error() {
         return h($this->connection->error);
@@ -283,8 +326,8 @@ abstract class AbstractServer implements ServerInterface
         return " FOREIGN KEY (" . implode(", ", array_map(function($idf) {
                 return $this->idf_escape($idf);
             }, $foreign_key["source"])) . ") REFERENCES " .
-            ($db != "" && $db != $_GET["db"] ? $this->idf_escape($db) . "." : "") .
-            ($ns != "" && $ns != $_GET["ns"] ? $this->idf_escape($ns) . "." : "") .
+            ($db != "" && $db != $this->database ? $this->idf_escape($db) . "." : "") .
+            ($ns != "" && $ns != $this->schema ? $this->idf_escape($ns) . "." : "") .
             $this->table($foreign_key["table"]) . " (" . implode(", ", array_map(function($idf) {
                 return $this->idf_escape($idf);
             }, $foreign_key["target"])) . ")" . //! reuse $name - check in older MySQL versions

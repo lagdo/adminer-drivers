@@ -57,7 +57,7 @@ class Driver extends AbstractDriver
             "information_schema" => "infoschema",
             "pg_catalog" => "catalog",
         );
-        $link = $links[$_GET["ns"]];
+        $link = $links[$this->server->getCurrentSchema()];
         if ($link) {
             return "$link-" . str_replace("_", "-", $name) . ".html";
         }
