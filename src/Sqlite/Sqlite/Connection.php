@@ -2,14 +2,17 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite\Sqlite;
 
-use Lagdo\Adminer\Drivers\Sqlite\Connection as SqliteConnection;
+use Lagdo\Adminer\Drivers\AbstractConnection;
+use Lagdo\Adminer\Drivers\Sqlite\ConnectionTrait;
 
 use SQLite3;
 
 use function Lagdo\Adminer\Drivers\is_utf8;
 
-class Connection extends SqliteConnection
+class Connection extends AbstractConnection
 {
+    use ConnectionTrait;
+
     /**
      * @inheritDoc
      */

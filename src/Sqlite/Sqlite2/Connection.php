@@ -2,12 +2,15 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite\Sqlite2;
 
-use Lagdo\Adminer\Drivers\Sqlite\Connection as SqliteConnection;
+use Lagdo\Adminer\Drivers\AbstractConnection;
+use Lagdo\Adminer\Drivers\Sqlite\ConnectionTrait;
 
 use SQLiteDatabase;
 
-class Connection extends SqliteConnection
+class Connection extends AbstractConnection
 {
+    use ConnectionTrait;
+
     /**
      * @inheritDoc
      */
