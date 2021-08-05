@@ -10,11 +10,26 @@ use function Lagdo\Adminer\Drivers\idf_unescape;
 class Server extends AbstractServer
 {
     /**
+     * @var string
+     */
+    protected $driver;
+
+    /**
+     * The constructor
+     *
+     * @param string $driver "sqlite" or "sqlite2"
+     */
+    public function __construct($driver)
+    {
+        $this->driver = $driver;
+    }
+
+    /**
      * @inheritDoc
      */
     public function getDriver()
     {
-        return (isset($_GET["sqlite"]) ? "sqlite" : "sqlite2");
+        return $this->driver;
     }
 
     /**
@@ -22,7 +37,7 @@ class Server extends AbstractServer
      */
     public function getName()
     {
-        return (isset($_GET["sqlite"]) ? "SQLite 3" : "SQLite 2");
+        return ($this->driver == "sqlite" ? "SQLite 3" : "SQLite 2");
     }
 
     /**
@@ -559,7 +574,7 @@ class Server extends AbstractServer
 
     public function driver_config() {
         return array(
-            'possible_drivers' => array((isset($_GET["sqlite"]) ? "SQLite3" : "SQLite"), "PDO_SQLite"),
+            'possible_drivers' => array(($this->driver == "sqlite" ? "SQLite3" : "SQLite"), "PDO_SQLite"),
             'jush' => "sqlite",
             'types' => array("integer" => 0, "real" => 0, "numeric" => 0, "text" => 0, "blob" => 0),
             'structured_types' => array_keys($types),
