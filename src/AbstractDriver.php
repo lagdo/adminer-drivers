@@ -63,15 +63,14 @@ abstract class AbstractDriver implements DriverInterface
      * @param array result of $this->adminer->selectOrderProcess()
      * @param int result of $this->adminer->selectLimitProcess()
      * @param int index of page starting at zero
-     * @param bool whether to print the query
      * @return Statement
      */
-    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0, $print = false) {
+    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0) {
         $is_group = (count($group) < count($select));
         $query = $this->adminer->selectQueryBuild($select, $where, $group, $order, $limit, $page);
         if (!$query) {
             $query = "SELECT" . $this->server->limit(
-                ($_GET["page"] != "last" && $limit != "" && $group && $is_group && $this->jush == "sql" ?
+                ($page != "last" && $limit != "" && $group && $is_group && $this->jush == "sql" ?
                 "SQL_CALC_FOUND_ROWS " : "") . implode(", ", $select) . "\nFROM " .
                 $this->server->table($table),
                 ($where ? "\nWHERE " . implode(" AND ", $where) : "") . ($group && $is_group ?
@@ -82,9 +81,6 @@ abstract class AbstractDriver implements DriverInterface
         }
         $start = microtime(true);
         $return = $this->connection->query($query);
-        if ($print) {
-            echo $this->adminer->selectQuery($query, $start, !$return);
-        }
         return $return;
     }
 

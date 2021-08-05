@@ -8,7 +8,7 @@ use Lagdo\Adminer\Drivers\DriverTrait;
 class Driver extends AbstractDriver {
     use DriverTrait;
 
-    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0, $print = false) {
+    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0) {
         $data = [];
         $query = "$table/_search";
         if ($select != array("*")) {
@@ -47,9 +47,6 @@ class Driver extends AbstractDriver {
         }
         $start = microtime(true);
         $search = $this->connection->query($query, $data);
-        if ($print) {
-            echo $this->adminer->selectQuery("$query: " . json_encode($data), $start, !$search);
-        }
         if (!$search) {
             return false;
         }

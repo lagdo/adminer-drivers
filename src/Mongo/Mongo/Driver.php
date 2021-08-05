@@ -12,7 +12,7 @@ class Driver extends AbstractDriver {
 
     public $primary = "_id";
 
-    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0, $print = false) {
+    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0) {
         $select = ($select == array("*")
             ? []
             : array_fill_keys($select, true)

@@ -411,7 +411,7 @@ abstract class AbstractServer implements ServerInterface
      * @param string
      * @return array of associative arrays
      */
-    public function get_rows($query, $connection2 = null, $error = "<p class='error'>")
+    public function get_rows($query, $connection2 = null)
     {
         $conn = (is_object($connection2) ? $connection2 : $this->connection);
         $return = [];
@@ -420,8 +420,6 @@ abstract class AbstractServer implements ServerInterface
             while ($row = $result->fetch_assoc()) {
                 $return[] = $row;
             }
-        } elseif (!$result && !is_object($connection2) && $error && defined("PAGE_HEADER")) {
-            // echo $error . $this->error() . "\n";
         }
         return $return;
     }
