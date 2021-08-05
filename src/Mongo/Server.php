@@ -39,7 +39,7 @@ class Server extends AbstractServer
             $options["username"] = $username;
             $options["password"] = $password;
         }
-        $db = $this->adminer->database();
+        $db = $this->getCurrentDatabase();
         if ($db != "") {
             $options["db"] = $db;
         }

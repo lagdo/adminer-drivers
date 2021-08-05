@@ -32,7 +32,7 @@ class Connection extends PdoConnection
         $username = $options['username'];
         $password = $options['password'];
 
-        $db = $this->adminer->database();
+        $db = $this->server->getCurrentDatabase();
         //! client_encoding is supported since 9.1 but we can't yet use min_version here
         $this->dsn("pgsql:host='" . str_replace(":", "' port='", addcslashes($server, "'\\")) .
             "' client_encoding=utf8 dbname='" .
@@ -42,7 +42,7 @@ class Connection extends PdoConnection
     }
 
     public function select_db($database) {
-        return ($this->adminer->database() == $database);
+        return ($this->server->getCurrentDatabase() == $database);
     }
 
     public function quoteBinary($s) {

@@ -288,7 +288,7 @@ ORDER BY connamespace, conname") as $row) {
 
     public function rename_database($name, $collation) {
         //! current database cannot be renamed
-        return $this->queries("ALTER DATABASE " . $this->idf_escape($this->adminer->database()) .
+        return $this->queries("ALTER DATABASE " . $this->idf_escape($this->getCurrentDatabase()) .
             " RENAME TO " . $this->idf_escape($name));
     }
 

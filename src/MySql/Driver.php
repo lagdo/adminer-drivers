@@ -64,10 +64,10 @@ class Driver extends AbstractDriver {
 
     public function tableHelp($name) {
         $maria = preg_match('~MariaDB~', $this->connection->server_info);
-        if ($this->server->information_schema($this->adminer->database())) {
+        if ($this->server->information_schema($this->server->getCurrentDatabase())) {
             return strtolower(($maria ? "information-schema-$name-table/" : str_replace("_", "-", $name) . "-table.html"));
         }
-        if ($this->adminer->database() == "mysql") {
+        if ($this->server->getCurrentDatabase() == "mysql") {
             return ($maria ? "mysql$name-table/" : "system-database.html"); //! more precise link
         }
     }

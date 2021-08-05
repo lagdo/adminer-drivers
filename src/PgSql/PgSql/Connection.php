@@ -56,7 +56,7 @@ class Connection extends AbstractConnection
         $username = $options['username'];
         $password = $options['password'];
 
-        $db = $this->adminer->database();
+        $db = $this->server->getCurrentDatabase();
         set_error_handler(array($this, '_error'));
         $this->_string = "host='" . str_replace(":", "' port='", addcslashes($server, "'\\")) .
             "' user='" . addcslashes($username, "'\\") . "' password='" . addcslashes($password, "'\\") . "'";
@@ -95,7 +95,7 @@ class Connection extends AbstractConnection
      * @inheritDoc
      */
     public function select_db($database) {
-        if ($database == $this->adminer->database()) {
+        if ($database == $this->server->getCurrentDatabase()) {
             return $this->_database;
         }
         $return = @pg_connect("$this->_string dbname='" . addcslashes($database, "'\\") . "'", PGSQL_CONNECT_FORCE_NEW);

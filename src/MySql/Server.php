@@ -401,7 +401,7 @@ class Server extends AbstractServer
                 }
             }
             $return = (!$tables && !$views) || $this->move_tables($tables, $views, $name);
-            $this->drop_databases($return ? array($this->adminer->database()) : []);
+            $this->drop_databases($return ? array($this->getCurrentDatabase()) : []);
         }
         return $return;
     }
@@ -531,7 +531,7 @@ class Server extends AbstractServer
                 $definitions[table($table)] = $this->view($table);
             }
             $this->connection->select_db($target);
-            $db = $this->idf_escape($this->adminer->database());
+            $db = $this->idf_escape($this->getCurrentDatabase());
             foreach ($definitions as $name => $view) {
                 if (!$this->server->queries("CREATE VIEW $name AS " . str_replace(" $db.", " ", $view["select"])) || !$this->queries("DROP VIEW $db.$name")) {
                     return false;
@@ -554,7 +554,7 @@ class Server extends AbstractServer
         $this->queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
         $overwrite = $this->getQuery()->overwrite();
         foreach ($tables as $table) {
-            $name = ($target == $this->adminer->database() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
+            $name = ($target == $this->getCurrentDatabase() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
             if (($overwrite && !$this->queries("\nDROP TABLE IF EXISTS $name"))
                 || !$this->queries("CREATE TABLE $name LIKE " . $this->table($table))
                 || !$this->queries("INSERT INTO $name SELECT * FROM " . $this->table($table))
@@ -563,13 +563,13 @@ class Server extends AbstractServer
             }
             foreach ($this->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\"))) as $row) {
                 $trigger = $row["Trigger"];
-                if (!$this->queries("CREATE TRIGGER " . ($target == $this->adminer->database() ? $this->idf_escape("copy_$trigger") : $this->idf_escape($target) . "." . $this->idf_escape($trigger)) . " $row[Timing] $row[Event] ON $name FOR EACH ROW\n$row[Statement];")) {
+                if (!$this->queries("CREATE TRIGGER " . ($target == $this->getCurrentDatabase() ? $this->idf_escape("copy_$trigger") : $this->idf_escape($target) . "." . $this->idf_escape($trigger)) . " $row[Timing] $row[Event] ON $name FOR EACH ROW\n$row[Statement];")) {
                     return false;
                 }
             }
         }
         foreach ($views as $table) {
-            $name = ($target == $this->adminer->database() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
+            $name = ($target == $this->getCurrentDatabase() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
             $view = $this->view($table);
             if (($overwrite && !$this->queries("DROP VIEW IF EXISTS $name"))
                 || !$this->queries("CREATE VIEW $name AS $view[select]")) { //! USE to avoid db.table
@@ -661,7 +661,7 @@ class Server extends AbstractServer
      * @return array ("SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => )
      */
     public function routines() {
-        return $this->get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . $this->q($this->adminer->database()));
+        return $this->get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . $this->q($this->getCurrentDatabase()));
     }
 
     /**

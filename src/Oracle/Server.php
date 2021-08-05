@@ -92,7 +92,7 @@ class Server extends AbstractServer
     }
 
     public function get_current_db() {
-        $db = $this->connection->_current_db ? $this->connection->_current_db : $this->adminer->database();
+        $db = $this->connection->_current_db ? $this->connection->_current_db : $this->getCurrentDatabase();
         unset($this->connection->_current_db);
         return $db;
     }
@@ -112,7 +112,7 @@ class Server extends AbstractServer
     public function tables_list() {
         $view = views_table("view_name");
         $owner = where_owner(" AND ");
-        return $this->get_key_vals("SELECT table_name, 'table' FROM all_tables WHERE tablespace_name = " . $this->q($this->adminer->database()) . "$owner
+        return $this->get_key_vals("SELECT table_name, 'table' FROM all_tables WHERE tablespace_name = " . $this->q($this->getCurrentDatabase()) . "$owner
 UNION SELECT view_name, 'view' FROM $view
 ORDER BY 1"
         ); //! views don't have schema
@@ -328,7 +328,7 @@ AND c_src.TABLE_NAME = " . $this->q($table);
 
     public function schemas() {
         $return = $this->get_vals("SELECT DISTINCT owner FROM dba_segments WHERE owner IN (SELECT username FROM dba_users WHERE default_tablespace NOT IN ('SYSTEM','SYSAUX')) ORDER BY 1");
-        return ($return ? $return : $this->get_vals("SELECT DISTINCT owner FROM all_tables WHERE tablespace_name = " . $this->q($this->adminer->database()) . " ORDER BY 1"));
+        return ($return ? $return : $this->get_vals("SELECT DISTINCT owner FROM all_tables WHERE tablespace_name = " . $this->q($this->getCurrentDatabase()) . " ORDER BY 1"));
     }
 
     public function get_schema() {

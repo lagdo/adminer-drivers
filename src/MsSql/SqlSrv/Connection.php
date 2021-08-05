@@ -36,7 +36,7 @@ class Connection extends AbstractConnection
         $username = $options['username'];
         $password = $options['password'];
 
-        $db = $this->adminer->database();
+        $db = $this->server->getCurrentDatabase();
         $connection_info = array("UID" => $username, "PWD" => $password, "CharacterSet" => "UTF-8");
         if ($db != "") {
             $connection_info["Database"] = $db;

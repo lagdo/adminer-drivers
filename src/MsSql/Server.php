@@ -208,9 +208,9 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table)
 
     public function rename_database($name, $collation) {
         if (preg_match('~^[a-z0-9_]+$~i', $collation)) {
-            $this->queries("ALTER DATABASE " . $this->idf_escape($this->adminer->database()) . " COLLATE $collation");
+            $this->queries("ALTER DATABASE " . $this->idf_escape($this->getCurrentDatabase()) . " COLLATE $collation");
         }
-        $this->queries("ALTER DATABASE " . $this->idf_escape($this->adminer->database()) . " MODIFY NAME = " . $this->idf_escape($name));
+        $this->queries("ALTER DATABASE " . $this->idf_escape($this->getCurrentDatabase()) . " MODIFY NAME = " . $this->idf_escape($name));
         return true; //! false negative "The database name 'test2' has been set."
     }
 
