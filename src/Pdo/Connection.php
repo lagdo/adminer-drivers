@@ -41,7 +41,7 @@ class Connection extends AbstractConnection
         if (!$result) {
             list(, $this->errno, $this->error) = $this->client->errorInfo();
             if (!$this->error) {
-                $this->error = lang('Unknown error.');
+                $this->error = $this->adminer->lang('Unknown error.');
             }
             return false;
         }

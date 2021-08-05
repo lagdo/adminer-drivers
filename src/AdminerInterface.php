@@ -5,6 +5,16 @@ namespace Lagdo\Adminer\Drivers;
 interface AdminerInterface
 {
     /**
+     * Translate string
+     *
+     * @param string
+     * @param int
+     *
+     * @return string
+     */
+    public function lang($idf, $number = null);
+
+    /**
      * Get the database user credentials
      *
      * @return array

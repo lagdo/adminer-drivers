@@ -119,6 +119,20 @@ interface ServerInterface
     public function logged_user();
 
     /**
+     * Format elapsed time
+     * @param float output of microtime(true)
+     * @return string HTML code
+     */
+    public function format_time($start);
+
+    /**
+     * Format decimal number
+     * @param int
+     * @return string
+     */
+    public function format_number($val);
+
+    /**
      * Get tables list
      * @return array array($name => $type)
      */
@@ -138,6 +152,14 @@ interface ServerInterface
      * @return array array($name => array("Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => )) or only inner array with $name
      */
     public function table_status($name = "", $fast = false);
+
+    /**
+     * Get status of a single table and fall back to name on error
+     * @param string
+     * @param bool
+     * @return array
+     */
+    public function table_status1($table, $fast = false);
 
     /**
      * Find out whether the identifier is view

@@ -47,7 +47,7 @@ class Server extends AbstractServer
         if ($password != "" &&
             $this->connection->open($server, ['username' => $username, 'password' => ""]))
         {
-            return lang('Database does not support password.');
+            return $this->adminer->lang('Database does not support password.');
         }
         if (!$this->connection->open($server, \compact('username', 'password'))) {
             return $this->connection->error;
@@ -224,11 +224,11 @@ class Server extends AbstractServer
         $types = [];
         $structured_types = [];
         foreach (array(
-            lang('Numbers') => array("long" => 3, "integer" => 5, "short" => 8, "byte" => 10,
+            $this->adminer->lang('Numbers') => array("long" => 3, "integer" => 5, "short" => 8, "byte" => 10,
                 "double" => 20, "float" => 66, "half_float" => 12, "scaled_float" => 21),
-            lang('Date and time') => array("date" => 10),
-            lang('Strings') => array("string" => 65535, "text" => 65535),
-            lang('Binary') => array("binary" => 255),
+            $this->adminer->lang('Date and time') => array("date" => 10),
+            $this->adminer->lang('Strings') => array("string" => 65535, "text" => 65535),
+            $this->adminer->lang('Binary') => array("binary" => 255),
         ) as $key => $val) {
             $types += $val;
             $structured_types[$key] = array_keys($val);

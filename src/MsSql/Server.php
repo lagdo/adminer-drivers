@@ -391,10 +391,10 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . $this->q($table)
         $types = [];
         $structured_types = [];
         foreach (array( //! use sys.types
-            lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "int" => 10, "bigint" => 20, "bit" => 1, "decimal" => 0, "real" => 12, "float" => 53, "smallmoney" => 10, "money" => 20),
-            lang('Date and time') => array("date" => 10, "smalldatetime" => 19, "datetime" => 19, "datetime2" => 19, "time" => 8, "datetimeoffset" => 10),
-            lang('Strings') => array("char" => 8000, "varchar" => 8000, "text" => 2147483647, "nchar" => 4000, "nvarchar" => 4000, "ntext" => 1073741823),
-            lang('Binary') => array("binary" => 8000, "varbinary" => 8000, "image" => 2147483647),
+            $this->adminer->lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "int" => 10, "bigint" => 20, "bit" => 1, "decimal" => 0, "real" => 12, "float" => 53, "smallmoney" => 10, "money" => 20),
+            $this->adminer->lang('Date and time') => array("date" => 10, "smalldatetime" => 19, "datetime" => 19, "datetime2" => 19, "time" => 8, "datetimeoffset" => 10),
+            $this->adminer->lang('Strings') => array("char" => 8000, "varchar" => 8000, "text" => 2147483647, "nchar" => 4000, "nvarchar" => 4000, "ntext" => 1073741823),
+            $this->adminer->lang('Binary') => array("binary" => 8000, "varbinary" => 8000, "image" => 2147483647),
         ) as $key => $val) {
             $types += $val;
             $structured_types[$key] = array_keys($val);

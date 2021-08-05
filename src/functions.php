@@ -68,26 +68,6 @@ function number_type()
 }
 
 /**
- * Format elapsed time
- * @param float output of microtime(true)
- * @return string HTML code
- */
-function format_time($start)
-{
-    return lang('%.3f s', max(0, microtime(true) - $start));
-}
-
-/**
- * Format decimal number
- * @param int
- * @return string
- */
-function format_number($val)
-{
-    return strtr(number_format($val, 0, ".", lang(',')), preg_split('~~u', lang('0123456789'), -1, PREG_SPLIT_NO_EMPTY));
-}
-
-/**
  * Find unique identifier of a row
  * @param array
  * @param array result of indexes()

@@ -42,7 +42,7 @@ class Connection extends AbstractConnection
             return $file;
         }
         if (!preg_match('~^HTTP/[0-9.]+ 2~i', $http_response_header[0])) {
-            $this->error = lang('Invalid credentials.') . " $http_response_header[0]";
+            $this->error = $this->adminer->lang('Invalid credentials.') . " $http_response_header[0]";
             return false;
         }
         $return = json_decode($file, true);

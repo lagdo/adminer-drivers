@@ -25,7 +25,7 @@ class Connection extends AbstractConnection
         $password = $options['password'];
 
         if (ini_bool("mysql.allow_local_infile")) {
-            $this->error = lang('Disable %s or enable %s or %s extensions.', "'mysql.allow_local_infile'", "MySQLi", "PDO_MySQL");
+            $this->error = $this->adminer->lang('Disable %s or enable %s or %s extensions.', "'mysql.allow_local_infile'", "MySQLi", "PDO_MySQL");
             return false;
         }
         $this->client = @mysql_connect(

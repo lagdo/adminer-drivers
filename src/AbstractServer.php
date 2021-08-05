@@ -3,7 +3,6 @@
 namespace Lagdo\Adminer\Drivers;
 
 use function Lagdo\Adminer\Drivers\h;
-use function Lagdo\Adminer\Drivers\format_time;
 
 abstract class AbstractServer implements ServerInterface
 {
@@ -317,15 +316,29 @@ abstract class AbstractServer implements ServerInterface
     }
 
     /**
-     * Get status of a single table and fall back to name on error
-     * @param string
-     * @param bool
-     * @return array
+     * @inheritDoc
      */
     public function table_status1($table, $fast = false)
     {
         $return = $this->table_status($table, $fast);
         return ($return ? $return : array("Name" => $table));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function format_time($start)
+    {
+        return $this->adminer->lang('%.3f s', max(0, microtime(true) - $start));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function format_number($val)
+    {
+        return strtr(number_format($val, 0, ".", $this->adminer->lang(',')),
+            preg_split('~~u', $this->adminer->lang('0123456789'), -1, PREG_SPLIT_NO_EMPTY));
     }
 
     /**
@@ -365,7 +378,7 @@ abstract class AbstractServer implements ServerInterface
         }
         if ($query === null) {
             // return executed queries
-            return array(implode("\n", $queries), format_time($start));
+            return array(implode("\n", $queries), $this->format_time($start));
         }
         $queries[] = (preg_match('~;$~', $query) ? "DELIMITER ;;\n$query;\nDELIMITER " : $query) . ";";
         return $this->connection->query($query);

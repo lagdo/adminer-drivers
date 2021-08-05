@@ -38,7 +38,7 @@ class Connection extends AbstractConnection
                 $options["password"] = "";
                 try {
                     new MongoClient($server, $options);
-                    $this->error = lang('Database does not support password.');
+                    $this->error = $this->adminer->lang('Database does not support password.');
                 } catch (Exception $e) {
                     // this is what we want
                 }

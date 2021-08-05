@@ -23,8 +23,7 @@
             "Lagdo\\Adminer\\Drivers": "src/"
         },
         "files": [
-            "src/functions.php",
-            "src/lang.php"
+            "src/functions.php"
         ]
     }
 }

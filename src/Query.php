@@ -2,9 +2,6 @@
 
 namespace Lagdo\Adminer\Drivers;
 
-use function Lagdo\Adminer\Drivers\h;
-use function Lagdo\Adminer\Drivers\format_time;
-
 class Query
 {
     /**

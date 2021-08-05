@@ -72,7 +72,7 @@ class Server extends AbstractServer
     {
         list(, , $password) = $this->adminer->credentials();
         if ($password != "") {
-            return lang('Database does not support password.');
+            return $this->adminer->lang('Database does not support password.');
         }
 
         $this->createConnection();
@@ -255,7 +255,7 @@ class Server extends AbstractServer
         // avoid creating PHP files on unsecured servers
         $extensions = "db|sdb|sqlite";
         if (!preg_match("~^[^\\0]*\\.($extensions)\$~", $name)) {
-            $this->connection->error = lang('Please use one of the extensions %s.', str_replace("|", ", ", $extensions));
+            $this->connection->error = $this->adminer->lang('Please use one of the extensions %s.', str_replace("|", ", ", $extensions));
             return false;
         }
         return true;
@@ -263,7 +263,7 @@ class Server extends AbstractServer
 
     public function create_database($db, $collation) {
         if (file_exists($db)) {
-            $this->connection->error = lang('File exists.');
+            $this->connection->error = $this->adminer->lang('File exists.');
             return false;
         }
         if (!check_sqlite_name($db)) {
@@ -285,7 +285,7 @@ class Server extends AbstractServer
         $this->connection->__construct(":memory:"); // to unlock file, doesn't work in PDO on Windows
         foreach ($databases as $db) {
             if (!@unlink($db)) {
-                $this->connection->error = lang('File exists.');
+                $this->connection->error = $this->adminer->lang('File exists.');
                 return false;
             }
         }
@@ -297,7 +297,7 @@ class Server extends AbstractServer
             return false;
         }
         $this->connection->__construct(":memory:");
-        $this->connection->error = lang('File exists.');
+        $this->connection->error = $this->adminer->lang('File exists.');
         return @rename($this->getCurrentDatabase(), $name);
     }
 

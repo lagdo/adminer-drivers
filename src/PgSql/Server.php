@@ -58,10 +58,10 @@ class Server extends AbstractServer
         if ($this->min_version(9, 0, $this->connection)) {
             $this->connection->query("SET application_name = 'Adminer'");
             if ($this->min_version(9.2, 0, $this->connection)) {
-                $structured_types[lang('Strings')][] = "json";
+                $structured_types[$this->adminer->lang('Strings')][] = "json";
                 $types["json"] = 4294967295;
                 if ($this->min_version(9.4, 0, $this->connection)) {
-                    $structured_types[lang('Strings')][] = "jsonb";
+                    $structured_types[$this->adminer->lang('Strings')][] = "jsonb";
                     $types["jsonb"] = 4294967295;
                 }
             }
@@ -150,7 +150,9 @@ WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 
         $identity_column = $this->min_version(10) ? 'a.attidentity' : '0';
 
-        foreach ($this->get_rows("SELECT a.attname AS field, format_type(a.atttypid, a.atttypmod) AS full_type, pg_get_expr(d.adbin, d.adrelid) AS default, a.attnotnull::int, col_description(c.oid, a.attnum) AS comment, $identity_column AS identity
+        foreach ($this->get_rows("SELECT a.attname AS field, format_type(a.atttypid, a.atttypmod) AS full_type, " .
+            "pg_get_expr(d.adbin, d.adrelid) AS default, a.attnotnull::int, " .
+            "col_description(c.oid, a.attnum) AS comment, $identity_column AS identity
 FROM pg_class c
 JOIN pg_namespace n ON c.relnamespace = n.oid
 JOIN pg_attribute a ON c.oid = a.attrelid
@@ -519,7 +521,7 @@ AND typelem = 0"
         foreach ($this->types() as $type) { //! get types from current_schemas('t')
             if (!isset($types[$type])) {
                 $types[$type] = 0;
-                $structured_types[lang('User types')][] = $type;
+                $structured_types[$this->adminer->lang('User types')][] = $type;
             }
         }
         return $return;
@@ -693,12 +695,12 @@ AND typelem = 0"
         $types = [];
         $structured_types = [];
         foreach (array( //! arrays
-            lang('Numbers') => array("smallint" => 5, "integer" => 10, "bigint" => 19, "boolean" => 1, "numeric" => 0, "real" => 7, "double precision" => 16, "money" => 20),
-            lang('Date and time') => array("date" => 13, "time" => 17, "timestamp" => 20, "timestamptz" => 21, "interval" => 0),
-            lang('Strings') => array("character" => 0, "character varying" => 0, "text" => 0, "tsquery" => 0, "tsvector" => 0, "uuid" => 0, "xml" => 0),
-            lang('Binary') => array("bit" => 0, "bit varying" => 0, "bytea" => 0),
-            lang('Network') => array("cidr" => 43, "inet" => 43, "macaddr" => 17, "txid_snapshot" => 0),
-            lang('Geometry') => array("box" => 0, "circle" => 0, "line" => 0, "lseg" => 0, "path" => 0, "point" => 0, "polygon" => 0),
+            $this->adminer->lang('Numbers') => array("smallint" => 5, "integer" => 10, "bigint" => 19, "boolean" => 1, "numeric" => 0, "real" => 7, "double precision" => 16, "money" => 20),
+            $this->adminer->lang('Date and time') => array("date" => 13, "time" => 17, "timestamp" => 20, "timestamptz" => 21, "interval" => 0),
+            $this->adminer->lang('Strings') => array("character" => 0, "character varying" => 0, "text" => 0, "tsquery" => 0, "tsvector" => 0, "uuid" => 0, "xml" => 0),
+            $this->adminer->lang('Binary') => array("bit" => 0, "bit varying" => 0, "bytea" => 0),
+            $this->adminer->lang('Network') => array("cidr" => 43, "inet" => 43, "macaddr" => 17, "txid_snapshot" => 0),
+            $this->adminer->lang('Geometry') => array("box" => 0, "circle" => 0, "line" => 0, "lseg" => 0, "path" => 0, "point" => 0, "polygon" => 0),
         ) as $key => $val) { //! can be retrieved from pg_type
             $types += $val;
             $structured_types[$key] = array_keys($val);
