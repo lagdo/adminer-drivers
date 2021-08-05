@@ -19,14 +19,6 @@ class Server extends AbstractServer
     /**
      * @inheritDoc
      */
-    public function getDriver()
-    {
-        return "mssql";
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getName()
     {
         return "MS SQL (beta)";
@@ -45,15 +37,15 @@ class Server extends AbstractServer
 
         if(extension_loaded("sqlsrv"))
         {
-            $this->connection = new SqlSrv\Connection();
+            $this->connection = new SqlSrv\Connection($this->adminer, $this, 'sqlsrv');
         }
         if(extension_loaded("mssql"))
         {
-            $this->connection = new MsSql\Connection();
+            $this->connection = new MsSql\Connection($this->adminer, $this, 'MSSQL');
         }
         if(extension_loaded("pdo_dblib"))
         {
-            $this->connection = new Pdo\Connection();
+            $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_DBLIB');
         }
     }
 
@@ -63,11 +55,17 @@ class Server extends AbstractServer
     public function connect()
     {
         $this->createConnection();
-        list($server, $username, $password) = $this->adminer->credentials();
-        if ($this->connection->open($server, \compact('username', 'password'))) {
-            return $this->connection;
+        if (!$this->connection) {
+            return null;
         }
-        return $this->connection->error;
+
+        list($server, $username, $password) = $this->adminer->credentials();
+        if (!$this->connection->open($server, \compact('username', 'password'))) {
+            return $this->connection->error;
+        }
+
+        $this->driver = new Driver($this->adminer, $this, $this->connection);
+        return $this->connection;
     }
 
     /**

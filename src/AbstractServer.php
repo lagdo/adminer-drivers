@@ -8,14 +8,19 @@ use function Lagdo\Adminer\Drivers\format_time;
 abstract class AbstractServer implements ServerInterface
 {
     /**
-     * @var Adminer
+     * @var AdminerInterface
      */
     protected $adminer;
 
     /**
+     * @var DriverInterface
+     */
+    protected $driver;
+
+    /**
      * @var ConnectionInterface
      */
-    protected $connection = null;
+    protected $connection;
 
     /**
      * @var string
@@ -26,6 +31,16 @@ abstract class AbstractServer implements ServerInterface
      * @var string
      */
     protected $schema = '';
+
+    /**
+     * The constructor
+     *
+     * @param AdminerInterface
+     */
+    public function __construct(AdminerInterface $adminer)
+    {
+        $this->adminer = $adminer;
+    }
 
     /**
      * Create a connection to the server, based on the config and available packages
@@ -409,6 +424,17 @@ abstract class AbstractServer implements ServerInterface
             $version = $maria_db;
         }
         return (version_compare($server_info, $version) >= 0);
+    }
+
+    /**
+     * Get connection charset
+     *
+     * @return string
+     */
+    public function charset()
+    {
+        // SHOW CHARSET would require an extra query
+        return ($this->min_version("5.5.3", 0, $this->connection) ? "utf8mb4" : "utf8");
     }
 
     /**

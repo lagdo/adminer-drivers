@@ -49,6 +49,20 @@ abstract class AbstractConnection implements ConnectionInterface
     protected $error;
 
     /**
+     * The constructor
+     *
+     * @param AdminerInterface
+     * @param ServerInterface
+     * @param string
+     */
+    public function __construct(AdminerInterface $adminer, ServerInterface $server, string $extension)
+    {
+        $this->adminer = $adminer;
+        $this->server = $server;
+        $this->extension = $extension;
+    }
+
+    /**
      * Return a quoted string
      *
      * @param string $string

@@ -4,6 +4,9 @@ namespace Lagdo\Adminer\Drivers\Mongo\Mongo;
 
 use Lagdo\Adminer\Drivers\AbstractConnection;
 
+use MongoClient;
+use Exception;
+
 use function Lagdo\Adminer\Drivers\lang;
 
 class Connection extends AbstractConnection
@@ -22,20 +25,13 @@ class Connection extends AbstractConnection
      */
     protected $_db;
 
-    /**
-     * The constructor
-     */
-    public function __construct()
-    {
-        $this->extension = 'Mongo';
-        $this->server_info = MongoClient::VERSION;
-    }
-
      /**
      * @inheritDoc
      */
     public function open($server, array $options)
     {
+        $this->server_info = MongoClient::VERSION;
+
         try {
             $this->client = new MongoClient($server, $options);
             if ($options["password"] != "") {

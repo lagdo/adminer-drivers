@@ -16,14 +16,6 @@ class Server extends MongoServer
     /**
      * @inheritDoc
      */
-    public function getDriver()
-    {
-        return "mongo";
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getName()
     {
         return "MongoDB (alpha)";

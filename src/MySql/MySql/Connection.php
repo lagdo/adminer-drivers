@@ -16,14 +16,6 @@ class Connection extends AbstractConnection
      */
     protected $_database = true;
 
-    /**
-     * The constructor
-     */
-    public function __construct()
-    {
-        $this->extension = 'MySQL';
-    }
-
      /**
      * @inheritDoc
      */

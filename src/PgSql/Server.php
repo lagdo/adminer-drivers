@@ -13,14 +13,6 @@ class Server extends AbstractServer
     /**
      * @inheritDoc
      */
-    public function getDriver()
-    {
-        return "pgsql";
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getName()
     {
         return "PostgreSQL";
@@ -39,11 +31,11 @@ class Server extends AbstractServer
 
         if(extension_loaded("pgsql"))
         {
-            $this->connection = new PgSql\Connection();
+            $this->connection = new PgSql\Connection($this->adminer, $this, 'PgSQL');
         }
         if(extension_loaded("pdo_pgsql"))
         {
-            $this->connection = new Pdo\Connection();
+            $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_PgSQL');
         }
     }
 
@@ -54,22 +46,29 @@ class Server extends AbstractServer
     {
         global $types, $structured_types;
         $this->createConnection();
+        if (!$this->connection) {
+            return null;
+        }
+
         list($server, $username, $password) = $this->adminer->credentials();
-        if ($this->connection->open($server, \compact('username', 'password'))) {
-            if ($this->min_version(9, 0, $this->connection)) {
-                $this->connection->query("SET application_name = 'Adminer'");
-                if ($this->min_version(9.2, 0, $this->connection)) {
-                    $structured_types[lang('Strings')][] = "json";
-                    $types["json"] = 4294967295;
-                    if ($this->min_version(9.4, 0, $this->connection)) {
-                        $structured_types[lang('Strings')][] = "jsonb";
-                        $types["jsonb"] = 4294967295;
-                    }
+        if (!$this->connection->open($server, \compact('username', 'password'))) {
+            return $this->connection->error;
+        }
+
+        if ($this->min_version(9, 0, $this->connection)) {
+            $this->connection->query("SET application_name = 'Adminer'");
+            if ($this->min_version(9.2, 0, $this->connection)) {
+                $structured_types[lang('Strings')][] = "json";
+                $types["json"] = 4294967295;
+                if ($this->min_version(9.4, 0, $this->connection)) {
+                    $structured_types[lang('Strings')][] = "jsonb";
+                    $types["jsonb"] = 4294967295;
                 }
             }
-            return $this->connection;
         }
-        return $this->connection->error;
+
+        $this->driver = new Driver($this->adminer, $this, $this->connection);
+        return $this->connection;
     }
 
     /**

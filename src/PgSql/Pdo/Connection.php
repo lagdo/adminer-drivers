@@ -16,14 +16,6 @@ class Connection extends PdoConnection
      */
     protected $timeout;
 
-    /**
-     * The constructor
-     */
-    public function __construct()
-    {
-        $this->extension = 'PDO_PgSQL';
-    }
-
      /**
      * @inheritDoc
      */

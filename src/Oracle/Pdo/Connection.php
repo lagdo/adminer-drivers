@@ -16,14 +16,6 @@ class Connection extends PdoConnection
      */
     protected $_current_db;
 
-    /**
-     * The constructor
-     */
-    public function __construct()
-    {
-        $this->extension = 'PDO_OCI';
-    }
-
      /**
      * @inheritDoc
      */

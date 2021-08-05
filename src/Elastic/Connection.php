@@ -23,14 +23,6 @@ class Connection extends AbstractConnection
     protected $_db;
 
     /**
-     * The constructor
-     */
-    public function __construct()
-    {
-        $this->extension = 'JSON';
-    }
-
-    /**
      * Performs query
      * @param string
      * @param array

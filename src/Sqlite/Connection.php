@@ -6,10 +6,10 @@ use Lagdo\Adminer\Drivers\AbstractConnection;
 
 class Connection extends AbstractConnection
 {
-    public function __construct() {
-        parent::__construct(":memory:");
-        $this->query("PRAGMA foreign_keys = 1");
-    }
+    // public function __construct() {
+    //     parent::__construct(":memory:");
+    //     $this->query("PRAGMA foreign_keys = 1");
+    // }
 
     public function select_db($filename) {
         if (is_readable($filename) && $this->query("ATTACH " .

@@ -14,9 +14,21 @@ class Connection extends MySQLi implements ConnectionInterface
 {
     use ConnectionTrait;
 
-    public function __construct() {
+    /**
+     * The constructor
+     *
+     * @param AdminerInterface
+     * @param ServerInterface
+     * @param string
+     */
+    public function __construct(AdminerInterface $adminer, ServerInterface $server, string $extension)
+    {
         parent::init();
         $this->extension = 'MySQLi';
+
+        $this->adminer = $adminer;
+        $this->server = $server;
+        // $this->extension = $extension;
     }
 
      /**

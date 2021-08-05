@@ -18,7 +18,7 @@ function add_driver($id, $name) {
 abstract class AbstractDriver implements DriverInterface
 {
     /**
-     * @var Adminer
+     * @var AdminerInterface
      */
     protected $adminer;
 
@@ -43,12 +43,19 @@ abstract class AbstractDriver implements DriverInterface
     protected $jush;
 
     /**
-     * Create object for performing database operations
+     * The constructor
+     *
+     * @param AdminerInterface
+     * @param ServerInterface
      * @param ConnectionInterface
      */
-    public function __construct($connection) {
+    public function __construct(AdminerInterface $adminer, ServerInterface $server, ConnectionInterface $connection)
+    {
+        $this->adminer = $adminer;
+        $this->server = $server;
         $this->connection = $connection;
     }
+
     /**
      * Get the current query
      *

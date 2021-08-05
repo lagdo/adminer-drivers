@@ -15,14 +15,6 @@ class Server extends AbstractServer
     /**
      * @inheritDoc
      */
-    public function getDriver()
-    {
-        return "server";
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getName()
     {
         return "MySQL";
@@ -41,16 +33,16 @@ class Server extends AbstractServer
 
         if(extension_loaded("mysqli"))
         {
-            $this->connection = new MySqli\Connection();
+            $this->connection = new MySqli\Connection($this->adminer, $this, 'MySQLi');
         }
         if(extension_loaded("mysql") && !((ini_bool("sql.safe_mode") ||
             ini_bool("mysql.allow_local_infile")) && extension_loaded("pdo_mysql")))
         {
-            $this->connection = new MySql\Connection();
+            $this->connection = new MySql\Connection($this->adminer, $this, 'MySQL');
         }
         if(extension_loaded("pdo_mysql"))
         {
-            $this->connection = new Pdo\Connection();
+            $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_MySQL');
         }
     }
 
@@ -61,21 +53,32 @@ class Server extends AbstractServer
     {
         global $types, $structured_types;
         $this->createConnection();
+        if (!$this->connection) {
+            return null;
+        }
+
         list($server, $username, $password) = $this->adminer->credentials();
-        if ($this->connection->open($server, \compact('username', 'password'))) {
-            $this->connection->set_charset(charset($this->connection)); // available in MySQLi since PHP 5.0.5
-            $this->connection->query("SET sql_quote_show_create = 1, autocommit = 1");
-            if ($this->min_version('5.7.8', 10.2, $this->connection)) {
-                $structured_types[lang('Strings')][] = "json";
-                $types["json"] = 4294967295;
+        if (!$this->connection->open($server, \compact('username', 'password'))) {
+            $return = $this->connection->error;
+            // windows-1250 - most common Windows encoding
+            if (function_exists('iconv') && !is_utf8($return) &&
+                strlen($s = iconv("windows-1250", "utf-8", $return)) > strlen($return))
+            {
+                $return = $s;
             }
-            return $this->connection;
+            return $return;
         }
-        $return = $this->connection->error;
-        if (function_exists('iconv') && !is_utf8($return) && strlen($s = iconv("windows-1250", "utf-8", $return)) > strlen($return)) { // windows-1250 - most common Windows encoding
-            $return = $s;
+
+        // available in MySQLi since PHP 5.0.5
+        $this->connection->set_charset($this->charset());
+        $this->connection->query("SET sql_quote_show_create = 1, autocommit = 1");
+        if ($this->min_version('5.7.8', 10.2, $this->connection)) {
+            $structured_types[lang('Strings')][] = "json";
+            $types["json"] = 4294967295;
         }
-        return $return;
+
+        $this->driver = new Driver($this->adminer, $this, $this->connection);
+        return $this->connection;
     }
 
     /**

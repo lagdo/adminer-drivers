@@ -7,11 +7,11 @@ use Lagdo\Adminer\Drivers\Pdo\Connection as PdoConnection;
 class Connection extends PdoConnection
 {
     /**
-     * The constructor
+     * @inheritDoc
      */
-    public function __construct($filename) {
+    public function open($filename, array $options)
+    {
         $this->dsn(DRIVER . ":$filename", "", "");
-        $this->extension = 'PDO_SQLite';
     }
 
     // These functions are manuellay copied here from the

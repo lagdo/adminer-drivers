@@ -11,13 +11,13 @@ use function Lagdo\Adminer\Drivers\is_utf8;
 class Connection extends SqliteConnection
 {
     /**
-     * The constructor
+     * @inheritDoc
      */
-    public function __construct($filename) {
+    public function open($filename, array $options)
+    {
         $this->client = new SQLite3($filename);
         $version = $this->client->version();
         $this->server_info = $version["versionString"];
-        $this->extension = 'SQLite3';
     }
 
     public function query($query, $unbuffered = false) {

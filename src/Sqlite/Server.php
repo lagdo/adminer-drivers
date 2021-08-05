@@ -53,15 +53,15 @@ class Server extends AbstractServer
 
         if(class_exists("SQLite3"))
         {
-            $this->connection = new Sqlite\Connection();
+            $this->connection = new Sqlite\Connection($this->adminer, $this, 'SQLite3');
         }
         if(class_exists("SQLiteDatabase"))
         {
-            $this->connection = new Sqlite2\Connection();
+            $this->connection = new Sqlite2\Connection($this->adminer, $this, 'SQLite');
         }
         if(extension_loaded("pdo_sqlite"))
         {
-            $this->connection = new Pdo\Connection();
+            $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_SQLite');
         }
     }
 
@@ -74,7 +74,13 @@ class Server extends AbstractServer
         if ($password != "") {
             return lang('Database does not support password.');
         }
+
         $this->createConnection();
+        if (!$this->connection) {
+            return null;
+        }
+
+        $this->driver = new Driver($this->adminer, $this, $this->connection);
         return $this->connection;
     }
 

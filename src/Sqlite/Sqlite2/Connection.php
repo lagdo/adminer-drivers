@@ -9,12 +9,12 @@ use SQLiteDatabase;
 class Connection extends SqliteConnection
 {
     /**
-     * The constructor
+     * @inheritDoc
      */
-    public function __construct($filename) {
+    public function open($filename, array $options)
+    {
         $this->server_info = sqlite_libversion();
         $this->client = new SQLiteDatabase($filename);
-        $this->extension = 'SQLite';
     }
 
     public function query($query, $unbuffered = false) {

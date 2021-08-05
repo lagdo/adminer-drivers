@@ -11,14 +11,6 @@ use Lagdo\Adminer\Drivers\Pdo\Connection as PdoConnection;
 
 class Connection extends PdoConnection
 {
-    /**
-     * The constructor
-     */
-    public function __construct()
-    {
-        $this->extension = 'PDO_DBLIB';
-    }
-
      /**
      * @inheritDoc
      */

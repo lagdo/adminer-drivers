@@ -5,6 +5,16 @@ namespace Lagdo\Adminer\Drivers;
 trait ConnectionTrait
 {
     /**
+     * @var AdminerInterface
+     */
+    protected $adminer;
+
+    /**
+     * @var ServerInterface
+     */
+    protected $server;
+
+    /**
      * The extension name
      *
      * @var string

@@ -11,14 +11,6 @@ use Lagdo\Adminer\Drivers\AbstractConnection;
 
 class Connection extends AbstractConnection
 {
-    /**
-     * The constructor
-     */
-    public function __construct()
-    {
-        $this->extension = 'sqlsrv';
-    }
-
     protected function _get_error() {
         $this->error = "";
         foreach (sqlsrv_errors() as $error) {

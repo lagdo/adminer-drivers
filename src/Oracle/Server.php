@@ -12,14 +12,6 @@ class Server extends AbstractServer
     /**
      * @inheritDoc
      */
-    public function getDriver()
-    {
-        return "oracle";
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getName()
     {
         return "Oracle (beta)";
@@ -38,11 +30,11 @@ class Server extends AbstractServer
 
         if(extension_loaded("oci8"))
         {
-            $this->connection = new Oci\Connection();
+            $this->connection = new Oci\Connection($this->adminer, $this, 'oci8');
         }
         if(extension_loaded("pdo_oci"))
         {
-            $this->connection = new Pdo\Connection();
+            $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_OCI');
         }
     }
 
@@ -52,11 +44,17 @@ class Server extends AbstractServer
     public function connect()
     {
         $this->createConnection();
-        list($server, $username, $password) = $this->adminer->credentials();
-        if ($this->connection->open($server, \compact('username', 'password'))) {
-            return $this->connection;
+        if (!$this->connection) {
+            return null;
         }
-        return $this->connection->error;
+
+        list($server, $username, $password) = $this->adminer->credentials();
+        if (!$this->connection->open($server, \compact('username', 'password'))) {
+            return $this->connection->error;
+        }
+
+        $this->driver = new Driver($this->adminer, $this, $this->connection);
+        return $this->connection;
     }
 
     /**

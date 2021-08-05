@@ -32,14 +32,6 @@ class Connection extends AbstractConnection
      */
     protected $timeout;
 
-    /**
-     * The constructor
-     */
-    public function __construct()
-    {
-        $this->extension = 'PgSQL';
-    }
-
     public function _error($errno, $error) {
         if (ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));

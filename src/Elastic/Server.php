@@ -11,14 +11,6 @@ class Server extends AbstractServer
     /**
      * @inheritDoc
      */
-    public function getDriver()
-    {
-        return "elastic";
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getName()
     {
         return "Elasticsearch (beta)";
@@ -37,7 +29,7 @@ class Server extends AbstractServer
 
         if(function_exists('json_decode') && ini_bool('allow_url_fopen'))
         {
-            $this->connection = new Connection();
+            $this->connection = new Connection($this->adminer, $this, 'JSON');
         }
     }
 
@@ -47,16 +39,22 @@ class Server extends AbstractServer
     public function connect()
     {
         $this->createConnection();
+        if (!$this->connection) {
+            return null;
+        }
+
         list($server, $username, $password) = $this->adminer->credentials();
         if ($password != "" &&
             $this->connection->open($server, ['username' => $username, 'password' => ""]))
         {
             return lang('Database does not support password.');
         }
-        if ($this->connection->open($server, \compact('username', 'password'))) {
-            return $this->connection;
+        if (!$this->connection->open($server, \compact('username', 'password'))) {
+            return $this->connection->error;
         }
-        return $this->connection->error;
+
+        $this->driver = new Driver($this->adminer, $this, $this->connection);
+        return $this->connection;
     }
 
     public function support($feature) {

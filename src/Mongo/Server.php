@@ -19,11 +19,13 @@ class Server extends AbstractServer
 
         if(class_exists('MongoDB'))
         {
-            $this->connection = new Mongo\Connection();
+            $this->connection = new Mongo\Connection($this->adminer, $this, 'Mongo');
+            $this->driver = new Mongo\Driver($this->adminer, $this, $this->connection);
         }
         if(class_exists('MongoDB\Driver\Manager'))
         {
-            $this->connection = new MongoDb\Connection();
+            $this->connection = new MongoDb\Connection($this->adminer, $this, 'MongoDB');
+            $this->driver = new MongoDb\Driver($this->adminer, $this, $this->connection);
         }
     }
 
@@ -33,6 +35,10 @@ class Server extends AbstractServer
     public function connect()
     {
         $this->createConnection();
+        if (!$this->connection) {
+            return null;
+        }
+
         list($server, $username, $password) = $this->adminer->credentials();
         $options = [];
         if ($username . $password != "") {
@@ -50,6 +56,7 @@ class Server extends AbstractServer
         if ($this->connection->error) {
             return $this->connection->error;
         }
+
         return $this->connection;
     }
 

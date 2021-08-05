@@ -32,19 +32,12 @@ class Connection extends AbstractConnection
     protected $_db_name;
 
     /**
-     * The constructor
-     */
-    public function __construct()
-    {
-        $this->extension = 'MongoDB';
-        $this->server_info = MONGODB_VERSION;
-    }
-
-    /**
      * @inheritDoc
      */
     public function open($server, array $options)
     {
+        $this->server_info = MONGODB_VERSION;
+
         // $class = 'MongoDB\Driver\Manager';
         // $this->client = new $class($server, $options);
         $this->client = new Manager($server, $options);
