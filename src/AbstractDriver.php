@@ -81,7 +81,7 @@ abstract class AbstractDriver implements DriverInterface
      */
     public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0) {
         $is_group = (count($group) < count($select));
-        $query = $this->adminer->selectQueryBuild($select, $where, $group, $order, $limit, $page);
+        $query = $this->adminer->buildSelectQuery($select, $where, $group, $order, $limit, $page);
         if (!$query) {
             $query = "SELECT" . $this->server->limit(
                 ($page != "last" && $limit != "" && $group && $is_group && $this->jush == "sql" ?

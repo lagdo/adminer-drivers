@@ -133,7 +133,7 @@ class Server extends AbstractServer
         return array(
             'possible_drivers' => array("mongo", "mongodb"),
             'jush' => "mongo",
-            'operators' => $this->adminer->operators,
+            'operators' => $this->adminer->operators(),
             'functions' => [],
             'grouping' => [],
             'edit_functions' => array(array("json")),

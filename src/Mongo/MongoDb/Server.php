@@ -153,7 +153,7 @@ class Server extends MongoServer
                         list(, $class, $val) = $match;
                         $val = new $class($val);
                     }
-                    if (!in_array($op, $this->adminer->operators)) {
+                    if (!in_array($op, $this->adminer->operators())) {
                         continue;
                     }
                     if (preg_match('~^\(f\)(.+)~', $op, $match)) {

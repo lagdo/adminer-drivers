@@ -13,10 +13,10 @@ use function Lagdo\Adminer\Drivers\lang;
 class Connection extends AbstractConnection
 {
     public function __construct() {
-        $pos = array_search("SQL", $this->adminer->operators);
-        if ($pos !== false) {
-            unset($this->adminer->operators[$pos]);
-        }
+        // $pos = array_search("SQL", $this->adminer->operators());
+        // if ($pos !== false) {
+        //     unset($this->adminer->operators()[$pos]);
+        // }
     }
 
     public function dsn($dsn, $username, $password, $options = []) {
