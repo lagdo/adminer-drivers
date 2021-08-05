@@ -413,9 +413,13 @@ class Server extends AbstractServer
     public function auto_increment() {
         $auto_increment_index = " PRIMARY KEY";
         // don't overwrite primary key by auto_increment
-        if ($_GET["create"] != "" && $_POST["auto_increment_col"]) {
-            foreach ($this->indexes($_GET["create"]) as $index) {
-                if (in_array($_POST["fields"][$_POST["auto_increment_col"]]["orig"], $index["columns"], true)) {
+        $query = $this->getDriver()->getQuery();
+        $create = $query->create();
+        $fields = $query->fields();
+        $autoIncrementField = $query->autoIncrementField();
+        if ($create != "" && $autoIncrementField) {
+            foreach ($this->indexes($create) as $index) {
+                if (in_array($fields[$autoIncrementField]["orig"], $index["columns"], true)) {
                     $auto_increment_index = "";
                     break;
                 }
@@ -548,9 +552,10 @@ class Server extends AbstractServer
      */
     public function copy_tables($tables, $views, $target) {
         $this->queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
+        $overwrite = $this->getQuery()->overwrite();
         foreach ($tables as $table) {
             $name = ($target == $this->adminer->database() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
-            if (($_POST["overwrite"] && !$this->queries("\nDROP TABLE IF EXISTS $name"))
+            if (($overwrite && !$this->queries("\nDROP TABLE IF EXISTS $name"))
                 || !$this->queries("CREATE TABLE $name LIKE " . $this->table($table))
                 || !$this->queries("INSERT INTO $name SELECT * FROM " . $this->table($table))
             ) {
@@ -566,7 +571,7 @@ class Server extends AbstractServer
         foreach ($views as $table) {
             $name = ($target == $this->adminer->database() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
             $view = $this->view($table);
-            if (($_POST["overwrite"] && !$this->queries("DROP VIEW IF EXISTS $name"))
+            if (($overwrite && !$this->queries("DROP VIEW IF EXISTS $name"))
                 || !$this->queries("CREATE VIEW $name AS $view[select]")) { //! USE to avoid db.table
                 return false;
             }

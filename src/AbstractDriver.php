@@ -33,6 +33,11 @@ abstract class AbstractDriver implements DriverInterface
     protected $connection;
 
     /**
+     * @var Query
+     */
+    protected $query;
+
+    /**
      * @var string
      */
     protected $jush;
@@ -43,6 +48,15 @@ abstract class AbstractDriver implements DriverInterface
      */
     public function __construct($connection) {
         $this->connection = $connection;
+    }
+    /**
+     * Get the current query
+     *
+     * @return Query
+     */
+    public function getQuery()
+    {
+        return $this->query;
     }
 
     /**

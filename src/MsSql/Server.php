@@ -12,6 +12,7 @@ use Lagdo\Adminer\Drivers\AbstractServer;
 use function Lagdo\Adminer\Drivers\h;
 use function Lagdo\Adminer\Drivers\lang;
 use function Lagdo\Adminer\Drivers\idf_unescape;
+use function Lagdo\Adminer\Drivers\number;
 
 class Server extends AbstractServer
 {
@@ -214,7 +215,8 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table)
     }
 
     public function auto_increment() {
-        return " IDENTITY" . ($_POST["Auto_increment"] != "" ? "(" . number($_POST["Auto_increment"]) . ",1)" : "") . " PRIMARY KEY";
+        $autoIncrement = $this->getDriver()->getQuery()->autoIncrement();
+        return " IDENTITY" . ($autoIncrement > 0 ? "(" . number($autoIncrement) . ",1)" : "") . " PRIMARY KEY";
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {

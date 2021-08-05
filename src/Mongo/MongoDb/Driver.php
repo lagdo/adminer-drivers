@@ -24,8 +24,9 @@ class Driver extends AbstractDriver {
             $val = preg_replace('~ DESC$~', '', $val, 1, $count);
             $sort[$val] = ($count ? -1 : 1);
         }
-        if (isset($_GET['limit']) && is_numeric($_GET['limit']) && $_GET['limit'] > 0) {
-            $limit = $_GET['limit'];
+        $_limit = $this->getQuery()->limit();
+        if ($_limit > 0) {
+            $limit = $_limit;
         }
         $limit = min(200, max(1, (int) $limit));
         $skip = $page * $limit;

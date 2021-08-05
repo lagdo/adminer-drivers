@@ -96,15 +96,14 @@ class Driver extends AbstractDriver {
     public function delete($type, $queryWhere, $limit = 0) {
         //! use $limit
         $ids = [];
-        if (is_array($_GET["where"]) && $_GET["where"]["_id"]) {
-            $ids[] = $_GET["where"]["_id"];
+        $where = $this->getQuery()->where();
+        if (is_array($where) && $where["_id"]) {
+            $ids[] = $where["_id"];
         }
-        if (is_array($_POST['check'])) {
-            foreach ($_POST['check'] as $check) {
-                $parts = preg_split('~ *= *~', $check);
-                if (count($parts) == 2) {
-                    $ids[] = trim($parts[1]);
-                }
+        foreach ($this->getQuery()->checks() as $check) {
+            $parts = preg_split('~ *= *~', $check);
+            if (count($parts) == 2) {
+                $ids[] = trim($parts[1]);
             }
         }
         $this->connection->affected_rows = 0;

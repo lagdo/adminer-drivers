@@ -241,7 +241,8 @@ class Server extends AbstractServer
     }
 
     public function collations() {
-        return (isset($_GET["create"]) ? $this->get_vals("PRAGMA collation_list", 1) : []);
+        $create = $this->getDriver()->getQuery()->create();
+        return (($create) ? $this->get_vals("PRAGMA collation_list", 1) : []);
     }
 
     public function check_sqlite_name($name) {
