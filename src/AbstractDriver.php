@@ -2,19 +2,6 @@
 
 namespace Lagdo\Adminer\Drivers;
 
-$drivers = [];
-
-/**
-     * Add a driver
-* @param string
-* @param string
-* @return null
-*/
-function add_driver($id, $name) {
-    global $drivers;
-    $drivers[$id] = $name;
-}
-
 abstract class AbstractDriver implements DriverInterface
 {
     /**

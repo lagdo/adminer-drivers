@@ -32,6 +32,24 @@ abstract class AbstractServer implements ServerInterface
     protected $schema = '';
 
     /**
+     * From bootstrap.inc.php
+     * @var string
+     */
+    protected $on_actions = "RESTRICT|NO ACTION|CASCADE|SET NULL|SET DEFAULT"; ///< @var string used in foreign_keys()
+
+    /**
+     * From index.php
+     * @var string
+     */
+    protected $enum_length = "'(?:''|[^'\\\\]|\\\\.)*'";
+
+    /**
+     * From index.php
+     * @var string
+     */
+    protected $inout = "IN|OUT|INOUT";
+
+    /**
      * The constructor
      *
      * @param AdminerInterface
@@ -39,6 +57,21 @@ abstract class AbstractServer implements ServerInterface
     public function __construct(AdminerInterface $adminer)
     {
         $this->adminer = $adminer;
+
+        // From bootstrap.inc.php
+        $config = $this->driver_config();
+        $this->possible_drivers = $config['possible_drivers'];
+        $this->jush = $config['jush'];
+        $this->types = $config['types'];
+        $this->structured_types = $config['structured_types'];
+        $this->unsigned = $config['unsigned'];
+        $this->operators = $config['operators'];
+        $this->functions = $config['functions'];
+        $this->grouping = $config['grouping'];
+        $this->edit_functions = $config['edit_functions'];
+        // if ($adminer->operators === null) {
+        //     $adminer->operators = $operators;
+        // }
     }
 
     /**
@@ -343,12 +376,14 @@ abstract class AbstractServer implements ServerInterface
 
     /**
      * Format foreign key to use in SQL query
-     * @param array ("db" => string, "ns" => string, "table" => string, "source" => array, "target" => array, "on_delete" => one of $on_actions, "on_update" => one of $on_actions)
+     *
+     * @param array ("db" => string, "ns" => string, "table" => string, "source" => array, "target" => array,
+     * "on_delete" => one of $this->on_actions, "on_update" => one of $this->on_actions)
+     *
      * @return string
      */
     function format_foreign_key($foreign_key)
     {
-        global $on_actions;
         $db = $foreign_key["db"];
         $ns = $foreign_key["ns"];
         return " FOREIGN KEY (" . implode(", ", array_map(function($idf) {
@@ -359,8 +394,8 @@ abstract class AbstractServer implements ServerInterface
             $this->table($foreign_key["table"]) . " (" . implode(", ", array_map(function($idf) {
                 return $this->idf_escape($idf);
             }, $foreign_key["target"])) . ")" . //! reuse $name - check in older MySQL versions
-            (preg_match("~^($on_actions)\$~", $foreign_key["on_delete"]) ? " ON DELETE $foreign_key[on_delete]" : "") .
-            (preg_match("~^($on_actions)\$~", $foreign_key["on_update"]) ? " ON UPDATE $foreign_key[on_update]" : "")
+            (preg_match("~^($this->on_actions)\$~", $foreign_key["on_delete"]) ? " ON DELETE $foreign_key[on_delete]" : "") .
+            (preg_match("~^($this->on_actions)\$~", $foreign_key["on_update"]) ? " ON UPDATE $foreign_key[on_update]" : "")
         ;
     }
 

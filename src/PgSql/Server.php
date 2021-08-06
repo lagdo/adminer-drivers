@@ -43,7 +43,6 @@ class Server extends AbstractServer
      */
     public function connect()
     {
-        global $types, $structured_types;
         $this->createConnection();
         if (!$this->connection) {
             return null;
@@ -57,11 +56,11 @@ class Server extends AbstractServer
         if ($this->min_version(9, 0, $this->connection)) {
             $this->connection->query("SET application_name = 'Adminer'");
             if ($this->min_version(9.2, 0, $this->connection)) {
-                $structured_types[$this->adminer->lang('Strings')][] = "json";
-                $types["json"] = 4294967295;
+                $this->structured_types[$this->adminer->lang('Strings')][] = "json";
+                $this->types["json"] = 4294967295;
                 if ($this->min_version(9.4, 0, $this->connection)) {
-                    $structured_types[$this->adminer->lang('Strings')][] = "jsonb";
-                    $types["jsonb"] = 4294967295;
+                    $this->structured_types[$this->adminer->lang('Strings')][] = "jsonb";
+                    $this->types["jsonb"] = 4294967295;
                 }
             }
         }
@@ -212,7 +211,6 @@ ORDER BY a.attnum"
     }
 
     public function foreign_keys($table) {
-        global $on_actions;
         $return = [];
         foreach ($this->get_rows("SELECT conname, condeferrable::int AS deferrable, pg_get_constraintdef(oid) AS definition
 FROM pg_constraint
@@ -226,8 +224,8 @@ ORDER BY conkey, conname") as $row) {
                     $row['table'] = str_replace('""', '"', preg_replace('~^"(.+)"$~', '\1', $match2[4]));
                 }
                 $row['target'] = array_map('trim', explode(',', $match[3]));
-                $row['on_delete'] = (preg_match("~ON DELETE ($on_actions)~", $match[4], $match2) ? $match2[1] : 'NO ACTION');
-                $row['on_update'] = (preg_match("~ON UPDATE ($on_actions)~", $match[4], $match2) ? $match2[1] : 'NO ACTION');
+                $row['on_delete'] = (preg_match("~ON DELETE ($this->on_actions)~", $match[4], $match2) ? $match2[1] : 'NO ACTION');
+                $row['on_update'] = (preg_match("~ON UPDATE ($this->on_actions)~", $match[4], $match2) ? $match2[1] : 'NO ACTION');
                 $return[$row['conname']] = $row;
             }
         }
@@ -235,7 +233,6 @@ ORDER BY conkey, conname") as $row) {
     }
 
     public function constraints($table) {
-        global $on_actions;
         $return = [];
         foreach ($this->get_rows("SELECT conname, consrc
 FROM pg_catalog.pg_constraint
@@ -512,15 +509,14 @@ AND typelem = 0"
     }
 
     public function set_schema($schema, $connection2 = null) {
-        global $types, $structured_types;
         if (!$connection2) {
             $connection2 = $this->connection;
         }
         $return = $connection2->query("SET search_path TO " . $this->idf_escape($schema));
         foreach ($this->types() as $type) { //! get types from current_schemas('t')
-            if (!isset($types[$type])) {
-                $types[$type] = 0;
-                $structured_types[$this->adminer->lang('User types')][] = $type;
+            if (!isset($this->types[$type])) {
+                $this->types[$type] = 0;
+                $this->structured_types[$this->adminer->lang('User types')][] = $type;
             }
         }
         return $return;

@@ -577,7 +577,7 @@ class Server extends AbstractServer
 
     public function driver_config() {
         return array(
-            'possible_drivers' => array(($this->driver == "sqlite" ? "SQLite3" : "SQLite"), "PDO_SQLite"),
+            'possible_drivers' => array(($this->server == "sqlite" ? "SQLite3" : "SQLite"), "PDO_SQLite"),
             'jush' => "sqlite",
             'types' => array("integer" => 0, "real" => 0, "numeric" => 0, "text" => 0, "blob" => 0),
             'structured_types' => array_keys($types),

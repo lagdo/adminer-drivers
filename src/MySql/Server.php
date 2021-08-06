@@ -50,7 +50,6 @@ class Server extends AbstractServer
      */
     public function connect()
     {
-        global $types, $structured_types;
         $this->createConnection();
         if (!$this->connection) {
             return null;
@@ -72,8 +71,8 @@ class Server extends AbstractServer
         $this->connection->set_charset($this->charset());
         $this->connection->query("SET sql_quote_show_create = 1, autocommit = 1");
         if ($this->min_version('5.7.8', 10.2, $this->connection)) {
-            $structured_types[$this->adminer->lang('Strings')][] = "json";
-            $types["json"] = 4294967295;
+            $this->structured_types[$this->adminer->lang('Strings')][] = "json";
+            $this->types["json"] = 4294967295;
         }
 
         $this->driver = new Driver($this->adminer, $this, $this->connection);
@@ -292,12 +291,13 @@ class Server extends AbstractServer
      * @return array array($name => array("db" => , "ns" => , "table" => , "source" => [], "target" => [], "on_delete" => , "on_update" => ))
      */
     public function foreign_keys($table) {
-        global $on_actions;
         static $pattern = '(?:`(?:[^`]|``)+`|"(?:[^"]|"")+")';
         $return = [];
         $create_table = $this->connection->result("SHOW CREATE TABLE " . $this->table($table), 1);
         if ($create_table) {
-            preg_match_all("~CONSTRAINT ($pattern) FOREIGN KEY ?\\(((?:$pattern,? ?)+)\\) REFERENCES ($pattern)(?:\\.($pattern))? \\(((?:$pattern,? ?)+)\\)(?: ON DELETE ($on_actions))?(?: ON UPDATE ($on_actions))?~", $create_table, $matches, PREG_SET_ORDER);
+            preg_match_all("~CONSTRAINT ($pattern) FOREIGN KEY ?\\(((?:$pattern,? ?)+)\\) REFERENCES " .
+                "($pattern)(?:\\.($pattern))? \\(((?:$pattern,? ?)+)\\)(?: ON DELETE ($this->on_actions))" .
+                "?(?: ON UPDATE ($this->on_actions))?~", $create_table, $matches, PREG_SET_ORDER);
             foreach ($matches as $match) {
                 preg_match_all("~$pattern~", $match[2], $source);
                 preg_match_all("~$pattern~", $match[5], $target);
@@ -626,11 +626,10 @@ class Server extends AbstractServer
      * @return array ("fields" => array("field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ), "returns" => , "definition" => , "language" => )
      */
     public function routine($name, $type) {
-        global $enum_length, $inout, $types;
         $aliases = array("bool", "boolean", "integer", "double precision", "real", "dec", "numeric", "fixed", "national char", "national varchar");
         $space = "(?:\\s|/\\*[\s\S]*?\\*/|(?:#|-- )[^\n]*\n?|--\r?\n)";
-        $type_pattern = "((" . implode("|", array_merge(array_keys($types), $aliases)) . ")\\b(?:\\s*\\(((?:[^'\")]|$enum_length)++)\\))?\\s*(zerofill\\s*)?(unsigned(?:\\s+zerofill)?)?)(?:\\s*(?:CHARSET|CHARACTER\\s+SET)\\s*['\"]?([^'\"\\s,]+)['\"]?)?";
-        $pattern = "$space*(" . ($type == "FUNCTION" ? "" : $inout) . ")?\\s*(?:`((?:[^`]|``)*)`\\s*|\\b(\\S+)\\s+)$type_pattern";
+        $type_pattern = "((" . implode("|", array_merge(array_keys($this->types), $aliases)) . ")\\b(?:\\s*\\(((?:[^'\")]|$this->enum_length)++)\\))?\\s*(zerofill\\s*)?(unsigned(?:\\s+zerofill)?)?)(?:\\s*(?:CHARSET|CHARACTER\\s+SET)\\s*['\"]?([^'\"\\s,]+)['\"]?)?";
+        $pattern = "$space*(" . ($type == "FUNCTION" ? "" : $this->inout) . ")?\\s*(?:`((?:[^`]|``)*)`\\s*|\\b(\\S+)\\s+)$type_pattern";
         $create = $this->connection->result("SHOW CREATE $type " . $this->idf_escape($name), 2);
         preg_match("~\\(((?:$pattern\\s*,?)*)\\)\\s*" . ($type == "FUNCTION" ? "RETURNS\\s+$type_pattern\\s+" : "") . "(.*)~is", $create, $match);
         $fields = [];
@@ -639,7 +638,7 @@ class Server extends AbstractServer
             $fields[] = array(
                 "field" => str_replace("``", "`", $param[2]) . $param[3],
                 "type" => strtolower($param[5]),
-                "length" => preg_replace_callback("~$enum_length~s", 'normalize_enum', $param[6]),
+                "length" => preg_replace_callback("~$this->enum_length~s", 'normalize_enum', $param[6]),
                 "unsigned" => strtolower(preg_replace('~\s+~', ' ', trim("$param[8] $param[7]"))),
                 "null" => 1,
                 "full_type" => $param[4],
