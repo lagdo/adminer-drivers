@@ -4,7 +4,43 @@ namespace Lagdo\Adminer\Drivers;
 
 use function substr;
 use function str_replace;
-use function Lagdo\Adminer\Drivers\lang;
+
+/**
+ * Get an instance of a database server class
+ *
+ * @param string $server
+ *
+ * @return Lagdo\Adminer\Drivers\ServerInterface
+ */
+function getDbServer(string $server)
+{
+    switch($server)
+    {
+    case "mysql":
+        return new Lagdo\Adminer\Drivers\MySql\Server($this);
+    case "pgsql":
+        return new Lagdo\Adminer\Drivers\PgSql\Server($this);
+    case "oracle":
+        return new Lagdo\Adminer\Drivers\Oracle\Server($this);
+    case "mssql":
+        return new Lagdo\Adminer\Drivers\MsSql\Server($this);
+    case "mongo":
+        if(class_exists('MongoDB'))
+        {
+            return new Lagdo\Adminer\Drivers\Mongo\Mongo\Server($this);
+        }
+        if(class_exists('MongoDB\Driver\Manager'))
+        {
+            return new Lagdo\Adminer\Drivers\Mongo\MongoDb\Server($this);
+        }
+    case "elastic":
+        return new Lagdo\Adminer\Drivers\Elastic\Server($this);
+    case "sqlite":
+    case "sqlite2":
+        return new Lagdo\Adminer\Drivers\Sqlite\Server($this, $server);
+    }
+    return null;
+}
 
 /**
  * Escape for HTML
