@@ -8,36 +8,37 @@ use function str_replace;
 /**
  * Get an instance of a database server class
  *
+ * @param AdminerInterface $adminer
  * @param string $server
  *
  * @return Lagdo\Adminer\Drivers\ServerInterface
  */
-function getDbServer(string $server)
+function getDbServer(AdminerInterface $adminer, string $server)
 {
     switch($server)
     {
     case "mysql":
-        return new Lagdo\Adminer\Drivers\MySql\Server($this);
+        return new Lagdo\Adminer\Drivers\MySql\Server($adminer);
     case "pgsql":
-        return new Lagdo\Adminer\Drivers\PgSql\Server($this);
+        return new Lagdo\Adminer\Drivers\PgSql\Server($adminer);
     case "oracle":
-        return new Lagdo\Adminer\Drivers\Oracle\Server($this);
+        return new Lagdo\Adminer\Drivers\Oracle\Server($adminer);
     case "mssql":
-        return new Lagdo\Adminer\Drivers\MsSql\Server($this);
+        return new Lagdo\Adminer\Drivers\MsSql\Server($adminer);
     case "mongo":
         if(class_exists('MongoDB'))
         {
-            return new Lagdo\Adminer\Drivers\Mongo\Mongo\Server($this);
+            return new Lagdo\Adminer\Drivers\Mongo\Mongo\Server($adminer);
         }
         if(class_exists('MongoDB\Driver\Manager'))
         {
-            return new Lagdo\Adminer\Drivers\Mongo\MongoDb\Server($this);
+            return new Lagdo\Adminer\Drivers\Mongo\MongoDb\Server($adminer);
         }
     case "elastic":
-        return new Lagdo\Adminer\Drivers\Elastic\Server($this);
+        return new Lagdo\Adminer\Drivers\Elastic\Server($adminer);
     case "sqlite":
     case "sqlite2":
-        return new Lagdo\Adminer\Drivers\Sqlite\Server($this, $server);
+        return new Lagdo\Adminer\Drivers\Sqlite\Server($adminer, $server);
     }
     return null;
 }

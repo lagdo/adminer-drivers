@@ -52,7 +52,7 @@ abstract class AbstractServer implements ServerInterface
     /**
      * The constructor
      *
-     * @param AdminerInterface
+     * @param AdminerInterface $adminer
      */
     public function __construct(AdminerInterface $adminer)
     {
