@@ -21,6 +21,21 @@ class Server extends MongoServer
         return "MongoDB (alpha)";
     }
 
+    /**
+     * @inheritDoc
+     */
+    protected function createConnection()
+    {
+        if(($this->connection))
+        {
+            // Do not create if it already exists
+            return;
+        }
+
+        $this->connection = new Connection($this->adminer, $this, 'Mongo');
+        $this->driver = new Driver($this->adminer, $this, $this->connection);
+    }
+
     public function get_databases($flush) {
         $return = [];
         $dbs = $this->connection->getClient()->listDBs();

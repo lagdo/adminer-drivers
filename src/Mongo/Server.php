@@ -9,29 +9,6 @@ class Server extends AbstractServer
     /**
      * @inheritDoc
      */
-    protected function createConnection()
-    {
-        if(($this->connection))
-        {
-            // Do not create if it already exists
-            return;
-        }
-
-        if(class_exists('MongoDB'))
-        {
-            $this->connection = new Mongo\Connection($this->adminer, $this, 'Mongo');
-            $this->driver = new Mongo\Driver($this->adminer, $this, $this->connection);
-        }
-        if(class_exists('MongoDB\Driver\Manager'))
-        {
-            $this->connection = new MongoDb\Connection($this->adminer, $this, 'MongoDB');
-            $this->driver = new MongoDb\Driver($this->adminer, $this, $this->connection);
-        }
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function connect()
     {
         $this->createConnection();
