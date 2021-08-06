@@ -4,8 +4,6 @@ namespace Lagdo\Adminer\Drivers\Elastic;
 
 use Lagdo\Adminer\Drivers\AbstractServer;
 
-use function Lagdo\Adminer\Drivers\lang;
-
 class Server extends AbstractServer
 {
     /**

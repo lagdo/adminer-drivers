@@ -5,7 +5,6 @@ namespace Lagdo\Adminer\Drivers\MySql;
 use Lagdo\Adminer\Drivers\AbstractServer;
 
 use function Lagdo\Adminer\Drivers\h;
-use function Lagdo\Adminer\Drivers\lang;
 use function Lagdo\Adminer\Drivers\is_utf8;
 use function Lagdo\Adminer\Drivers\idf_unescape;
 use function Lagdo\Adminer\Drivers\number_type;

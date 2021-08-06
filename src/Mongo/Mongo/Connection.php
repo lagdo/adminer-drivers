@@ -7,8 +7,6 @@ use Lagdo\Adminer\Drivers\AbstractConnection;
 use MongoClient;
 use Exception;
 
-use function Lagdo\Adminer\Drivers\lang;
-
 class Connection extends AbstractConnection
 {
     /**

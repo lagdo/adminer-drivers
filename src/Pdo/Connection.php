@@ -8,8 +8,6 @@ use Lagdo\Adminer\Drivers\AbstractConnection;
 use PDO;
 use Exception;
 
-use function Lagdo\Adminer\Drivers\lang;
-
 class Connection extends AbstractConnection
 {
     public function __construct() {

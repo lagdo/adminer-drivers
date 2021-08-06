@@ -4,8 +4,6 @@ namespace Lagdo\Adminer\Drivers\Elastic;
 
 use Lagdo\Adminer\Drivers\AbstractConnection;
 
-use function Lagdo\Adminer\Drivers\lang;
-
 class Connection extends AbstractConnection
 {
     /**

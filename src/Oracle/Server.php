@@ -4,7 +4,6 @@ namespace Lagdo\Adminer\Drivers\Oracle;
 
 use Lagdo\Adminer\Drivers\AbstractServer;
 
-use function Lagdo\Adminer\Drivers\lang;
 use function Lagdo\Adminer\Drivers\idf_unescape;
 
 class Server extends AbstractServer
