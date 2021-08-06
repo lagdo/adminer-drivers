@@ -2,6 +2,7 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite;
 
+use Lagdo\Adminer\Drivers\AdminerInterface;
 use Lagdo\Adminer\Drivers\AbstractServer;
 
 use function Lagdo\Adminer\Drivers\lang;
@@ -12,24 +13,18 @@ class Server extends AbstractServer
     /**
      * @var string
      */
-    protected $driver;
+    protected $server;
 
     /**
      * The constructor
      *
-     * @param string $driver "sqlite" or "sqlite2"
+     * @param AdminerInterface
+     * @param string $server "sqlite" or "sqlite2"
      */
-    public function __construct($driver)
+    public function __construct(AdminerInterface $adminer, $server)
     {
-        $this->driver = $driver;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getDriver()
-    {
-        return $this->driver;
+        parent::__construct($adminer);
+        $this->server = $server;
     }
 
     /**
@@ -37,7 +32,7 @@ class Server extends AbstractServer
      */
     public function getName()
     {
-        return ($this->driver == "sqlite" ? "SQLite 3" : "SQLite 2");
+        return ($this->server === "sqlite" ? "SQLite 3" : "SQLite 2");
     }
 
     /**
@@ -51,11 +46,11 @@ class Server extends AbstractServer
             return;
         }
 
-        if(class_exists("SQLite3"))
+        if($this->server === "sqlite" && class_exists("SQLite3"))
         {
             $this->connection = new Sqlite\Connection($this->adminer, $this, 'SQLite3');
         }
-        if(class_exists("SQLiteDatabase"))
+        if($this->server === "sqlite2" && class_exists("SQLiteDatabase"))
         {
             $this->connection = new Sqlite2\Connection($this->adminer, $this, 'SQLite');
         }
@@ -70,7 +65,7 @@ class Server extends AbstractServer
      */
     public function connect()
     {
-        list(, , $password) = $this->adminer->credentials();
+        list($filename, , $password) = $this->adminer->credentials();
         if ($password != "") {
             return $this->adminer->lang('Database does not support password.');
         }
@@ -79,6 +74,8 @@ class Server extends AbstractServer
         if (!$this->connection) {
             return null;
         }
+
+        $this->connection->open($filename, []);
 
         $this->driver = new Driver($this->adminer, $this, $this->connection);
         return $this->connection;
