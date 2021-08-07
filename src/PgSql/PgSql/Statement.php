@@ -2,6 +2,8 @@
 
 namespace Lagdo\Adminer\Drivers\PgSql\PgSql;
 
+use stdClass;
+
 class Statement
 {
     /**

@@ -53,10 +53,10 @@ interface AdminerInterface
      * Apply command to all array items
      * @param string
      * @param array
-     * @param callback
+     * @param callback|null
      * @return bool
      */
-    public function apply_queries($query, $tables, $escape = 'table');
+    public function apply_queries($query, $tables, $escape = null);
 
     /**
      * Get list of values from database
@@ -182,11 +182,11 @@ interface AdminerInterface
     public function unique_array($row, $indexes);
 
     /**
-     * Print SET NAMES if utf8mb4 might be needed
+     * Get SET NAMES if utf8mb4 might be needed
      *
      * @param string
      *
-     * @return void
+     * @return string
      */
     public function set_utf8mb4($create);
 
@@ -249,9 +249,10 @@ interface AdminerInterface
     /**
      * Process edit input field
      * @param one field from fields()
+     * @param array the user inputs
      * @return string or false to leave the original value
      */
-    public function process_input($field);
+    public function process_input($field, $inputs);
 
     /**
      * Get referencable tables with single column primary key except self

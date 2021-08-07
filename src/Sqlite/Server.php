@@ -408,7 +408,9 @@ class Server extends AbstractServer
         if ($table != "") {
             if ($originals && !$this->adminer->queries("INSERT INTO " . $this->table($temp_name) .
                 " (" . implode(", ", $originals) . ") SELECT " . implode(", ",
-               array_map('idf_escape', array_keys($originals))) . " FROM " . $this->table($table))) {
+               array_map(function($key) {
+                   return $this->idf_escape($key);
+               }, array_keys($originals))) . " FROM " . $this->table($table))) {
                 return false;
             }
             $triggers = [];
@@ -538,7 +540,9 @@ class Server extends AbstractServer
                 continue;
             }
             $return .= ";\n\n" . $this->index_sql($table, $index['type'], $name,
-                "(" . implode(", ", array_map('idf_escape', $index['columns'])) . ")");
+                "(" . implode(", ", array_map(function($key) {
+                    return $this->idf_escape($key);
+                }, $index['columns'])) . ")");
         }
         return $return;
     }

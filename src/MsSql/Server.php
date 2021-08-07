@@ -195,7 +195,9 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table)
     }
 
     public function drop_databases($databases) {
-        return $this->adminer->queries("DROP DATABASE " . implode(", ", array_map('idf_escape', $databases)));
+        return $this->adminer->queries("DROP DATABASE " . implode(", ", array_map(function($database) {
+            return $this->idf_escape($database);
+        }, $databases)));
     }
 
     public function rename_database($name, $collation) {
@@ -207,8 +209,8 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table)
     }
 
     public function auto_increment() {
-        $autoIncrement = $this->getDriver()->getQuery()->autoIncrement();
-        return " IDENTITY" . ($autoIncrement > 0 ? "(" . $this->adminer->number($autoIncrement) . ",1)" : "") . " PRIMARY KEY";
+        $autoIncrement = $this->getDriver()->getQuery()->autoIncrementStep();
+        return " IDENTITY" . ($autoIncrement > 0 ? "($autoIncrement,1)" : "") . " PRIMARY KEY";
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
@@ -306,15 +308,20 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table)
     }
 
     public function drop_views($views) {
-        return $this->adminer->queries("DROP VIEW " . implode(", ", array_map('table', $views)));
+        return $this->adminer->queries("DROP VIEW " . implode(", ", array_map(function($view) {
+            return $this->table($view);
+        }, $views)));
     }
 
     public function drop_tables($tables) {
-        return $this->adminer->queries("DROP TABLE " . implode(", ", array_map('table', $tables)));
+        return $this->adminer->queries("DROP TABLE " . implode(", ", array_map(function($table) {
+            return $this->table($table);
+        }, $tables)));
     }
 
     public function move_tables($tables, $views, $target) {
-        return $this->adminer->apply_queries("ALTER SCHEMA " . $this->idf_escape($target) . " TRANSFER", array_merge($tables, $views));
+        return $this->adminer->apply_queries("ALTER SCHEMA " .
+            $this->idf_escape($target) . " TRANSFER", array_merge($tables, $views));
     }
 
     public function trigger($name) {

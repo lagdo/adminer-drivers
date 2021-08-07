@@ -176,7 +176,11 @@ ORDER BY a.attnum"
             $row["auto_increment"] = $row['identity'] || preg_match('~^nextval\(~i', $row["default"]);
             $row["privileges"] = array("insert" => 1, "select" => 1, "update" => 1);
             if (preg_match('~(.+)::[^,)]+(.*)~', $row["default"], $match)) {
-                $row["default"] = ($match[1] == "NULL" ? null : (($match[1][0] == "'" ? $this->idf_unescape($match[1]) : $match[1]) . $match[2]));
+                $match1 = $match[1] ?? '';
+                $match10 = $match1[0] ?? '';
+                $match2 = $match[2] ?? '';
+                $row["default"] = ($match1 == "NULL" ? null :
+                    (($match10 == "'" ? $this->idf_unescape($match1) : $match1) . $match2));
             }
             $return[$row["field"]] = $row;
         }
@@ -214,14 +218,23 @@ WHERE conrelid = (SELECT pc.oid FROM pg_class AS pc INNER JOIN pg_namespace AS p
 AND contype = 'f'::char
 ORDER BY conkey, conname") as $row) {
             if (preg_match('~FOREIGN KEY\s*\((.+)\)\s*REFERENCES (.+)\((.+)\)(.*)$~iA', $row['definition'], $match)) {
-                $row['source'] = array_map('trim', explode(',', $match[1]));
-                if (preg_match('~^(("([^"]|"")+"|[^"]+)\.)?"?("([^"]|"")+"|[^"]+)$~', $match[2], $match2)) {
-                    $row['ns'] = str_replace('""', '"', preg_replace('~^"(.+)"$~', '\1', $match2[2]));
-                    $row['table'] = str_replace('""', '"', preg_replace('~^"(.+)"$~', '\1', $match2[4]));
+                $match1 = $match[1] ?? '';
+                $match2 = $match[2] ?? '';
+                $match3 = $match[3] ?? '';
+                $match4 = $match[4] ?? '';
+                $match11 = '';
+                $row['source'] = array_map('trim', explode(',', $match1));
+                if (preg_match('~^(("([^"]|"")+"|[^"]+)\.)?"?("([^"]|"")+"|[^"]+)$~', $match2, $match10)) {
+                    $match11 = $match10[1] ?? '';
+                    $match12 = $match10[2] ?? '';
+                    // $match13 = $match10[3] ?? '';
+                    $match14 = $match10[4] ?? '';
+                    $row['ns'] = str_replace('""', '"', preg_replace('~^"(.+)"$~', '\1', $match12));
+                    $row['table'] = str_replace('""', '"', preg_replace('~^"(.+)"$~', '\1', $match14));
                 }
-                $row['target'] = array_map('trim', explode(',', $match[3]));
-                $row['on_delete'] = (preg_match("~ON DELETE ($this->on_actions)~", $match[4], $match2) ? $match2[1] : 'NO ACTION');
-                $row['on_update'] = (preg_match("~ON UPDATE ($this->on_actions)~", $match[4], $match2) ? $match2[1] : 'NO ACTION');
+                $row['target'] = array_map('trim', explode(',', $match3));
+                $row['on_delete'] = (preg_match("~ON DELETE ({$this->on_actions})~", $match4, $match10) ? $match11 : 'NO ACTION');
+                $row['on_update'] = (preg_match("~ON UPDATE ({$this->on_actions})~", $match4, $match10) ? $match11 : 'NO ACTION');
                 $return[$row['conname']] = $row;
             }
         }
@@ -263,8 +276,12 @@ ORDER BY connamespace, conname") as $row) {
     public function error() {
         $return = parent::error();
         if (preg_match('~^(.*\n)?([^\n]*)\n( *)\^(\n.*)?$~s', $return, $match)) {
-            $return = $match[1] . preg_replace('~((?:[^&]|&[^;]*;){' .
-                strlen($match[3]) . '})(.*)~', '\1<b>\2</b>', $match[2]) . $match[4];
+            $match1 = $match[1] ?? '';
+            $match2 = $match[2] ?? '';
+            $match3 = $match[3] ?? '';
+            $match4 = $match[4] ?? '';
+            $return = $match1 . preg_replace('~((?:[^&]|&[^;]*;){' .
+                strlen($match3) . '})(.*)~', '\1<b>\2</b>', $match2) . $match4;
         }
         return nl_br($return);
     }
@@ -276,7 +293,9 @@ ORDER BY connamespace, conname") as $row) {
 
     public function drop_databases($databases) {
         $this->connection->close();
-        return $this->adminer->apply_queries("DROP DATABASE", $databases, 'idf_escape');
+        return $this->adminer->apply_queries("DROP DATABASE", $databases, function($database) {
+            return $this->idf_escape($database);
+        });
     }
 
     public function rename_database($name, $collation) {
@@ -374,7 +393,9 @@ ORDER BY connamespace, conname") as $row) {
     }
 
     public function truncate_tables($tables) {
-        return $this->adminer->queries("TRUNCATE " . implode(", ", array_map('table', $tables)));
+        return $this->adminer->queries("TRUNCATE " . implode(", ", array_map(function($table) {
+            return $this->table($table);
+        }, $tables)));
         return true;
     }
 
@@ -588,11 +609,15 @@ AND typelem = 0"
             switch($index['type']) {
                 case 'UNIQUE':
                     $return_parts[] = "CONSTRAINT " . $this->idf_escape($index_name) .
-                        " UNIQUE (" . implode(', ', array_map('idf_escape', $index['columns'])) . ")";
+                        " UNIQUE (" . implode(', ', array_map(function($column) {
+                            return $this->idf_escape($column);
+                        }, $index['columns'])) . ")";
                     break;
                 case 'PRIMARY':
                     $return_parts[] = "CONSTRAINT " . $this->idf_escape($index_name) .
-                        " PRIMARY KEY (" . implode(', ', array_map('idf_escape', $index['columns'])) . ")";
+                        " PRIMARY KEY (" . implode(', ', array_map(function($column) {
+                            return $this->idf_escape($column);
+                        }, $index['columns'])) . ")";
                     break;
             }
         }

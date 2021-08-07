@@ -69,9 +69,9 @@ class Query
      *
      * @return string
      */
-    public function autoIncrement()
+    public function autoIncrementStep()
     {
-        // $_POST["Auto_increment"]
+        // $_POST["Auto_increment"], formatted with $this->adminer->number()
     }
 
     /**
