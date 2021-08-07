@@ -37,8 +37,8 @@ class Connection extends PdoConnection
         return ($this->server->getCurrentDatabase() == $database);
     }
 
-    public function quoteBinary($s) {
-        return $this->quote($s);
+    public function quoteBinary($string) {
+        return $this->quote($string);
     }
 
     public function query($query, $unbuffered = false) {

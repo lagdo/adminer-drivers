@@ -12,14 +12,14 @@ class Statement extends PDOStatement
      *
      * @var int
      */
-    protected $_offset = 0;
+    public $_offset = 0;
 
     /**
      * Undocumented variable
      *
      * @var int
      */
-    protected $num_rows;
+    public $num_rows;
 
     public function fetch_assoc() {
         return $this->fetch(PDO::FETCH_ASSOC);

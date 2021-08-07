@@ -18,7 +18,7 @@ abstract class AbstractConnection implements ConnectionInterface
      *
      * @var string
      */
-    protected $server_info;
+    public $server_info;
 
     /**
      * The client object used to query the database server
@@ -39,14 +39,14 @@ abstract class AbstractConnection implements ConnectionInterface
      *
      * @var int
      */
-    protected $errno;
+    public $errno;
 
     /**
      * Undocumented variable
      *
      * @var string
      */
-    protected $error;
+    public $error;
 
     /**
      * The constructor
@@ -82,15 +82,5 @@ abstract class AbstractConnection implements ConnectionInterface
     public function getClient()
     {
         return $this->client;
-    }
-
-    /**
-     * Get the number of rows affected by the last query
-     *
-     * @return int
-     */
-    public function getAffectedRows()
-    {
-        return $this->affected_rows;
     }
 }

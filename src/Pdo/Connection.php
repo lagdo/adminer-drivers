@@ -2,27 +2,28 @@
 
 namespace Lagdo\Adminer\Drivers\Pdo;
 
-use Lagdo\Adminer\Drivers\AuthException;
 use Lagdo\Adminer\Drivers\AbstractConnection;
+use Lagdo\Adminer\Drivers\ConnectionTrait;
+use Lagdo\Adminer\Drivers\AuthException;
 
 use PDO;
 use Exception;
 
-class Connection extends AbstractConnection
+abstract class Connection extends AbstractConnection
 {
-    public function __construct() {
-        // $pos = array_search("SQL", $this->adminer->operators());
-        // if ($pos !== false) {
-        //     unset($this->adminer->operators()[$pos]);
-        // }
-    }
+    // public function __construct() {
+    //     $pos = array_search("SQL", $this->server->operators());
+    //     if ($pos !== false) {
+    //         unset($this->server->operators()[$pos]);
+    //     }
+    // }
 
     public function dsn($dsn, $username, $password, $options = []) {
         try {
             $this->client = new PDO($dsn, $username, $password, $options);
         } catch (Exception $ex) {
             // auth_error(h($ex->getMessage()));
-            throw new AuthException($ex->getMessage());
+            throw new AuthException($this->adminer->h($ex->getMessage()));
         }
         $this->client->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
         $this->client->setAttribute(PDO::ATTR_STATEMENT_CLASS, array(Statement::class));

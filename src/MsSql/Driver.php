@@ -9,8 +9,6 @@ namespace Lagdo\Adminer\Drivers\MsSql;
 
 use Lagdo\Adminer\Drivers\AbstractDriver;
 
-use function Lagdo\Adminer\Drivers\idf_unescape;
-
 class Driver extends AbstractDriver {
 
     public function insertUpdate($table, $rows, $primary) {
@@ -19,12 +17,12 @@ class Driver extends AbstractDriver {
             $where = [];
             foreach ($set as $key => $val) {
                 $update[] = "$key = $val";
-                if (isset($primary[idf_unescape($key)])) {
+                if (isset($primary[$this->server->idf_unescape($key)])) {
                     $where[] = "$key = $val";
                 }
             }
             //! can use only one query for all rows
-            if (!$this->server->queries("MERGE " . $this->server->table($table) . " USING (VALUES(" .
+            if (!$this->adminer->queries("MERGE " . $this->server->table($table) . " USING (VALUES(" .
                 implode(", ", $set) . ")) AS source (c" . implode(", c", range(1, count($set))) .
                 ") ON " . implode(" AND ", $where) . //! source, c1 - possible conflict
                 " WHEN MATCHED THEN UPDATE SET " . implode(", ", $update) .
@@ -38,7 +36,7 @@ class Driver extends AbstractDriver {
     }
 
     public function begin() {
-        return $this->server->queries("BEGIN TRANSACTION");
+        return $this->adminer->queries("BEGIN TRANSACTION");
     }
 
 }

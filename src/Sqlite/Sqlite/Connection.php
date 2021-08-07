@@ -7,8 +7,6 @@ use Lagdo\Adminer\Drivers\Sqlite\ConnectionTrait;
 
 use SQLite3;
 
-use function Lagdo\Adminer\Drivers\is_utf8;
-
 class Connection extends AbstractConnection
 {
     use ConnectionTrait;
@@ -38,7 +36,7 @@ class Connection extends AbstractConnection
     }
 
     public function quote($string) {
-        return (is_utf8($string)
+        return ($this->adminer->is_utf8($string)
             ? "'" . $this->client->escapeString($string) . "'"
             : "x'" . reset(unpack('H*', $string)) . "'"
         );

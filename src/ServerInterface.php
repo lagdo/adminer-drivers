@@ -5,9 +5,9 @@ namespace Lagdo\Adminer\Drivers;
 interface ServerInterface
 {
     /**
-     * Get the driver id
+     * Get the database driver
      *
-     * @return string
+     * @return DriverInterface
      */
     public function getDriver();
 
@@ -58,6 +58,27 @@ interface ServerInterface
      * @return string
      */
     public function idf_escape($idf);
+
+    /**
+     * Unescape database identifier
+     * @param string $idf
+     * @return string
+     */
+    public function idf_unescape($idf);
+
+    /**
+     * Shortcut for $this->connection->quote($string)
+     * @param string
+     * @return string
+     */
+    public function q($string);
+
+    /**
+     * Get connection charset
+     *
+     * @return string
+     */
+    public function charset();
 
     /**
      * Get escaped table name
@@ -119,18 +140,14 @@ interface ServerInterface
     public function logged_user();
 
     /**
-     * Format elapsed time
-     * @param float output of microtime(true)
-     * @return string HTML code
-     */
-    public function format_time($start);
-
-    /**
-     * Format decimal number
-     * @param int
+     * Format foreign key to use in SQL query
+     *
+     * @param array ("db" => string, "ns" => string, "table" => string, "source" => array, "target" => array,
+     * "on_delete" => one of $this->on_actions, "on_update" => one of $this->on_actions)
+     *
      * @return string
      */
-    public function format_number($val);
+    public function format_foreign_key($foreign_key);
 
     /**
      * Get tables list
@@ -332,7 +349,7 @@ interface ServerInterface
      * @param string
      * @return array array($name => array($timing, $event))
      */
-    // public function triggers($table);
+    public function triggers($table);
 
     /**
      * Get trigger options
@@ -417,14 +434,28 @@ interface ServerInterface
      * @param string
      * @return string
      */
-    // public function create_sql($table, $auto_increment, $style);
+    public function create_sql($table, $auto_increment, $style);
+
+    /**
+     * Get SQL command to create foreign keys
+     *
+     * create_sql() produces CREATE TABLE without FK CONSTRAINTs
+     * foreign_keys_sql() produces all FK CONSTRAINTs as ALTER TABLE ... ADD CONSTRAINT
+     * so that all FKs can be added after all tables have been created, avoiding any need
+     * to reorder CREATE TABLE statements in order of their FK dependencies
+     *
+     * @param string
+     *
+     * @return string
+     */
+    public function foreign_keys_sql($table);
 
     /**
      * Get SQL command to truncate table
      * @param string
      * @return string
      */
-    // public function truncate_sql($table);
+    public function truncate_sql($table);
 
     /**
      * Get SQL command to change database
@@ -438,7 +469,7 @@ interface ServerInterface
      * @param string
      * @return string
      */
-    // public function trigger_sql($table);
+    public function trigger_sql($table);
 
     /**
      * Get server variables
@@ -456,22 +487,22 @@ interface ServerInterface
      * Get process list
      * @return array ($row)
      */
-    // public function process_list();
+    public function process_list();
 
     /**
      * Convert field in select and edit
-     * @param array one element from $this->fields()
+     * @param array $field one element from $this->fields()
      * @return string
      */
-    public function convert_field($field);
+    public function convert_field(array $field);
 
     /**
      * Convert value in edit after applying functions back
-     * @param array one element from $this->fields()
-     * @param string
+     * @param array $field one element from $this->fields()
+     * @param string $return
      * @return string
      */
-    public function unconvert_field($field, $return);
+    public function unconvert_field(array $field, $return);
 
     /**
      * Check whether a feature is supported
@@ -479,6 +510,15 @@ interface ServerInterface
      * @return bool
      */
     public function support($feature);
+
+    /**
+     * Check if connection has at least the given version
+     * @param string $version required version
+     * @param string $maria_db required MariaDB version
+     * @param ConnectionInterface|null $connection2
+     * @return bool
+     */
+    public function min_version($version, $maria_db = "", ConnectionInterface $connection2 = null);
 
     /**
      * Kill a process

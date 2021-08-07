@@ -5,8 +5,6 @@ namespace Lagdo\Adminer\Drivers\Sqlite;
 use Lagdo\Adminer\Drivers\AdminerInterface;
 use Lagdo\Adminer\Drivers\AbstractServer;
 
-use function Lagdo\Adminer\Drivers\idf_unescape;
-
 class Server extends AbstractServer
 {
     /**
@@ -69,7 +67,6 @@ class Server extends AbstractServer
             return $this->adminer->lang('Database does not support password.');
         }
 
-        $this->createConnection();
         if (!$this->connection) {
             return null;
         }
@@ -113,7 +110,7 @@ class Server extends AbstractServer
     }
 
     public function tables_list() {
-        return $this->get_key_vals("SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') ORDER BY (name = 'sqlite_sequence'), name");
+        return $this->adminer->get_key_vals("SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') ORDER BY (name = 'sqlite_sequence'), name");
     }
 
     public function count_tables($databases) {
@@ -122,11 +119,11 @@ class Server extends AbstractServer
 
     public function table_status($name = "", $fast = false) {
         $return = [];
-        foreach ($this->get_rows("SELECT name AS Name, type AS Engine, 'rowid' AS Oid, '' AS Auto_increment FROM sqlite_master WHERE type IN ('table', 'view') " . ($name != "" ? "AND name = " . $this->q($name) : "ORDER BY name")) as $row) {
+        foreach ($this->adminer->get_rows("SELECT name AS Name, type AS Engine, 'rowid' AS Oid, '' AS Auto_increment FROM sqlite_master WHERE type IN ('table', 'view') " . ($name != "" ? "AND name = " . $this->q($name) : "ORDER BY name")) as $row) {
             $row["Rows"] = $this->connection->result("SELECT COUNT(*) FROM " . $this->idf_escape($row["Name"]));
             $return[$row["Name"]] = $row;
         }
-        foreach ($this->get_rows("SELECT * FROM sqlite_sequence", null, "") as $row) {
+        foreach ($this->adminer->get_rows("SELECT * FROM sqlite_sequence", null, "") as $row) {
             $return[$row["name"]]["Auto_increment"] = $row["seq"];
         }
         return ($name != "" ? $return[$name] : $return);
@@ -143,7 +140,7 @@ class Server extends AbstractServer
     public function fields($table) {
         $return = [];
         $primary = "";
-        foreach ($this->get_rows("PRAGMA table_info(" . $this->table($table) . ")") as $row) {
+        foreach ($this->adminer->get_rows("PRAGMA table_info(" . $this->table($table) . ")") as $row) {
             $name = $row["name"];
             $type = strtolower($row["type"]);
             $default = $row["dflt_value"];
@@ -186,7 +183,7 @@ class Server extends AbstractServer
             $return[""] = array("type" => "PRIMARY", "columns" => [], "lengths" => [], "descs" => []);
             preg_match_all('~((("[^"]*+")+|(?:`[^`]*+`)+)|(\S+))(\s+(ASC|DESC))?(,\s*|$)~i', $match[1], $matches, PREG_SET_ORDER);
             foreach ($matches as $match) {
-                $return[""]["columns"][] = idf_unescape($match[2]) . $match[4];
+                $return[""]["columns"][] = $this->idf_unescape($match[2]) . $match[4];
                 $return[""]["descs"][] = (preg_match('~DESC~i', $match[5]) ? '1' : null);
             }
         }
@@ -197,13 +194,13 @@ class Server extends AbstractServer
                 }
             }
         }
-        $sqls = $this->get_key_vals("SELECT name, sql FROM sqlite_master WHERE type = 'index' AND tbl_name = " . $this->q($table), $connection2);
-        foreach ($this->get_rows("PRAGMA index_list(" . $this->table($table) . ")", $connection2) as $row) {
+        $sqls = $this->adminer->get_key_vals("SELECT name, sql FROM sqlite_master WHERE type = 'index' AND tbl_name = " . $this->q($table), $connection2);
+        foreach ($this->adminer->get_rows("PRAGMA index_list(" . $this->table($table) . ")", $connection2) as $row) {
             $name = $row["name"];
             $index = array("type" => ($row["unique"] ? "UNIQUE" : "INDEX"));
             $index["lengths"] = [];
             $index["descs"] = [];
-            foreach ($this->get_rows("PRAGMA index_info(" . $this->idf_escape($name) . ")", $connection2) as $row1) {
+            foreach ($this->adminer->get_rows("PRAGMA index_info(" . $this->idf_escape($name) . ")", $connection2) as $row1) {
                 $index["columns"][] = $row1["name"];
                 $index["descs"][] = null;
             }
@@ -224,7 +221,7 @@ class Server extends AbstractServer
 
     public function foreign_keys($table) {
         $return = [];
-        foreach ($this->get_rows("PRAGMA foreign_key_list(" . $this->table($table) . ")") as $row) {
+        foreach ($this->adminer->get_rows("PRAGMA foreign_key_list(" . $this->table($table) . ")") as $row) {
             $foreign_key = &$return[$row["id"]];
             //! idf_unescape in SQLite2
             if (!$foreign_key) {
@@ -244,7 +241,7 @@ class Server extends AbstractServer
 
     public function collations() {
         $create = $this->getDriver()->getQuery()->create();
-        return (($create) ? $this->get_vals("PRAGMA collation_list", 1) : []);
+        return (($create) ? $this->adminer->get_vals("PRAGMA collation_list", 1) : []);
     }
 
     public function check_sqlite_name($name) {
@@ -321,23 +318,23 @@ class Server extends AbstractServer
         }
         if (!$use_all_fields) {
             foreach ($alter as $val) {
-                if (!$this->queries("ALTER TABLE " . $this->table($table) . " $val")) {
+                if (!$this->adminer->queries("ALTER TABLE " . $this->table($table) . " $val")) {
                     return false;
                 }
             }
-            if ($table != $name && !$this->queries("ALTER TABLE " . $this->table($table) . " RENAME TO " . $this->table($name))) {
+            if ($table != $name && !$this->adminer->queries("ALTER TABLE " . $this->table($table) . " RENAME TO " . $this->table($name))) {
                 return false;
             }
         } elseif (!$this->recreate_table($table, $name, $alter, $originals, $foreign, $auto_increment)) {
             return false;
         }
         if ($auto_increment) {
-            $this->queries("BEGIN");
-            $this->queries("UPDATE sqlite_sequence SET seq = $auto_increment WHERE name = " . $this->q($name)); // ignores error
+            $this->adminer->queries("BEGIN");
+            $this->adminer->queries("UPDATE sqlite_sequence SET seq = $auto_increment WHERE name = " . $this->q($name)); // ignores error
             if (!$this->connection->affected_rows) {
-                $this->queries("INSERT INTO sqlite_sequence (name, seq) VALUES (" . $this->q($name) . ", $auto_increment)");
+                $this->adminer->queries("INSERT INTO sqlite_sequence (name, seq) VALUES (" . $this->q($name) . ", $auto_increment)");
             }
-            $this->queries("COMMIT");
+            $this->adminer->queries("COMMIT");
         }
         return true;
     }
@@ -349,7 +346,7 @@ class Server extends AbstractServer
                     if ($indexes) {
                         $field["auto_increment"] = 0;
                     }
-                    $fields[] = process_field($field, $field);
+                    $fields[] = $this->adminer->process_field($field, $field);
                     $originals[$key] = $this->idf_escape($key);
                 }
             }
@@ -391,25 +388,25 @@ class Server extends AbstractServer
                     if (!$originals[$column]) {
                         continue 2;
                     }
-                    $foreign_key["source"][$key] = idf_unescape($originals[$column]);
+                    $foreign_key["source"][$key] = $this->idf_unescape($originals[$column]);
                 }
                 if (!isset($foreign[" $key_name"])) {
                     $foreign[] = " " . $this->format_foreign_key($foreign_key);
                 }
             }
-            $this->queries("BEGIN");
+            $this->adminer->queries("BEGIN");
         }
         foreach ($fields as $key => $field) {
             $fields[$key] = "  " . implode($field);
         }
         $fields = array_merge($fields, array_filter($foreign));
         $temp_name = ($table == $name ? "adminer_$name" : $name);
-        if (!$this->queries("CREATE TABLE " . $this->table($temp_name) . " (\n" . implode(",\n", $fields) . "\n)")) {
+        if (!$this->adminer->queries("CREATE TABLE " . $this->table($temp_name) . " (\n" . implode(",\n", $fields) . "\n)")) {
             // implicit ROLLBACK to not overwrite $this->connection->error
             return false;
         }
         if ($table != "") {
-            if ($originals && !$this->queries("INSERT INTO " . $this->table($temp_name) .
+            if ($originals && !$this->adminer->queries("INSERT INTO " . $this->table($temp_name) .
                 " (" . implode(", ", $originals) . ") SELECT " . implode(", ",
                array_map('idf_escape', array_keys($originals))) . " FROM " . $this->table($table))) {
                 return false;
@@ -424,21 +421,21 @@ class Server extends AbstractServer
                 $this->connection->result("SELECT seq FROM sqlite_sequence WHERE name = " .
                 $this->q($table)); // if $auto_increment is set then it will be updated later
             // drop before creating indexes and triggers to allow using old names
-            if (!$this->queries("DROP TABLE " . $this->table($table)) ||
-                ($table == $name && !$this->queries("ALTER TABLE " . $this->table($temp_name) .
+            if (!$this->adminer->queries("DROP TABLE " . $this->table($table)) ||
+                ($table == $name && !$this->adminer->queries("ALTER TABLE " . $this->table($temp_name) .
                 " RENAME TO " . $this->table($name))) || !$this->alter_indexes($name, $indexes)
             ) {
                 return false;
             }
             if ($auto_increment) {
-                $this->queries("UPDATE sqlite_sequence SET seq = $auto_increment WHERE name = " . $this->q($name)); // ignores error
+                $this->adminer->queries("UPDATE sqlite_sequence SET seq = $auto_increment WHERE name = " . $this->q($name)); // ignores error
             }
             foreach ($triggers as $trigger) {
-                if (!$this->queries($trigger)) {
+                if (!$this->adminer->queries($trigger)) {
                     return false;
                 }
             }
-            $this->queries("COMMIT");
+            $this->adminer->queries("COMMIT");
         }
         return true;
     }
@@ -458,7 +455,7 @@ class Server extends AbstractServer
             }
         }
         foreach (array_reverse($alter) as $val) {
-            if (!$this->queries($val[2] == "DROP" ? "DROP INDEX " . $this->idf_escape($val[1]) :
+            if (!$this->adminer->queries($val[2] == "DROP" ? "DROP INDEX " . $this->idf_escape($val[1]) :
                 $this->index_sql($table, $val[0], $val[1], "(" . implode(", ", $val[2]) . ")")
             )) {
                 return false;
@@ -468,15 +465,15 @@ class Server extends AbstractServer
     }
 
     public function truncate_tables($tables) {
-        return $this->apply_queries("DELETE FROM", $tables);
+        return $this->adminer->apply_queries("DELETE FROM", $tables);
     }
 
     public function drop_views($views) {
-        return $this->apply_queries("DROP VIEW", $views);
+        return $this->adminer->apply_queries("DROP VIEW", $views);
     }
 
     public function drop_tables($tables) {
-        return $this->apply_queries("DROP TABLE", $tables);
+        return $this->adminer->apply_queries("DROP TABLE", $tables);
     }
 
     public function move_tables($tables, $views, $target) {
@@ -498,7 +495,7 @@ class Server extends AbstractServer
         return array(
             "Timing" => strtoupper($match[1]),
             "Event" => strtoupper($match[2]) . ($of ? " OF" : ""),
-            "Of" => ($of[0] == '`' || $of[0] == '"' ? idf_unescape($of) : $of),
+            "Of" => ($of[0] == '`' || $of[0] == '"' ? $this->idf_unescape($of) : $of),
             "Trigger" => $name,
             "Statement" => $match[4],
         );
@@ -507,7 +504,7 @@ class Server extends AbstractServer
     public function triggers($table) {
         $return = [];
         $trigger_options = trigger_options();
-        foreach ($this->get_rows("SELECT * FROM sqlite_master WHERE type = 'trigger' AND tbl_name = " . $this->q($table)) as $row) {
+        foreach ($this->adminer->get_rows("SELECT * FROM sqlite_master WHERE type = 'trigger' AND tbl_name = " . $this->q($table)) as $row) {
             preg_match('~^CREATE\s+TRIGGER\s*(?:[^`"\s]+|`[^`]*`|"[^"]*")+\s*(' . implode("|", $trigger_options["Timing"]) . ')\s*(.*?)\s+ON\b~i', $row["sql"], $match);
             $return[$row["name"]] = array($match[1], $match[2]);
         }
@@ -523,7 +520,7 @@ class Server extends AbstractServer
     }
 
     public function begin() {
-        return $this->queries("BEGIN");
+        return $this->adminer->queries("BEGIN");
     }
 
     public function last_id() {
@@ -551,7 +548,7 @@ class Server extends AbstractServer
     }
 
     public function trigger_sql($table) {
-        return implode($this->get_vals("SELECT sql || ';;\n' FROM sqlite_master WHERE type = 'trigger' AND tbl_name = " . $this->q($table)));
+        return implode($this->adminer->get_vals("SELECT sql || ';;\n' FROM sqlite_master WHERE type = 'trigger' AND tbl_name = " . $this->q($table)));
     }
 
     public function show_variables() {
@@ -564,7 +561,7 @@ class Server extends AbstractServer
 
     public function show_status() {
         $return = [];
-        foreach ($this->get_vals("PRAGMA compile_options") as $option) {
+        foreach ($this->adminer->get_vals("PRAGMA compile_options") as $option) {
             list($key, $val) = explode("=", $option, 2);
             $return[$key] = $val;
         }

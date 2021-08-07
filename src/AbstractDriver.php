@@ -101,7 +101,7 @@ abstract class AbstractDriver implements DriverInterface
      */
     public function delete($table, $queryWhere, $limit = 0) {
         $query = "FROM " . $this->server->table($table);
-        return $this->server->queries("DELETE" . ($limit ? $this->server->limit1($table, $query, $queryWhere) : " $query$queryWhere"));
+        return $this->adminer->queries("DELETE" . ($limit ? $this->server->limit1($table, $query, $queryWhere) : " $query$queryWhere"));
     }
 
     /**
@@ -119,7 +119,7 @@ abstract class AbstractDriver implements DriverInterface
             $values[] = "$key = $val";
         }
         $query = $this->server->table($table) . " SET$separator" . implode(",$separator", $values);
-        return $this->server->queries("UPDATE" .
+        return $this->adminer->queries("UPDATE" .
             ($limit ? $this->server->limit1($table, $query, $queryWhere, $separator) : " $query$queryWhere"));
     }
 
@@ -130,7 +130,7 @@ abstract class AbstractDriver implements DriverInterface
      * @return bool
      */
     public function insert($table, $set) {
-        return $this->server->queries("INSERT INTO " . $this->server->table($table) . ($set
+        return $this->adminer->queries("INSERT INTO " . $this->server->table($table) . ($set
             ? " (" . implode(", ", array_keys($set)) . ")\nVALUES (" . implode(", ", $set) . ")"
             : " DEFAULT VALUES"
         ));
@@ -141,7 +141,7 @@ abstract class AbstractDriver implements DriverInterface
      * @return bool
      */
     public function begin() {
-        return $this->server->queries("BEGIN");
+        return $this->adminer->queries("BEGIN");
     }
 
     /**
@@ -149,7 +149,7 @@ abstract class AbstractDriver implements DriverInterface
      * @return bool
      */
     public function commit() {
-        return $this->server->queries("COMMIT");
+        return $this->adminer->queries("COMMIT");
     }
 
     /**
@@ -157,7 +157,7 @@ abstract class AbstractDriver implements DriverInterface
      * @return bool
      */
     public function rollback() {
-        return $this->server->queries("ROLLBACK");
+        return $this->adminer->queries("ROLLBACK");
     }
 
     /**
@@ -198,8 +198,8 @@ abstract class AbstractDriver implements DriverInterface
      * @param string
      * @return string
      */
-    public function quoteBinary($s) {
-        return $this->connection->quote($s);
+    public function quoteBinary($string) {
+        return $this->connection->quote($string);
     }
 
     /**

@@ -2,8 +2,6 @@
 
 namespace Lagdo\Adminer\Drivers;
 
-use function Lagdo\Adminer\Drivers\h;
-
 abstract class AbstractServer implements ServerInterface
 {
     /**
@@ -35,19 +33,19 @@ abstract class AbstractServer implements ServerInterface
      * From bootstrap.inc.php
      * @var string
      */
-    protected $on_actions = "RESTRICT|NO ACTION|CASCADE|SET NULL|SET DEFAULT"; ///< @var string used in foreign_keys()
+    public $on_actions = "RESTRICT|NO ACTION|CASCADE|SET NULL|SET DEFAULT"; ///< @var string used in foreign_keys()
 
     /**
      * From index.php
      * @var string
      */
-    protected $enum_length = "'(?:''|[^'\\\\]|\\\\.)*'";
+    public $enum_length = "'(?:''|[^'\\\\]|\\\\.)*'";
 
     /**
      * From index.php
      * @var string
      */
-    protected $inout = "IN|OUT|INOUT";
+    public $inout = "IN|OUT|INOUT";
 
     /**
      * The constructor
@@ -72,6 +70,8 @@ abstract class AbstractServer implements ServerInterface
         // if ($adminer->operators === null) {
         //     $adminer->operators = $operators;
         // }
+
+        $this->createConnection();
     }
 
     /**
@@ -80,6 +80,14 @@ abstract class AbstractServer implements ServerInterface
      * @return void
      */
     abstract protected function createConnection();
+
+    /**
+     * @inheritDoc
+     */
+    public function getDriver()
+    {
+        return $this->driver;
+    }
 
     /**
      * @inheritDoc
@@ -115,7 +123,7 @@ abstract class AbstractServer implements ServerInterface
     }
 
     public function error() {
-        return h($this->connection->error);
+        return $this->adminer->h($this->connection->error);
     }
 
     /**
@@ -124,6 +132,15 @@ abstract class AbstractServer implements ServerInterface
     public function idf_escape($idf)
     {
         return $idf;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function idf_unescape($idf)
+    {
+        $last = substr($idf, -1);
+        return str_replace($last . $last, $last, substr($idf, 1, -1));
     }
 
     /**
@@ -234,13 +251,13 @@ abstract class AbstractServer implements ServerInterface
     /**
      * @inheritDoc
      */
-    public function convert_field($field) {
+    public function convert_field(array $field) {
     }
 
     /**
      * @inheritDoc
      */
-    public function unconvert_field($field, $return) {
+    public function unconvert_field(array $field, $return) {
         return $return;
     }
 
@@ -270,6 +287,14 @@ abstract class AbstractServer implements ServerInterface
      */
     public function use_sql($database) {
         return "";
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function foreign_keys_sql($table)
+    {
+        return '';
     }
 
     /**
@@ -336,19 +361,6 @@ abstract class AbstractServer implements ServerInterface
     }
 
     /**
-     * Get default value clause
-     * @param array
-     * @return string
-     */
-    public function default_value($field)
-    {
-        $default = $field["default"];
-        return ($default === null ? "" : " DEFAULT " .
-            (preg_match('~char|binary|text|enum|set~', $field["type"]) ||
-            preg_match('~^(?![a-z])~i', $default) ? $this->q($default) : $default));
-    }
-
-    /**
      * @inheritDoc
      */
     public function table_status1($table, $fast = false)
@@ -360,29 +372,7 @@ abstract class AbstractServer implements ServerInterface
     /**
      * @inheritDoc
      */
-    public function format_time($start)
-    {
-        return $this->adminer->lang('%.3f s', max(0, microtime(true) - $start));
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function format_number($val)
-    {
-        return strtr(number_format($val, 0, ".", $this->adminer->lang(',')),
-            preg_split('~~u', $this->adminer->lang('0123456789'), -1, PREG_SPLIT_NO_EMPTY));
-    }
-
-    /**
-     * Format foreign key to use in SQL query
-     *
-     * @param array ("db" => string, "ns" => string, "table" => string, "source" => array, "target" => array,
-     * "on_delete" => one of $this->on_actions, "on_update" => one of $this->on_actions)
-     *
-     * @return string
-     */
-    function format_foreign_key($foreign_key)
+    public function format_foreign_key($foreign_key)
     {
         $db = $foreign_key["db"];
         $ns = $foreign_key["ns"];
@@ -400,66 +390,7 @@ abstract class AbstractServer implements ServerInterface
     }
 
     /**
-     * Execute and remember query
-     * @param string or null to return remembered queries, end with ';' to use DELIMITER
-     * @return Statement or array($queries, $time) if $query = null
-     */
-    public function queries($query)
-    {
-        static $queries = [];
-        static $start;
-        if (!$start) {
-            $start = microtime(true);
-        }
-        if ($query === null) {
-            // return executed queries
-            return array(implode("\n", $queries), $this->format_time($start));
-        }
-        $queries[] = (preg_match('~;$~', $query) ? "DELIMITER ;;\n$query;\nDELIMITER " : $query) . ";";
-        return $this->connection->query($query);
-    }
-
-    /**
-     * Apply command to all array items
-     * @param string
-     * @param array
-     * @param callback
-     * @return bool
-     */
-    public function apply_queries($query, $tables, $escape = 'table')
-    {
-        foreach ($tables as $table) {
-            if (!$this->queries("$query " . $escape($table))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Get list of values from database
-     * @param string
-     * @param mixed
-     * @return array
-     */
-    public function get_vals($query, $column = 0)
-    {
-        $return = [];
-        $result = $this->connection->query($query);
-        if (is_object($result)) {
-            while ($row = $result->fetch_row()) {
-                $return[] = $row[$column];
-            }
-        }
-        return $return;
-    }
-
-    /**
-     * Check if connection has at least the given version
-     * @param string required version
-     * @param string required MariaDB version
-     * @param ConnectionInterface defaults to $this->connection
-     * @return bool
+     * @inheritDoc
      */
     public function min_version($version, $maria_db = "", $connection2 = null)
     {
@@ -475,69 +406,19 @@ abstract class AbstractServer implements ServerInterface
     }
 
     /**
-     * Get connection charset
-     *
-     * @return string
+     * @inheritDoc
      */
     public function charset()
     {
         // SHOW CHARSET would require an extra query
-        return ($this->min_version("5.5.3", 0, $this->connection) ? "utf8mb4" : "utf8");
+        return ($this->min_version("5.5.3", 0) ? "utf8mb4" : "utf8");
     }
 
     /**
-     * Shortcut for $this->connection->quote($string)
-     * @param string
-     * @return string
+     * @inheritDoc
      */
     public function q($string)
     {
         return $this->connection->quote($string);
-    }
-
-    /**
-     * Get keys from first column and values from second
-     * @param string
-     * @param ConnectionInterface
-     * @param bool
-     * @return array
-     */
-    public function get_key_vals($query, $connection2 = null, $set_keys = true)
-    {
-        if (!is_object($connection2)) {
-            $connection2 = $this->connection;
-        }
-        $return = [];
-        $result = $connection2->query($query);
-        if (is_object($result)) {
-            while ($row = $result->fetch_row()) {
-                if ($set_keys) {
-                    $return[$row[0]] = $row[1];
-                } else {
-                    $return[] = $row[0];
-                }
-            }
-        }
-        return $return;
-    }
-
-    /**
-     * Get all rows of result
-     * @param string
-     * @param ConnectionInterface
-     * @param string
-     * @return array of associative arrays
-     */
-    public function get_rows($query, $connection2 = null)
-    {
-        $conn = (is_object($connection2) ? $connection2 : $this->connection);
-        $return = [];
-        $result = $conn->query($query);
-        if (is_object($result)) { // can return true
-            while ($row = $result->fetch_assoc()) {
-                $return[] = $row;
-            }
-        }
-        return $return;
     }
 }

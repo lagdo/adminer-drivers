@@ -4,8 +4,6 @@ namespace Lagdo\Adminer\Drivers;
 
 use Exception;
 
-use function Lagdo\Adminer\Drivers\h;
-
 class AuthException extends Exception
 {
     /**
@@ -15,6 +13,6 @@ class AuthException extends Exception
      */
     public function __construct(string $message)
     {
-        parent::__construct(h($message));
+        parent::__construct($message);
     }
 }

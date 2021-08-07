@@ -2,8 +2,6 @@
 
 namespace Lagdo\Adminer\Drivers\Sqlite\Sqlite2;
 
-use function Lagdo\Adminer\Drivers\idf_unescape;
-
 class Statement
 {
     /**
@@ -41,7 +39,7 @@ class Statement
         }
         $return = [];
         foreach ($row as $key => $val) {
-            $return[($key[0] == '"' ? idf_unescape($key) : $key)] = $val;
+            $return[($key[0] == '"' ? $this->server->idf_unescape($key) : $key)] = $val;
         }
         return $return;
     }
@@ -54,8 +52,8 @@ class Statement
         $name = $this->_result->fieldName($this->_offset++);
         $pattern = '(\[.*]|"(?:[^"]|"")*"|(.+))';
         if (preg_match("~^($pattern\\.)?$pattern\$~", $name, $match)) {
-            $table = ($match[3] != "" ? $match[3] : idf_unescape($match[2]));
-            $name = ($match[5] != "" ? $match[5] : idf_unescape($match[4]));
+            $table = ($match[3] != "" ? $match[3] : $this->server->idf_unescape($match[2]));
+            $name = ($match[5] != "" ? $match[5] : $this->server->idf_unescape($match[4]));
         }
         return (object) array(
             "name" => $name,

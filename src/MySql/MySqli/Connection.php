@@ -2,6 +2,8 @@
 
 namespace Lagdo\Adminer\Drivers\MySql\MySqli;
 
+use Lagdo\Adminer\Drivers\AdminerInterface;
+use Lagdo\Adminer\Drivers\ServerInterface;
 use Lagdo\Adminer\Drivers\ConnectionInterface;
 use Lagdo\Adminer\Drivers\ConnectionTrait;
 
@@ -79,7 +81,8 @@ class Connection extends MySQLi implements ConnectionInterface
         return $row[$field];
     }
 
-    public function quote($string) {
-        return "'" . $this->escape_string($string) . "'";
+    public function quote($string)
+    {
+        return "'" . $this->adminer->escape_string($string) . "'";
     }
 }

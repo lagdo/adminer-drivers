@@ -10,4 +10,13 @@ interface DriverInterface
      * @return Query
      */
     public function getQuery();
+
+    /**
+     * Return a quoted string
+     *
+     * @param string $string
+     *
+     * @return string
+     */
+    public function quoteBinary($string);
 }

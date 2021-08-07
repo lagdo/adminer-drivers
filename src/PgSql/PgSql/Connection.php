@@ -4,8 +4,6 @@ namespace Lagdo\Adminer\Drivers\PgSql\PgSql;
 
 use Lagdo\Adminer\Drivers\AbstractConnection;
 
-use function Lagdo\Adminer\Drivers\h;
-
 /**
  * PostgreSQL driver to be used with the pgsql PHP extension.
  */
@@ -33,7 +31,7 @@ class Connection extends AbstractConnection
     protected $timeout;
 
     public function _error($errno, $error) {
-        if (ini_bool("html_errors")) {
+        if ($this->adminer->ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));
         }
         $error = preg_replace('~^[^:]*: ~', '', $error);
@@ -142,6 +140,6 @@ class Connection extends AbstractConnection
     }
 
     public function warnings() {
-        return h(pg_last_notice($this->client)); // second parameter is available since PHP 7.1.0
+        return $this->adminer->h(pg_last_notice($this->client)); // second parameter is available since PHP 7.1.0
     }
 }

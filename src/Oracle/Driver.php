@@ -4,8 +4,6 @@ namespace Lagdo\Adminer\Drivers\Oracle;
 
 use Lagdo\Adminer\Drivers\AbstractDriver;
 
-use function Lagdo\Adminer\Drivers\idf_unescape;
-
 class Driver extends AbstractDriver {
 
     //! support empty $set in insert()
@@ -20,13 +18,13 @@ class Driver extends AbstractDriver {
             $where = [];
             foreach ($set as $key => $val) {
                 $update[] = "$key = $val";
-                if (isset($primary[idf_unescape($key)])) {
+                if (isset($primary[$this->server->idf_unescape($key)])) {
                     $where[] = "$key = $val";
                 }
             }
-            if (!(($where && $this->server->queries("UPDATE " . $this->server->table($table) . " SET " .
+            if (!(($where && $this->adminer->queries("UPDATE " . $this->server->table($table) . " SET " .
                 implode(", ", $update) . " WHERE " . implode(" AND ", $where)) && $this->connection->affected_rows) ||
-                $this->server->queries("INSERT INTO " . $this->server->table($table) .
+                $this->adminer->queries("INSERT INTO " . $this->server->table($table) .
                 " (" . implode(", ", array_keys($set)) . ") VALUES (" . implode(", ", $set) . ")")
             )) {
                 return false;

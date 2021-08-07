@@ -4,6 +4,8 @@ namespace Lagdo\Adminer\Drivers\MySql\Pdo;
 
 use Lagdo\Adminer\Drivers\Pdo\Connection as PdoConnection;
 
+use PDO;
+
 /**
  * MySQL driver to be used with the pdo_mysql PHP extension.
  */
@@ -49,7 +51,7 @@ class Connection extends PdoConnection
     }
 
     public function query($query, $unbuffered = false) {
-        $this->pdo->setAttribute(1000, !$unbuffered); // 1000 - PDO::MYSQL_ATTR_USE_BUFFERED_QUERY
+        $this->client->setAttribute(1000, !$unbuffered); // 1000 - PDO::MYSQL_ATTR_USE_BUFFERED_QUERY
         return parent::query($query, $unbuffered);
     }
 }

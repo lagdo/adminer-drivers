@@ -54,6 +54,15 @@ interface ConnectionInterface
     public function quote($string);
 
     /**
+     * Return a quoted string
+     *
+     * @param string $string
+     *
+     * @return string
+     */
+    public function quoteBinary($string);
+
+    /**
      * Open a connection to a server
      *
      * @param string $server    The server address, name or uri
@@ -68,5 +77,5 @@ interface ConnectionInterface
      *
      * @return mixed
      */
-    public function getClient();
+    // public function getClient();
 }

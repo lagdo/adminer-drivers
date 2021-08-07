@@ -11,7 +11,7 @@ class Driver extends AbstractDriver {
         foreach ($rows as $set) {
             $values[] = "(" . implode(", ", $set) . ")";
         }
-        return $this->server->queries("REPLACE INTO " . $this->server->table($table) ." (" . implode(", ",
+        return $this->adminer->queries("REPLACE INTO " . $this->server->table($table) ." (" . implode(", ",
             array_keys(reset($rows))) . ") VALUES\n" . implode(",\n", $values));
     }
 

@@ -7,7 +7,7 @@ use Lagdo\Adminer\Drivers\AbstractDriver;
 class Driver extends AbstractDriver {
 
     public function insert($table, $set) {
-        return ($set ? parent::insert($table, $set) : $this->server->queries("INSERT INTO " .
+        return ($set ? parent::insert($table, $set) : $this->adminer->queries("INSERT INTO " .
             $this->server->table($table) . " ()\nVALUES ()"));
     }
 
@@ -24,7 +24,7 @@ class Driver extends AbstractDriver {
         foreach ($rows as $set) {
             $value = "(" . implode(", ", $set) . ")";
             if ($values && (strlen($prefix) + $length + strlen($value) + strlen($suffix) > 1e6)) { // 1e6 - default max_allowed_packet
-                if (!$this->server->queries($prefix . implode(",\n", $values) . $suffix)) {
+                if (!$this->adminer->queries($prefix . implode(",\n", $values) . $suffix)) {
                     return false;
                 }
                 $values = [];
@@ -33,7 +33,7 @@ class Driver extends AbstractDriver {
             $values[] = $value;
             $length += strlen($value) + 2; // 2 - strlen(",\n")
         }
-        return $this->server->queries($prefix . implode(",\n", $values) . $suffix);
+        return $this->adminer->queries($prefix . implode(",\n", $values) . $suffix);
     }
 
     public function slowQuery($query, $timeout) {

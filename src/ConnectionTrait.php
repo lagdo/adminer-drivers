@@ -19,7 +19,7 @@ trait ConnectionTrait
      *
      * @var string
      */
-    protected $extension;
+    public $extension;
 
     /**
      * Get the extension name
@@ -39,5 +39,27 @@ trait ConnectionTrait
     public function getServerInfo()
     {
         return $this->server_info;
+    }
+
+    /**
+     * Get the number of rows affected by the last query
+     *
+     * @return int
+     */
+    public function getAffectedRows()
+    {
+        return $this->affected_rows;
+    }
+
+    /**
+     * Return a quoted string
+     *
+     * @param string $string
+     *
+     * @return string
+     */
+    public function quoteBinary($string)
+    {
+        return $this->quote($string);
     }
 }

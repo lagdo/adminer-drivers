@@ -4,8 +4,6 @@ namespace Lagdo\Adminer\Drivers\Oracle;
 
 use Lagdo\Adminer\Drivers\AbstractServer;
 
-use function Lagdo\Adminer\Drivers\idf_unescape;
-
 class Server extends AbstractServer
 {
     /**
@@ -42,7 +40,6 @@ class Server extends AbstractServer
      */
     public function connect()
     {
-        $this->createConnection();
         if (!$this->connection) {
             return null;
         }
@@ -65,7 +62,7 @@ class Server extends AbstractServer
     }
 
     public function get_databases($flush) {
-        return $this->get_vals("SELECT tablespace_name FROM user_tablespaces ORDER BY 1");
+        return $this->adminer->get_vals("SELECT tablespace_name FROM user_tablespaces ORDER BY 1");
     }
 
     public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
@@ -109,7 +106,7 @@ class Server extends AbstractServer
     public function tables_list() {
         $view = views_table("view_name");
         $owner = where_owner(" AND ");
-        return $this->get_key_vals("SELECT table_name, 'table' FROM all_tables WHERE tablespace_name = " . $this->q($this->getCurrentDatabase()) . "$owner
+        return $this->adminer->get_key_vals("SELECT table_name, 'table' FROM all_tables WHERE tablespace_name = " . $this->q($this->getCurrentDatabase()) . "$owner
 UNION SELECT view_name, 'view' FROM $view
 ORDER BY 1"
         ); //! views don't have schema
@@ -129,7 +126,7 @@ ORDER BY 1"
         $db = get_current_db();
         $view = views_table("view_name");
         $owner = where_owner(" AND ");
-        foreach ($this->get_rows('SELECT table_name "Name", \'table\' "Engine", avg_row_len * num_rows "Data_length", num_rows "Rows" FROM all_tables WHERE tablespace_name = ' . $this->q($db) . $owner . ($name != "" ? " AND table_name = $search" : "") . "
+        foreach ($this->adminer->get_rows('SELECT table_name "Name", \'table\' "Engine", avg_row_len * num_rows "Data_length", num_rows "Rows" FROM all_tables WHERE tablespace_name = ' . $this->q($db) . $owner . ($name != "" ? " AND table_name = $search" : "") . "
 UNION SELECT view_name, 'view', 0, 0 FROM $view" . ($name != "" ? " WHERE view_name = $search" : "") . "
 ORDER BY 1"
         ) as $row) {
@@ -152,7 +149,7 @@ ORDER BY 1"
     public function fields($table) {
         $return = [];
         $owner = where_owner(" AND ");
-        foreach ($this->get_rows("SELECT * FROM all_tab_columns WHERE table_name = " . $this->q($table) . "$owner ORDER BY column_id") as $row) {
+        foreach ($this->adminer->get_rows("SELECT * FROM all_tab_columns WHERE table_name = " . $this->q($table) . "$owner ORDER BY column_id") as $row) {
             $type = $row["DATA_TYPE"];
             $length = "$row[DATA_PRECISION],$row[DATA_SCALE]";
             if ($length == ",") {
@@ -178,7 +175,7 @@ ORDER BY 1"
     public function indexes($table, $connection2 = null) {
         $return = [];
         $owner = where_owner(" AND ", "aic.table_owner");
-        foreach ($this->get_rows("SELECT aic.*, ac.constraint_type, atc.data_default
+        foreach ($this->adminer->get_rows("SELECT aic.*, ac.constraint_type, atc.data_default
 FROM all_ind_columns aic
 LEFT JOIN all_constraints ac ON aic.index_name = ac.constraint_name AND aic.table_name = ac.table_name AND aic.index_owner = ac.owner
 LEFT JOIN all_tab_cols atc ON aic.column_name = atc.column_name AND aic.table_name = atc.table_name AND aic.index_owner = atc.owner
@@ -187,7 +184,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
             $index_name = $row["INDEX_NAME"];
             $column_name = $row["DATA_DEFAULT"];
             if ($column_name) {
-                $column_name = idf_unescape($column_name);
+                $column_name = $this->idf_unescape($column_name);
             } else {
                 $column_name = $row["COLUMN_NAME"];
             }
@@ -201,7 +198,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
 
     public function view($name) {
         $view = views_table("view_name, text");
-        $rows = $this->get_rows('SELECT text "select" FROM ' . $view . ' WHERE view_name = ' . $this->q($name));
+        $rows = $this->adminer->get_rows('SELECT text "select" FROM ' . $view . ' WHERE view_name = ' . $this->q($name));
         return reset($rows);
     }
 
@@ -228,11 +225,11 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
         foreach ($fields as $field) {
             $val = $field[1];
             if ($val && $field[0] != "" && $this->idf_escape($field[0]) != $val[0]) {
-                $this->queries("ALTER TABLE " . $this->table($table) . " RENAME COLUMN " . $this->idf_escape($field[0]) . " TO $val[0]");
+                $this->adminer->queries("ALTER TABLE " . $this->table($table) . " RENAME COLUMN " . $this->idf_escape($field[0]) . " TO $val[0]");
             }
             $orig_field = $orig_fields[$field[0]];
             if ($val && $orig_field) {
-                $old = process_field($orig_field, $orig_field);
+                $old = $this->adminer->process_field($orig_field, $orig_field);
                 if ($val[2] == $old[2]) {
                     $val[2] = "";
                 }
@@ -244,11 +241,11 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
             }
         }
         if ($table == "") {
-            return $this->queries("CREATE TABLE " . $this->table($name) . " (\n" . implode(",\n", $alter) . "\n)");
+            return $this->adminer->queries("CREATE TABLE " . $this->table($name) . " (\n" . implode(",\n", $alter) . "\n)");
         }
-        return (!$alter || $this->queries("ALTER TABLE " . $this->table($table) . "\n" . implode("\n", $alter)))
-            && (!$drop || $this->queries("ALTER TABLE " . $this->table($table) . " DROP (" . implode(", ", $drop) . ")"))
-            && ($table == $name || $this->queries("ALTER TABLE " . $this->table($table) . " RENAME TO " . $this->table($name)))
+        return (!$alter || $this->adminer->queries("ALTER TABLE " . $this->table($table) . "\n" . implode("\n", $alter)))
+            && (!$drop || $this->adminer->queries("ALTER TABLE " . $this->table($table) . " DROP (" . implode(", ", $drop) . ")"))
+            && ($table == $name || $this->adminer->queries("ALTER TABLE " . $this->table($table) . " RENAME TO " . $this->table($name)))
         ;
     }
 
@@ -274,7 +271,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
             array_unshift($queries, "DROP INDEX " . implode(", ", $drop));
         }
         foreach ($queries as $query) {
-            if (!$this->queries($query)) {
+            if (!$this->adminer->queries($query)) {
                 return false;
             }
         }
@@ -294,7 +291,7 @@ WHERE c_list.CONSTRAINT_NAME = c_src.CONSTRAINT_NAME
 AND c_list.R_CONSTRAINT_NAME = c_dest.CONSTRAINT_NAME
 AND c_list.CONSTRAINT_TYPE = 'R'
 AND c_src.TABLE_NAME = " . $this->q($table);
-        foreach ($this->get_rows($query) as $row) {
+        foreach ($this->adminer->get_rows($query) as $row) {
             $return[$row['NAME']] = array(
                 "db" => $row['DEST_DB'],
                 "table" => $row['DEST_TABLE'],
@@ -308,15 +305,15 @@ AND c_src.TABLE_NAME = " . $this->q($table);
     }
 
     public function truncate_tables($tables) {
-        return $this->apply_queries("TRUNCATE TABLE", $tables);
+        return $this->adminer->apply_queries("TRUNCATE TABLE", $tables);
     }
 
     public function drop_views($views) {
-        return $this->apply_queries("DROP VIEW", $views);
+        return $this->adminer->apply_queries("DROP VIEW", $views);
     }
 
     public function drop_tables($tables) {
-        return $this->apply_queries("DROP TABLE", $tables);
+        return $this->adminer->apply_queries("DROP TABLE", $tables);
     }
 
     public function last_id() {
@@ -324,8 +321,8 @@ AND c_src.TABLE_NAME = " . $this->q($table);
     }
 
     public function schemas() {
-        $return = $this->get_vals("SELECT DISTINCT owner FROM dba_segments WHERE owner IN (SELECT username FROM dba_users WHERE default_tablespace NOT IN ('SYSTEM','SYSAUX')) ORDER BY 1");
-        return ($return ? $return : $this->get_vals("SELECT DISTINCT owner FROM all_tables WHERE tablespace_name = " . $this->q($this->getCurrentDatabase()) . " ORDER BY 1"));
+        $return = $this->adminer->get_vals("SELECT DISTINCT owner FROM dba_segments WHERE owner IN (SELECT username FROM dba_users WHERE default_tablespace NOT IN ('SYSTEM','SYSAUX')) ORDER BY 1");
+        return ($return ? $return : $this->adminer->get_vals("SELECT DISTINCT owner FROM all_tables WHERE tablespace_name = " . $this->q($this->getCurrentDatabase()) . " ORDER BY 1"));
     }
 
     public function get_schema() {
@@ -340,11 +337,11 @@ AND c_src.TABLE_NAME = " . $this->q($table);
     }
 
     public function show_variables() {
-        return $this->get_key_vals('SELECT name, display_value FROM v$parameter');
+        return $this->adminer->get_key_vals('SELECT name, display_value FROM v$parameter');
     }
 
     public function process_list() {
-        return $this->get_rows('SELECT sess.process AS "process", sess.username AS "user", sess.schemaname AS "schema", sess.status AS "status", sess.wait_class AS "wait_class", sess.seconds_in_wait AS "seconds_in_wait", sql.sql_text AS "sql_text", sess.machine AS "machine", sess.port AS "port"
+        return $this->adminer->get_rows('SELECT sess.process AS "process", sess.username AS "user", sess.schemaname AS "schema", sess.status AS "status", sess.wait_class AS "wait_class", sess.seconds_in_wait AS "seconds_in_wait", sql.sql_text AS "sql_text", sess.machine AS "machine", sess.port AS "port"
 FROM v$session sess LEFT OUTER JOIN v$sql sql
 ON sql.sql_id = sess.sql_id
 WHERE sess.type = \'USER\'
@@ -353,7 +350,7 @@ ORDER BY PROCESS
     }
 
     public function show_status() {
-        $rows = $this->get_rows('SELECT * FROM v$instance');
+        $rows = $this->adminer->get_rows('SELECT * FROM v$instance');
         return reset($rows);
     }
 

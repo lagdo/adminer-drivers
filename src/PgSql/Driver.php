@@ -4,9 +4,6 @@ namespace Lagdo\Adminer\Drivers\PgSql;
 
 use Lagdo\Adminer\Drivers\AbstractDriver;
 
-use function Lagdo\Adminer\Drivers\idf_unescape;
-use function Lagdo\Adminer\Drivers\number_type;
-
 class Driver extends AbstractDriver
 {
     public function insertUpdate($table, $rows, $primary) {
@@ -15,14 +12,14 @@ class Driver extends AbstractDriver
             $where = [];
             foreach ($set as $key => $val) {
                 $update[] = "$key = $val";
-                if (isset($primary[idf_unescape($key)])) {
+                if (isset($primary[$this->server->idf_unescape($key)])) {
                     $where[] = "$key = $val";
                 }
             }
-            if (!(($where && $this->server->queries("UPDATE " . $this->server->table($table) .
+            if (!(($where && $this->adminer->queries("UPDATE " . $this->server->table($table) .
                 " SET " . implode(", ", $update) . " WHERE " . implode(" AND ", $where)) &&
                 $this->connection->affected_rows)
-                || $this->server->queries("INSERT INTO " . $this->server->table($table) .
+                || $this->adminer->queries("INSERT INTO " . $this->server->table($table) .
                 " (" . implode(", ", array_keys($set)) . ") VALUES (" . implode(", ", $set) . ")")
             )) {
                 return false;
@@ -39,13 +36,9 @@ class Driver extends AbstractDriver
 
     public function convertSearch($idf, $val, $field) {
         return (preg_match('~char|text' . (!preg_match('~LIKE~', $val["op"]) ?
-            '|date|time(stamp)?|boolean|uuid|' . number_type() : '') . '~', $field["type"]) ?
+            '|date|time(stamp)?|boolean|uuid|' . $this->adminer->number_type() : '') . '~', $field["type"]) ?
             $idf : "CAST($idf AS text)"
         );
-    }
-
-    public function quoteBinary($s) {
-        return $this->connection->quoteBinary($s);
     }
 
     public function warnings() {
