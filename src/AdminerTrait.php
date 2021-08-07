@@ -7,40 +7,69 @@ use function class_exists;
 trait AdminerTrait
 {
     /**
+     * @var ServerInterface
+     */
+    public $server = null;
+
+    /**
+     * @var DriverInterface
+     */
+    public $driver = null;
+
+    /**
+     * @var ConnectionInterface
+     */
+    public $connection = null;
+
+    /**
      * Get an instance of a database server class
      *
      * @param AdminerInterface $adminer
-     * @param string $server
+     * @param string $driver
      *
-     * @return ServerInterface
+     * @return void
      */
-    public function getDbServer(AdminerInterface $adminer, string $server)
+    public function connect(AdminerInterface $adminer, string $driver)
     {
-        switch($server)
+        switch($driver)
         {
         case "mysql":
-            return new MySql\Server($adminer);
+            $this->server = new MySql\Server($adminer);
+            break;
         case "pgsql":
-            return new PgSql\Server($adminer);
+            $this->server = new PgSql\Server($adminer);
+            break;
         case "oracle":
-            return new Oracle\Server($adminer);
+            $this->server = new Oracle\Server($adminer);
+            break;
         case "mssql":
-            return new MsSql\Server($adminer);
+            $this->server = new MsSql\Server($adminer);
+            break;
         case "mongo":
             if(class_exists('MongoDB'))
             {
-                return new Mongo\Mongo\Server($adminer);
+                $this->server = new Mongo\Mongo\Server($adminer);
             }
             if(class_exists('MongoDB\Driver\Manager'))
             {
-                return new Mongo\MongoDb\Server($adminer);
+                $this->server = new Mongo\MongoDb\Server($adminer);
             }
+            break;
         case "elastic":
-            return new Elastic\Server($adminer);
+            $this->server = new Elastic\Server($adminer);
+            break;
         case "sqlite":
         case "sqlite2":
-            return new Sqlite\Server($adminer, $server);
+            $this->server = new Sqlite\Server($adminer, $driver);
+            break;
         }
-        return null;
+
+        if(!$this->server)
+        {
+            return;
+        }
+
+        $this->connection = $this->server->connect();
+        $this->driver = $this->server->getDriver();
     }
 }
