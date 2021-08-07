@@ -3,11 +3,9 @@
 namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
 
 use Lagdo\Adminer\Drivers\AbstractDriver;
-use Lagdo\Adminer\Drivers\DriverTrait;
 
-class Driver extends AbstractDriver {
-    use DriverTrait;
-
+class Driver extends AbstractDriver
+{
     public $primary = "_id";
 
     public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0) {
@@ -80,5 +78,13 @@ class Driver extends AbstractDriver {
         }
         $bulk->insert($set);
         return $this->connection->executeBulkWrite("$db.$table", $bulk, 'getInsertedCount');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function insertUpdate($table, $rows, $primary)
+    {
+        return false;
     }
 }

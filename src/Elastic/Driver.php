@@ -3,11 +3,9 @@
 namespace Lagdo\Adminer\Drivers\Elastic;
 
 use Lagdo\Adminer\Drivers\AbstractDriver;
-use Lagdo\Adminer\Drivers\DriverTrait;
 
-class Driver extends AbstractDriver {
-    use DriverTrait;
-
+class Driver extends AbstractDriver
+{
     public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0) {
         $data = [];
         $query = "$table/_search";
@@ -91,6 +89,14 @@ class Driver extends AbstractDriver {
         $response = $this->connection->query($query, $record, 'POST');
         $this->connection->last_id = $response['_id'];
         return $response['created'];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function insertUpdate($table, $rows, $primary)
+    {
+        return false;
     }
 
     public function delete($type, $queryWhere, $limit = 0) {

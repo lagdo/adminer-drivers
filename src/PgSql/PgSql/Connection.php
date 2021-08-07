@@ -73,10 +73,6 @@ class Connection extends AbstractConnection
         return "'" . pg_escape_string($this->client, $string) . "'";
     }
 
-    public function value($val, $field) {
-        return ($field["type"] == "bytea" && $val !== null ? pg_unescape_bytea($val) : $val);
-    }
-
     public function quoteBinary($string) {
         return "'" . pg_escape_bytea($this->client, $string) . "'";
     }
@@ -140,6 +136,7 @@ class Connection extends AbstractConnection
     }
 
     public function warnings() {
-        return $this->adminer->h(pg_last_notice($this->client)); // second parameter is available since PHP 7.1.0
+        // second parameter is available since PHP 7.1.0
+        return $this->adminer->h(pg_last_notice($this->client));
     }
 }

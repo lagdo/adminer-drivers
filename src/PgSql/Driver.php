@@ -28,6 +28,10 @@ class Driver extends AbstractDriver
         return true;
     }
 
+    public function value($val, $field) {
+        return ($field["type"] == "bytea" && $val !== null ? pg_unescape_bytea($val) : $val);
+    }
+
     public function slowQuery($query, $timeout) {
         $this->connection->query("SET statement_timeout = " . (1000 * $timeout));
         $this->connection->timeout = 1000 * $timeout;

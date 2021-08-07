@@ -53,14 +53,14 @@ class Driver extends AbstractDriver {
         );
     }
 
-    public function warnings() {
-        $result = $this->connection->query("SHOW WARNINGS");
-        if ($result && $result->num_rows) {
-            ob_start();
-            select($result); // select() usually needs to print a big table progressively
-            return ob_get_clean();
-        }
-    }
+    // public function warnings() {
+    //     $result = $this->connection->query("SHOW WARNINGS");
+    //     if ($result && $result->num_rows) {
+    //         ob_start();
+    //         select($result); // select() usually needs to print a big table progressively
+    //         return ob_get_clean();
+    //     }
+    // }
 
     public function tableHelp($name) {
         $maria = preg_match('~MariaDB~', $this->connection->server_info);

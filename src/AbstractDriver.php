@@ -54,15 +54,6 @@ abstract class AbstractDriver implements DriverInterface
     }
 
     /**
-     * Insert or update data in table
-     * @param string
-     * @param array
-     * @param array of arrays with escaped columns in keys and quoted data in values
-     * @return bool
-     */
-    abstract public function insertUpdate($table, $rows, $primary);
-
-    /**
      * Select data from table
      * @param string
      * @param array result of $this->adminer->selectColumnsProcess()[0]
@@ -187,10 +178,7 @@ abstract class AbstractDriver implements DriverInterface
      * @return string
      */
     public function value($val, $field) {
-        return (method_exists($this->connection, 'value')
-            ? $this->connection->value($val, $field)
-            : (is_resource($val) ? stream_get_contents($val) : $val)
-        );
+        return (is_resource($val) ? stream_get_contents($val) : $val);
     }
 
     /**
@@ -216,6 +204,6 @@ abstract class AbstractDriver implements DriverInterface
      * @return string relative URL or null
      */
     public function tableHelp($name) {
+        return '';
     }
-
 }
