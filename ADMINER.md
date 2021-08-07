@@ -35,13 +35,13 @@ Here's how the new classes are designed.
 The classes
 -----------
 
-The `AbstractDriver` derived from the `Min_SQL` class from `Adminer`, defined in the `adminer/include/driver.inc.php` file.
+The `AbstractDriver` derives from the `Min_SQL` class from `Adminer`, defined in the `adminer/include/driver.inc.php` file.
 The `AbstractServer` and `AbstractConnection` classes are created from scratch to implement functions that are common to all drivers, or provide default implementation of drivers functions.
 
-For each specific database, the `Driver` class derived from the `Min_SQL` class, defined in the corresponding file, and the global functions are moved to the `Server` class.
+For each specific database, the `Driver` class derives from the `Min_SQL` class, defined in the corresponding file, and the global functions are moved to the `Server` class.
 
-For each specific library, the `Connection` and the `Statement` classes derived resp. from the `Min_DB` and `Min_Result` classes, defined in the corresponding file.
-For the specific case of the `PDO` library, the common base `Connection` and `Statement` classes, in the `Pdo` dir, derived resp. from the `Min_PDO` and `Min_PDOStatement` classes from `Adminer`, defined in the `adminer/include/pdo.inc.php` file.
+For each specific library, the `Connection` and the `Statement` classes derive resp. from the `Min_DB` and `Min_Result` classes, defined in the corresponding file.
+For the specific case of the `PDO` library, the common base `Connection` and `Statement` classes, in the `Pdo` dir, derive resp. from the `Min_PDO` and `Min_PDOStatement` classes from `Adminer`, defined in the `adminer/include/pdo.inc.php` file.
 
 The interfaces
 --------------
