@@ -20,16 +20,6 @@ abstract class AbstractDriver implements DriverInterface
     protected $connection;
 
     /**
-     * @var Query
-     */
-    protected $query;
-
-    /**
-     * @var string
-     */
-    protected $jush;
-
-    /**
      * The constructor
      *
      * @param AdminerInterface
@@ -41,16 +31,6 @@ abstract class AbstractDriver implements DriverInterface
         $this->adminer = $adminer;
         $this->server = $server;
         $this->connection = $connection;
-    }
-
-    /**
-     * Get the current query
-     *
-     * @return Query
-     */
-    public function getQuery()
-    {
-        return $this->query;
     }
 
     /**
@@ -69,7 +49,7 @@ abstract class AbstractDriver implements DriverInterface
         $query = $this->adminer->buildSelectQuery($select, $where, $group, $order, $limit, $page);
         if (!$query) {
             $query = "SELECT" . $this->server->limit(
-                ($page != "last" && $limit != "" && $group && $is_group && $this->jush == "sql" ?
+                ($page != "last" && $limit != "" && $group && $is_group && $this->server->jush == "sql" ?
                 "SQL_CALC_FOUND_ROWS " : "") . implode(", ", $select) . "\nFROM " .
                 $this->server->table($table),
                 ($where ? "\nWHERE " . implode(" AND ", $where) : "") . ($group && $is_group ?
@@ -92,7 +72,8 @@ abstract class AbstractDriver implements DriverInterface
      */
     public function delete($table, $queryWhere, $limit = 0) {
         $query = "FROM " . $this->server->table($table);
-        return $this->adminer->queries("DELETE" . ($limit ? $this->server->limit1($table, $query, $queryWhere) : " $query$queryWhere"));
+        return $this->adminer->queries("DELETE" .
+            ($limit ? $this->server->limit1($table, $query, $queryWhere) : " $query$queryWhere"));
     }
 
     /**

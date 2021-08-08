@@ -240,7 +240,7 @@ class Server extends AbstractServer
     }
 
     public function collations() {
-        $create = $this->getDriver()->getQuery()->create();
+        $create = $this->adminer->input()->create();
         return (($create) ? $this->adminer->get_vals("PRAGMA collation_list", 1) : []);
     }
 

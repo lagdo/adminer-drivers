@@ -209,7 +209,7 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table)
     }
 
     public function auto_increment() {
-        $autoIncrement = $this->getDriver()->getQuery()->autoIncrementStep();
+        $autoIncrement = $this->adminer->input()->autoIncrementStep();
         return " IDENTITY" . ($autoIncrement > 0 ? "($autoIncrement,1)" : "") . " PRIMARY KEY";
     }
 

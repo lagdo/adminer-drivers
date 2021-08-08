@@ -5,6 +5,13 @@ namespace Lagdo\Adminer\Drivers;
 interface AdminerInterface
 {
     /**
+     * Get the request inputs
+     *
+     * @return InputInterface
+     */
+    public function input();
+
+    /**
      * Translate string
      * The first parameter is mandatory. Optional parameters can follow.
      *

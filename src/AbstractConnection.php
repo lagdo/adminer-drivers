@@ -32,7 +32,7 @@ abstract class AbstractConnection implements ConnectionInterface
      *
      * @var int
      */
-    protected $affected_rows;
+    public $affected_rows;
 
     /**
      * Undocumented variable

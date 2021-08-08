@@ -102,11 +102,11 @@ class Driver extends AbstractDriver
     public function delete($type, $queryWhere, $limit = 0) {
         //! use $limit
         $ids = [];
-        $where = $this->getQuery()->where();
+        $where = $this->adminer->input()->where();
         if (is_array($where) && $where["_id"]) {
             $ids[] = $where["_id"];
         }
-        foreach ($this->getQuery()->checks() as $check) {
+        foreach ($this->adminer->input()->checks() as $check) {
             $parts = preg_split('~ *= *~', $check);
             if (count($parts) == 2) {
                 $ids[] = trim($parts[1]);

@@ -22,7 +22,7 @@ class Driver extends AbstractDriver
             $val = preg_replace('~ DESC$~', '', $val, 1, $count);
             $sort[$val] = ($count ? -1 : 1);
         }
-        $_limit = $this->getQuery()->limit();
+        $_limit = $this->adminer->input()->limit();
         if ($_limit > 0) {
             $limit = $_limit;
         }

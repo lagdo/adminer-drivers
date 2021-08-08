@@ -90,7 +90,7 @@ class Server extends MongoServer
 
     public function found_rows($table_status, $where) {
         //! don't call count_rows()
-        $select = $this->getDriver()->getQuery()->select();
+        $select = $this->adminer->input()->select();
         return $this->connection->_db->selectCollection($select)->count($where);
     }
 }
