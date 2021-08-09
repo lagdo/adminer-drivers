@@ -28,6 +28,7 @@ class Server extends AbstractServer
         if(function_exists('json_decode') && $this->adminer->ini_bool('allow_url_fopen'))
         {
             $this->connection = new Connection($this->adminer, $this, 'JSON');
+            return;
         }
     }
 

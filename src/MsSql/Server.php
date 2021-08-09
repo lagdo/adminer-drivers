@@ -33,14 +33,17 @@ class Server extends AbstractServer
         if(extension_loaded("sqlsrv"))
         {
             $this->connection = new SqlSrv\Connection($this->adminer, $this, 'sqlsrv');
+            return;
         }
         if(extension_loaded("mssql"))
         {
             $this->connection = new MsSql\Connection($this->adminer, $this, 'MSSQL');
+            return;
         }
         if(extension_loaded("pdo_dblib"))
         {
             $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_DBLIB');
+            return;
         }
     }
 

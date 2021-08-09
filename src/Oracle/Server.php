@@ -28,10 +28,12 @@ class Server extends AbstractServer
         if(extension_loaded("oci8"))
         {
             $this->connection = new Oci\Connection($this->adminer, $this, 'oci8');
+            return;
         }
         if(extension_loaded("pdo_oci"))
         {
             $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_OCI');
+            return;
         }
     }
 

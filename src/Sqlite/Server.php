@@ -46,14 +46,17 @@ class Server extends AbstractServer
         if($this->server === "sqlite" && class_exists("SQLite3"))
         {
             $this->connection = new Sqlite\Connection($this->adminer, $this, 'SQLite3');
+            return;
         }
         if($this->server === "sqlite2" && class_exists("SQLiteDatabase"))
         {
             $this->connection = new Sqlite2\Connection($this->adminer, $this, 'SQLite');
+            return;
         }
         if(extension_loaded("pdo_sqlite"))
         {
             $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_SQLite');
+            return;
         }
     }
 

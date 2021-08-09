@@ -28,10 +28,12 @@ class Server extends AbstractServer
         if(extension_loaded("pgsql"))
         {
             $this->connection = new PgSql\Connection($this->adminer, $this, 'PgSQL');
+            return;
         }
         if(extension_loaded("pdo_pgsql"))
         {
             $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_PgSQL');
+            return;
         }
     }
 
