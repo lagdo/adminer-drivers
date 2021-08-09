@@ -19,19 +19,16 @@ class Server extends AbstractServer
      */
     protected function createConnection()
     {
-        if(($this->connection))
-        {
+        if (($this->connection)) {
             // Do not create if it already exists
             return;
         }
 
-        if(extension_loaded("pgsql"))
-        {
+        if (extension_loaded("pgsql")) {
             $this->connection = new PgSql\Connection($this->adminer, $this, 'PgSQL');
             return;
         }
-        if(extension_loaded("pdo_pgsql"))
-        {
+        if (extension_loaded("pdo_pgsql")) {
             $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_PgSQL');
             return;
         }
@@ -75,30 +72,36 @@ class Server extends AbstractServer
         return '"' . str_replace('"', '""', $idf) . '"';
     }
 
-    public function get_databases($flush) {
+    public function get_databases($flush)
+    {
         return $this->adminer->get_vals("SELECT datname FROM pg_database WHERE has_database_privilege(datname, 'CONNECT') ORDER BY datname");
     }
 
-    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
+    public function limit($query, $where, $limit, $offset = 0, $separator = " ")
+    {
         return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
     }
 
-    public function limit1($table, $query, $where, $separator = "\n") {
+    public function limit1($table, $query, $where, $separator = "\n")
+    {
         return (preg_match('~^INTO~', $query) ? $this->limit($query, $where, 1, 0, $separator) :
             " $query" . ($this->is_view($this->table_status1($table)) ? $where :
             " WHERE ctid = (SELECT ctid FROM " . $this->table($table) . $where . $separator . "LIMIT 1)")
         );
     }
 
-    public function db_collation($db, $collations) {
+    public function db_collation($db, $collations)
+    {
         return $this->connection->result("SELECT datcollate FROM pg_database WHERE datname = " . $this->q($db));
     }
 
-    public function logged_user() {
+    public function logged_user()
+    {
         return $this->connection->result("SELECT user");
     }
 
-    public function tables_list() {
+    public function tables_list()
+    {
         $query = "SELECT table_name, table_type FROM information_schema.tables WHERE table_schema = current_schema()";
         if ($this->support('materializedview')) {
             $query .= "
@@ -112,13 +115,16 @@ ORDER BY 1";
         return $this->adminer->get_key_vals($query);
     }
 
-    public function count_tables($databases) {
+    public function count_tables($databases)
+    {
         return []; // would require reconnect
     }
 
-    public function table_status($name = "", $fast = false) {
+    public function table_status($name = "", $fast = false)
+    {
         $return = [];
-        foreach ($this->adminer->get_rows("SELECT c.relname AS \"Name\", CASE c.relkind WHEN 'r' THEN 'table' WHEN 'm' THEN 'materialized view' ELSE 'view' END AS \"Engine\", pg_relation_size(c.oid) AS \"Data_length\", pg_total_relation_size(c.oid) - pg_relation_size(c.oid) AS \"Index_length\", obj_description(c.oid, 'pg_class') AS \"Comment\", " . ($this->min_version(12) ? "''" : "CASE WHEN c.relhasoids THEN 'oid' ELSE '' END") . " AS \"Oid\", c.reltuples as \"Rows\", n.nspname
+        foreach ($this->adminer->get_rows(
+            "SELECT c.relname AS \"Name\", CASE c.relkind WHEN 'r' THEN 'table' WHEN 'm' THEN 'materialized view' ELSE 'view' END AS \"Engine\", pg_relation_size(c.oid) AS \"Data_length\", pg_total_relation_size(c.oid) - pg_relation_size(c.oid) AS \"Index_length\", obj_description(c.oid, 'pg_class') AS \"Comment\", " . ($this->min_version(12) ? "''" : "CASE WHEN c.relhasoids THEN 'oid' ELSE '' END") . " AS \"Oid\", c.reltuples as \"Rows\", n.nspname
 FROM pg_class c
 JOIN pg_namespace n ON(n.nspname = current_schema() AND n.oid = c.relnamespace)
 WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
@@ -129,15 +135,18 @@ WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
         return ($name != "" ? $return[$name] : $return);
     }
 
-    public function is_view($table_status) {
+    public function is_view($table_status)
+    {
         return in_array($table_status["Engine"], array("view", "materialized view"));
     }
 
-    public function fk_support($table_status) {
+    public function fk_support($table_status)
+    {
         return true;
     }
 
-    public function fields($table) {
+    public function fields($table)
+    {
         $return = [];
         $aliases = array(
             'timestamp without time zone' => 'timestamp',
@@ -146,7 +155,8 @@ WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 
         $identity_column = $this->min_version(10) ? 'a.attidentity' : '0';
 
-        foreach ($this->adminer->get_rows("SELECT a.attname AS field, format_type(a.atttypid, a.atttypmod) AS full_type, " .
+        foreach ($this->adminer->get_rows(
+            "SELECT a.attname AS field, format_type(a.atttypid, a.atttypmod) AS full_type, " .
             "pg_get_expr(d.adbin, d.adrelid) AS default, a.attnotnull::int, " .
             "col_description(c.oid, a.attnum) AS comment, $identity_column AS identity
 FROM pg_class c
@@ -189,7 +199,8 @@ ORDER BY a.attnum"
         return $return;
     }
 
-    public function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null)
+    {
         if (!is_object($connection2)) {
             $connection2 = $this->connection;
         }
@@ -212,7 +223,8 @@ ORDER BY a.attnum"
         return $return;
     }
 
-    public function foreign_keys($table) {
+    public function foreign_keys($table)
+    {
         $return = [];
         foreach ($this->adminer->get_rows("SELECT conname, condeferrable::int AS deferrable, pg_get_constraintdef(oid) AS definition
 FROM pg_constraint
@@ -243,7 +255,8 @@ ORDER BY conkey, conname") as $row) {
         return $return;
     }
 
-    public function constraints($table) {
+    public function constraints($table)
+    {
         $return = [];
         foreach ($this->adminer->get_rows("SELECT conname, consrc
 FROM pg_catalog.pg_constraint
@@ -259,23 +272,27 @@ ORDER BY connamespace, conname") as $row) {
         return $return;
     }
 
-    public function view($name) {
+    public function view($name)
+    {
         return array("select" => trim($this->connection->result("SELECT pg_get_viewdef(" .
             $this->connection->result("SELECT oid FROM pg_class WHERE relnamespace = " .
             "(SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " .
             $this->q($name)) . ")")));
     }
 
-    public function collations() {
+    public function collations()
+    {
         //! supported in CREATE DATABASE
         return [];
     }
 
-    public function information_schema($db) {
+    public function information_schema($db)
+    {
         return ($db == "information_schema");
     }
 
-    public function error() {
+    public function error()
+    {
         $return = parent::error();
         if (preg_match('~^(.*\n)?([^\n]*)\n( *)\^(\n.*)?$~s', $return, $match)) {
             $match1 = $match[1] ?? '';
@@ -288,25 +305,29 @@ ORDER BY connamespace, conname") as $row) {
         return nl_br($return);
     }
 
-    public function create_database($db, $collation) {
+    public function create_database($db, $collation)
+    {
         return $this->adminer->queries("CREATE DATABASE " . $this->idf_escape($db) .
             ($collation ? " ENCODING " . $this->idf_escape($collation) : ""));
     }
 
-    public function drop_databases($databases) {
+    public function drop_databases($databases)
+    {
         $this->connection->close();
-        return $this->adminer->apply_queries("DROP DATABASE", $databases, function($database) {
+        return $this->adminer->apply_queries("DROP DATABASE", $databases, function ($database) {
             return $this->idf_escape($database);
         });
     }
 
-    public function rename_database($name, $collation) {
+    public function rename_database($name, $collation)
+    {
         //! current database cannot be renamed
         return $this->adminer->queries("ALTER DATABASE " . $this->idf_escape($this->getCurrentDatabase()) .
             " RENAME TO " . $this->idf_escape($name));
     }
 
-    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning)
+    {
         $alter = [];
         $queries = [];
         if ($table != "" && $table != $name) {
@@ -363,14 +384,16 @@ ORDER BY connamespace, conname") as $row) {
         return true;
     }
 
-    public function alter_indexes($table, $alter) {
+    public function alter_indexes($table, $alter)
+    {
         $create = [];
         $drop = [];
         $queries = [];
         foreach ($alter as $val) {
             if ($val[0] != "INDEX") {
                 //! descending UNIQUE indexes results in syntax error
-                $create[] = ($val[2] == "DROP"
+                $create[] = (
+                    $val[2] == "DROP"
                     ? "\nDROP CONSTRAINT " . $this->idf_escape($val[1])
                     : "\nADD" . ($val[1] != "" ? " CONSTRAINT " . $this->idf_escape($val[1]) : "") . " $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . "(" . implode(", ", $val[2]) . ")"
                 );
@@ -394,28 +417,32 @@ ORDER BY connamespace, conname") as $row) {
         return true;
     }
 
-    public function truncate_tables($tables) {
-        return $this->adminer->queries("TRUNCATE " . implode(", ", array_map(function($table) {
+    public function truncate_tables($tables)
+    {
+        return $this->adminer->queries("TRUNCATE " . implode(", ", array_map(function ($table) {
             return $this->table($table);
         }, $tables)));
         return true;
     }
 
-    public function drop_views($views) {
+    public function drop_views($views)
+    {
         return $this->drop_tables($views);
     }
 
-    public function drop_tables($tables) {
+    public function drop_tables($tables)
+    {
         foreach ($tables as $table) {
-                $status = $this->table_status($table);
-                if (!$this->adminer->queries("DROP " . strtoupper($status["Engine"]) . " " . $this->table($table))) {
-                    return false;
-                }
+            $status = $this->table_status($table);
+            if (!$this->adminer->queries("DROP " . strtoupper($status["Engine"]) . " " . $this->table($table))) {
+                return false;
+            }
         }
         return true;
     }
 
-    public function move_tables($tables, $views, $target) {
+    public function move_tables($tables, $views, $target)
+    {
         foreach (array_merge($tables, $views) as $table) {
             $status = $this->table_status($table);
             if (!$this->adminer->queries("ALTER " . strtoupper($status["Engine"]) . " " .
@@ -426,7 +453,8 @@ ORDER BY connamespace, conname") as $row) {
         return true;
     }
 
-    public function trigger($name, $table = null) {
+    public function trigger($name, $table = null)
+    {
         if ($name == "") {
             return array("Statement" => "EXECUTE PROCEDURE ()");
         }
@@ -442,7 +470,8 @@ ORDER BY connamespace, conname") as $row) {
         return reset($rows);
     }
 
-    public function triggers($table) {
+    public function triggers($table)
+    {
         $return = [];
         foreach ($this->adminer->get_rows("SELECT * FROM information_schema.triggers " .
             "WHERE trigger_schema = current_schema() AND event_object_table = " . $this->q($table)) as $row) {
@@ -451,7 +480,8 @@ ORDER BY connamespace, conname") as $row) {
         return $return;
     }
 
-    public function trigger_options() {
+    public function trigger_options()
+    {
         return array(
             "Timing" => array("BEFORE", "AFTER"),
             "Event" => array("INSERT", "UPDATE", "DELETE"),
@@ -459,7 +489,8 @@ ORDER BY connamespace, conname") as $row) {
         );
     }
 
-    public function routine($name, $type) {
+    public function routine($name, $type)
+    {
         $rows = $this->adminer->get_rows('SELECT routine_definition AS definition, LOWER(external_language) AS language, *
 FROM information_schema.routines
 WHERE routine_schema = current_schema() AND specific_name = ' . $this->q($name));
@@ -472,18 +503,21 @@ ORDER BY ordinal_position');
         return $return;
     }
 
-    public function routines() {
+    public function routines()
+    {
         return $this->adminer->get_rows('SELECT specific_name AS "SPECIFIC_NAME", routine_type AS "ROUTINE_TYPE", routine_name AS "ROUTINE_NAME", type_udt_name AS "DTD_IDENTIFIER"
 FROM information_schema.routines
 WHERE routine_schema = current_schema()
 ORDER BY SPECIFIC_NAME');
     }
 
-    public function routine_languages() {
+    public function routine_languages()
+    {
         return $this->adminer->get_vals("SELECT LOWER(lanname) FROM pg_catalog.pg_language");
     }
 
-    public function routine_id($name, $row) {
+    public function routine_id($name, $row)
+    {
         $return = [];
         foreach ($row["fields"] as $field) {
             $return[] = $field["type"];
@@ -491,15 +525,18 @@ ORDER BY SPECIFIC_NAME');
         return $this->idf_escape($name) . "(" . implode(", ", $return) . ")";
     }
 
-    public function last_id() {
+    public function last_id()
+    {
         return 0; // there can be several sequences
     }
 
-    public function explain($connection, $query) {
+    public function explain($connection, $query)
+    {
         return $connection->query("EXPLAIN $query");
     }
 
-    public function found_rows($table_status, $where) {
+    public function found_rows($table_status, $where)
+    {
         if (preg_match(
             "~ rows=([0-9]+)~",
             $this->connection->result("EXPLAIN SELECT * FROM " . $this->idf_escape($table_status["Name"]) . ($where ? " WHERE " . implode(" AND ", $where) : "")),
@@ -510,8 +547,10 @@ ORDER BY SPECIFIC_NAME');
         return false;
     }
 
-    public function types() {
-        return $this->adminer->get_vals("SELECT typname
+    public function types()
+    {
+        return $this->adminer->get_vals(
+            "SELECT typname
 FROM pg_type
 WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema())
 AND typtype IN ('b','d','e')
@@ -519,15 +558,18 @@ AND typelem = 0"
         );
     }
 
-    public function schemas() {
+    public function schemas()
+    {
         return $this->adminer->get_vals("SELECT nspname FROM pg_namespace ORDER BY nspname");
     }
 
-    public function get_schema() {
+    public function get_schema()
+    {
         return $this->connection->result("SELECT current_schema()");
     }
 
-    public function set_schema($schema, $connection2 = null) {
+    public function set_schema($schema, $connection2 = null)
+    {
         if (!$connection2) {
             $connection2 = $this->connection;
         }
@@ -561,7 +603,8 @@ AND typelem = 0"
         return ($return ? "$return\n" : $return);
     }
 
-    public function create_sql($table, $auto_increment, $style) {
+    public function create_sql($table, $auto_increment, $style)
+    {
         $return = '';
         $return_parts = [];
         $sequences = [];
@@ -591,7 +634,8 @@ AND typelem = 0"
             // sequences for fields
             if (preg_match('~nextval\(\'([^\']+)\'\)~', $field['default'], $matches)) {
                 $sequence_name = $matches[1];
-                $sq = reset($this->adminer->get_rows($this->min_version(10) ?
+                $sq = reset($this->adminer->get_rows(
+                    $this->min_version(10) ?
                     "SELECT *, cache_size AS cache_value FROM pg_sequences WHERE schemaname = current_schema() AND sequencename = " .
                     $this->q($sequence_name) : "SELECT * FROM $sequence_name"
                 ));
@@ -608,16 +652,16 @@ AND typelem = 0"
 
         // primary + unique keys
         foreach ($indexes as $index_name => $index) {
-            switch($index['type']) {
+            switch ($index['type']) {
                 case 'UNIQUE':
                     $return_parts[] = "CONSTRAINT " . $this->idf_escape($index_name) .
-                        " UNIQUE (" . implode(', ', array_map(function($column) {
+                        " UNIQUE (" . implode(', ', array_map(function ($column) {
                             return $this->idf_escape($column);
                         }, $index['columns'])) . ")";
                     break;
                 case 'PRIMARY':
                     $return_parts[] = "CONSTRAINT " . $this->idf_escape($index_name) .
-                        " PRIMARY KEY (" . implode(', ', array_map(function($column) {
+                        " PRIMARY KEY (" . implode(', ', array_map(function ($column) {
                             return $this->idf_escape($column);
                         }, $index['columns'])) . ")";
                     break;
@@ -660,11 +704,13 @@ AND typelem = 0"
         return rtrim($return, ';');
     }
 
-    public function truncate_sql($table) {
+    public function truncate_sql($table)
+    {
         return "TRUNCATE " . $this->table($table);
     }
 
-    public function trigger_sql($table) {
+    public function trigger_sql($table)
+    {
         $status = $this->table_status($table);
         $return = "";
         foreach ($this->triggers($table) as $trg_id => $trg) {
@@ -677,40 +723,49 @@ AND typelem = 0"
     }
 
 
-    public function use_sql($database) {
+    public function use_sql($database)
+    {
         return "\connect " . $this->idf_escape($database);
     }
 
-    public function show_variables() {
+    public function show_variables()
+    {
         return $this->adminer->get_key_vals("SHOW ALL");
     }
 
-    public function process_list() {
+    public function process_list()
+    {
         return $this->adminer->get_rows("SELECT * FROM pg_stat_activity ORDER BY " . ($this->min_version(9.2) ? "pid" : "procpid"));
     }
 
-    public function show_status() {
+    public function show_status()
+    {
     }
 
-    public function support($feature) {
+    public function support($feature)
+    {
         return preg_match('~^(database|table|columns|sql|indexes|descidx|comment|view|' .
             ($this->min_version(9.3) ? 'materializedview|' : '') .
             'scheme|routine|processlist|sequence|trigger|type|variables|drop_col|kill|dump|fkeys_sql)$~', $feature);
     }
 
-    public function kill_process($val) {
+    public function kill_process($val)
+    {
         return $this->adminer->queries("SELECT pg_terminate_backend(" . $this->adminer->number($val) . ")");
     }
 
-    public function connection_id(){
+    public function connection_id()
+    {
         return "SELECT pg_backend_pid()";
     }
 
-    public function max_connections() {
+    public function max_connections()
+    {
         return $this->connection->result("SHOW max_connections");
     }
 
-    public function driver_config() {
+    public function driver_config()
+    {
         $types = [];
         $structured_types = [];
         foreach (array( //! arrays

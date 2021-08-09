@@ -19,25 +19,21 @@ class Server extends AbstractServer
      */
     protected function createConnection()
     {
-        if(($this->connection))
-        {
+        if (($this->connection)) {
             // Do not create if it already exists
             return;
         }
 
-        if(extension_loaded("mysqli"))
-        {
+        if (extension_loaded("mysqli")) {
             $this->connection = new MySqli\Connection($this->adminer, $this, 'MySQLi');
             return;
         }
-        if(extension_loaded("mysql") && !(($this->adminer->ini_bool("sql.safe_mode") ||
-            $this->adminer->ini_bool("mysql.allow_local_infile")) && extension_loaded("pdo_mysql")))
-        {
+        if (extension_loaded("mysql") && !(($this->adminer->ini_bool("sql.safe_mode") ||
+            $this->adminer->ini_bool("mysql.allow_local_infile")) && extension_loaded("pdo_mysql"))) {
             $this->connection = new MySql\Connection($this->adminer, $this, 'MySQL');
             return;
         }
-        if(extension_loaded("pdo_mysql"))
-        {
+        if (extension_loaded("pdo_mysql")) {
             $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_MySQL');
             return;
         }
@@ -57,8 +53,7 @@ class Server extends AbstractServer
             $return = $this->connection->error;
             // windows-1250 - most common Windows encoding
             if (function_exists('iconv') && !$this->adminer->is_utf8($return) &&
-                strlen($s = iconv("windows-1250", "utf-8", $return)) > strlen($return))
-            {
+                strlen($s = iconv("windows-1250", "utf-8", $return)) > strlen($return)) {
                 $return = $s;
             }
             return $return;
@@ -89,7 +84,8 @@ class Server extends AbstractServer
      * @param bool
      * @return array
      */
-    public function get_databases($flush) {
+    public function get_databases($flush)
+    {
         // !!! Caching and slow query handling are temporarily disabled !!!
         $query = $this->min_version(5) ?
             "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME" :
@@ -120,7 +116,8 @@ class Server extends AbstractServer
      * @param string
      * @return string
      */
-    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
+    public function limit($query, $where, $limit, $offset = 0, $separator = " ")
+    {
         return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
     }
 
@@ -130,7 +127,8 @@ class Server extends AbstractServer
      * @param array result of collations()
      * @return string
      */
-    public function db_collation($db, $collations) {
+    public function db_collation($db, $collations)
+    {
         $return = null;
         $create = $this->connection->result("SHOW CREATE DATABASE " . $this->idf_escape($db), 1);
         if (preg_match('~ COLLATE ([^ ]+)~', $create, $match)) {
@@ -146,7 +144,8 @@ class Server extends AbstractServer
      * Get supported engines
      * @return array
      */
-    public function engines() {
+    public function engines()
+    {
         $return = [];
         foreach ($this->adminer->get_rows("SHOW ENGINES") as $row) {
             if (preg_match("~YES|DEFAULT~", $row["Support"])) {
@@ -160,7 +159,8 @@ class Server extends AbstractServer
      * Get logged user
      * @return string
      */
-    public function logged_user() {
+    public function logged_user()
+    {
         return $this->connection->result("SELECT USER()");
     }
 
@@ -168,8 +168,10 @@ class Server extends AbstractServer
      * Get tables list
      * @return array array($name => $type)
      */
-    public function tables_list() {
-        return $this->adminer->get_key_vals($this->min_version(5)
+    public function tables_list()
+    {
+        return $this->adminer->get_key_vals(
+            $this->min_version(5)
             ? "SELECT TABLE_NAME, TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME"
             : "SHOW TABLES"
         );
@@ -180,7 +182,8 @@ class Server extends AbstractServer
      * @param array
      * @return array array($db => $tables)
      */
-    public function count_tables($databases) {
+    public function count_tables($databases)
+    {
         $return = [];
         foreach ($databases as $db) {
             $return[$db] = count($this->adminer->get_vals("SHOW TABLES IN " . $this->idf_escape($db)));
@@ -194,9 +197,11 @@ class Server extends AbstractServer
      * @param bool return only "Name", "Engine" and "Comment" fields
      * @return array array($name => array("Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => )) or only inner array with $name
      */
-    public function table_status($name = "", $fast = false) {
+    public function table_status($name = "", $fast = false)
+    {
         $return = [];
-        foreach ($this->adminer->get_rows($fast && $this->min_version(5)
+        foreach ($this->adminer->get_rows(
+            $fast && $this->min_version(5)
             ? "SELECT TABLE_NAME AS Name, ENGINE AS Engine, TABLE_COMMENT AS Comment FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() " . ($name != "" ? "AND TABLE_NAME = " . $this->q($name) : "ORDER BY Name")
             : "SHOW TABLE STATUS" . ($name != "" ? " LIKE " . $this->q(addcslashes($name, "%_\\")) : "")
         ) as $row) {
@@ -220,7 +225,8 @@ class Server extends AbstractServer
      * @param array
      * @return bool
      */
-    public function is_view($table_status) {
+    public function is_view($table_status)
+    {
         return $table_status["Engine"] === null;
     }
 
@@ -229,7 +235,8 @@ class Server extends AbstractServer
      * @param array result of table_status
      * @return bool
      */
-    public function fk_support($table_status) {
+    public function fk_support($table_status)
+    {
         return preg_match('~InnoDB|IBMDB2I~i', $table_status["Engine"])
             || (preg_match('~NDB~i', $table_status["Engine"]) && $this->min_version(5.6));
     }
@@ -239,7 +246,8 @@ class Server extends AbstractServer
      * @param string
      * @return array array($name => array("field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => ))
      */
-    public function fields($table) {
+    public function fields($table)
+    {
         $return = [];
         foreach ($this->adminer->get_rows("SHOW FULL COLUMNS FROM " . $this->table($table)) as $row) {
             preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $row["Type"], $match);
@@ -276,7 +284,8 @@ class Server extends AbstractServer
      * @param string ConnectionInterface to use
      * @return array array($key_name => array("type" => , "columns" => [], "lengths" => [], "descs" => []))
      */
-    public function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null)
+    {
         $return = [];
         foreach ($this->adminer->get_rows("SHOW INDEX FROM " . $this->table($table), $connection2) as $row) {
             $name = $row["Key_name"];
@@ -293,7 +302,8 @@ class Server extends AbstractServer
      * @param string
      * @return array array($name => array("db" => , "ns" => , "table" => , "source" => [], "target" => [], "on_delete" => , "on_update" => ))
      */
-    public function foreign_keys($table) {
+    public function foreign_keys($table)
+    {
         static $pattern = '(?:`(?:[^`]|``)+`|"(?:[^"]|"")+")';
         $return = [];
         $create_table = $this->connection->result("SHOW CREATE TABLE " . $this->table($table), 1);
@@ -315,10 +325,10 @@ class Server extends AbstractServer
                 $return[$this->idf_unescape($match1)] = array(
                     "db" => $this->idf_unescape($match4 != "" ? $match3 : $match4),
                     "table" => $this->idf_unescape($match4 != "" ? $match4 : $match3),
-                    "source" => array_map(function($idf) {
+                    "source" => array_map(function ($idf) {
                         return $this->idf_unescape($idf);
                     }, $source[0]),
-                    "target" => array_map(function($idf) {
+                    "target" => array_map(function ($idf) {
                         return $this->idf_unescape($idf);
                     }, $target[0]),
                     "on_delete" => ($matchCount > 6 ? $match[6] : "RESTRICT"),
@@ -334,16 +344,21 @@ class Server extends AbstractServer
      * @param string
      * @return array array("select" => )
      */
-    public function view($name) {
-        return array("select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '',
-            $this->connection->result("SHOW CREATE VIEW " . $this->table($name), 1)));
+    public function view($name)
+    {
+        return array("select" => preg_replace(
+            '~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU',
+            '',
+            $this->connection->result("SHOW CREATE VIEW " . $this->table($name), 1)
+        ));
     }
 
     /**
      * Get sorted grouped list of collations
      * @return array
      */
-    public function collations() {
+    public function collations()
+    {
         $return = [];
         foreach ($this->adminer->get_rows("SHOW COLLATION") as $row) {
             if ($row["Default"]) {
@@ -364,7 +379,8 @@ class Server extends AbstractServer
      * @param string
      * @return bool
      */
-    public function information_schema($db) {
+    public function information_schema($db)
+    {
         return ($this->min_version(5) && $db == "information_schema")
             || ($this->min_version(5.5) && $db == "performance_schema");
     }
@@ -373,7 +389,8 @@ class Server extends AbstractServer
      * Get escaped error message
      * @return string
      */
-    public function error() {
+    public function error()
+    {
         return $this->adminer->h(preg_replace('~^You have an error.*syntax to use~U', "Syntax error", $this->connection->error));
     }
 
@@ -383,7 +400,8 @@ class Server extends AbstractServer
      * @param string
      * @return string
      */
-    public function create_database($db, $collation) {
+    public function create_database($db, $collation)
+    {
         return $this->adminer->queries("CREATE DATABASE " . $this->idf_escape($db) . ($collation ? " COLLATE " . $this->q($collation) : ""));
     }
 
@@ -392,8 +410,9 @@ class Server extends AbstractServer
      * @param array
      * @return bool
      */
-    public function drop_databases($databases) {
-        return $this->adminer->apply_queries("DROP DATABASE", $databases, function($database) {
+    public function drop_databases($databases)
+    {
+        return $this->adminer->apply_queries("DROP DATABASE", $databases, function ($database) {
             return $this->idf_escape($database);
         });
     }
@@ -404,7 +423,8 @@ class Server extends AbstractServer
      * @param string
      * @return bool
      */
-    public function rename_database($name, $collation) {
+    public function rename_database($name, $collation)
+    {
         $return = false;
         if ($this->create_database($name, $collation)) {
             $tables = [];
@@ -426,7 +446,8 @@ class Server extends AbstractServer
      * Generate modifier for auto increment column
      * @return string
      */
-    public function auto_increment() {
+    public function auto_increment()
+    {
         $auto_increment_index = " PRIMARY KEY";
         // don't overwrite primary key by auto_increment
         $query = $this->adminer->input();
@@ -460,10 +481,12 @@ class Server extends AbstractServer
      * @param string
      * @return bool
      */
-    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning)
+    {
         $alter = [];
         foreach ($fields as $field) {
-            $alter[] = ($field[1]
+            $alter[] = (
+                $field[1]
                 ? ($table != "" ? ($field[0] != "" ? "CHANGE " . $this->idf_escape($field[0]) : "ADD") : " ") . " " . implode($field[1]) . ($table != "" ? $field[2] : "")
                 : "DROP " . $this->idf_escape($field[0])
             );
@@ -492,9 +515,11 @@ class Server extends AbstractServer
      * @param array of array("index type", "name", array("column definition", ...)) or array("index type", "name", "DROP")
      * @return bool
      */
-    public function alter_indexes($table, $alter) {
+    public function alter_indexes($table, $alter)
+    {
         foreach ($alter as $key => $val) {
-            $alter[$key] = ($val[2] == "DROP"
+            $alter[$key] = (
+                $val[2] == "DROP"
                 ? "\nDROP INDEX " . $this->idf_escape($val[1])
                 : "\nADD $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . ($val[1] != "" ? $this->idf_escape($val[1]) . " " : "") . "(" . implode(", ", $val[2]) . ")"
             );
@@ -507,7 +532,8 @@ class Server extends AbstractServer
      * @param array
      * @return bool
      */
-    public function truncate_tables($tables) {
+    public function truncate_tables($tables)
+    {
         return $this->adminer->apply_queries("TRUNCATE TABLE", $tables);
     }
 
@@ -516,8 +542,9 @@ class Server extends AbstractServer
      * @param array
      * @return bool
      */
-    public function drop_views($views) {
-        return $this->adminer->queries("DROP VIEW " . implode(", ", array_map(function($view) {
+    public function drop_views($views)
+    {
+        return $this->adminer->queries("DROP VIEW " . implode(", ", array_map(function ($view) {
             return $this->table($view);
         }, $views)));
     }
@@ -527,8 +554,9 @@ class Server extends AbstractServer
      * @param array
      * @return bool
      */
-    public function drop_tables($tables) {
-        return $this->adminer->queries("DROP TABLE " . implode(", ", array_map(function($table) {
+    public function drop_tables($tables)
+    {
+        return $this->adminer->queries("DROP TABLE " . implode(", ", array_map(function ($table) {
             return $this->table($table);
         }, $tables)));
     }
@@ -540,7 +568,8 @@ class Server extends AbstractServer
      * @param string
      * @return bool
      */
-    public function move_tables($tables, $views, $target) {
+    public function move_tables($tables, $views, $target)
+    {
         $rename = [];
         foreach ($tables as $table) {
             $rename[] = $this->table($table) . " TO " . $this->idf_escape($target) . "." . $this->table($table);
@@ -570,7 +599,8 @@ class Server extends AbstractServer
      * @param string
      * @return bool
      */
-    public function copy_tables($tables, $views, $target) {
+    public function copy_tables($tables, $views, $target)
+    {
         $this->adminer->queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
         $overwrite = $this->adminer->input()->overwrite();
         foreach ($tables as $table) {
@@ -604,7 +634,8 @@ class Server extends AbstractServer
      * @param string trigger name
      * @return array array("Trigger" => , "Timing" => , "Event" => , "Of" => , "Type" => , "Statement" => )
      */
-    public function trigger($name) {
+    public function trigger($name)
+    {
         if ($name == "") {
             return [];
         }
@@ -617,7 +648,8 @@ class Server extends AbstractServer
      * @param string
      * @return array array($name => array($timing, $event))
      */
-    public function triggers($table) {
+    public function triggers($table)
+    {
         $return = [];
         foreach ($this->adminer->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\"))) as $row) {
             $return[$row["Trigger"]] = array($row["Timing"], $row["Event"]);
@@ -629,7 +661,8 @@ class Server extends AbstractServer
      * Get trigger options
      * @return array ("Timing" => [], "Event" => [], "Type" => [])
      */
-    public function trigger_options() {
+    public function trigger_options()
+    {
         return array(
             "Timing" => array("BEFORE", "AFTER"),
             "Event" => array("INSERT", "UPDATE", "DELETE"),
@@ -643,7 +676,8 @@ class Server extends AbstractServer
      * @param string "FUNCTION" or "PROCEDURE"
      * @return array ("fields" => array("field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ), "returns" => , "definition" => , "language" => )
      */
-    public function routine($name, $type) {
+    public function routine($name, $type)
+    {
         $aliases = array("bool", "boolean", "integer", "double precision", "real", "dec", "numeric", "fixed", "national char", "national varchar");
         $space = "(?:\\s|/\\*[\s\S]*?\\*/|(?:#|-- )[^\n]*\n?|--\r?\n)";
         $type_pattern = "((" . implode("|", array_merge(array_keys($this->types), $aliases)) . ")\\b(?:\\s*\\(((?:[^'\")]|$this->enum_length)++)\\))?\\s*(zerofill\\s*)?(unsigned(?:\\s+zerofill)?)?)(?:\\s*(?:CHARSET|CHARACTER\\s+SET)\\s*['\"]?([^'\"\\s,]+)['\"]?)?";
@@ -679,7 +713,8 @@ class Server extends AbstractServer
      * Get list of routines
      * @return array ("SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => )
      */
-    public function routines() {
+    public function routines()
+    {
         return $this->adminer->get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . $this->q($this->getCurrentDatabase()));
     }
 
@@ -687,7 +722,8 @@ class Server extends AbstractServer
      * Get list of available routine languages
      * @return array
      */
-    public function routine_languages() {
+    public function routine_languages()
+    {
         return []; // "SQL" not required
     }
 
@@ -697,7 +733,8 @@ class Server extends AbstractServer
      * @param array result of routine()
      * @return string
      */
-    public function routine_id($name, $row) {
+    public function routine_id($name, $row)
+    {
         return $this->idf_escape($name);
     }
 
@@ -705,7 +742,8 @@ class Server extends AbstractServer
      * Get last auto increment ID
      * @return string
      */
-    public function last_id() {
+    public function last_id()
+    {
         return $this->connection->result("SELECT LAST_INSERT_ID()"); // mysql_insert_id() truncates bigint
     }
 
@@ -715,7 +753,8 @@ class Server extends AbstractServer
      * @param string
      * @return Statement
      */
-    public function explain($connection, $query) {
+    public function explain($connection, $query)
+    {
         return $connection->query("EXPLAIN " . ($this->min_version(5.1) && !$this->min_version(5.7) ? "PARTITIONS " : "") . $query);
     }
 
@@ -725,7 +764,8 @@ class Server extends AbstractServer
      * @param array
      * @return int or null if approximate number can't be retrieved
      */
-    public function found_rows($table_status, $where) {
+    public function found_rows($table_status, $where)
+    {
         return ($where || $table_status["Engine"] != "InnoDB" ? null : $table_status["Rows"]);
     }
 
@@ -736,7 +776,8 @@ class Server extends AbstractServer
      * @param string
      * @return string
      */
-    public function create_sql($table, $auto_increment, $style) {
+    public function create_sql($table, $auto_increment, $style)
+    {
         $return = $this->connection->result("SHOW CREATE TABLE " . $this->table($table), 1);
         if (!$auto_increment) {
             $return = preg_replace('~ AUTO_INCREMENT=\d+~', '', $return); //! skip comments
@@ -749,7 +790,8 @@ class Server extends AbstractServer
      * @param string
      * @return string
      */
-    public function truncate_sql($table) {
+    public function truncate_sql($table)
+    {
         return "TRUNCATE " . $this->table($table);
     }
 
@@ -758,7 +800,8 @@ class Server extends AbstractServer
      * @param string
      * @return string
      */
-    public function use_sql($database) {
+    public function use_sql($database)
+    {
         return "USE " . $this->idf_escape($database);
     }
 
@@ -767,7 +810,8 @@ class Server extends AbstractServer
      * @param string
      * @return string
      */
-    public function trigger_sql($table) {
+    public function trigger_sql($table)
+    {
         $return = "";
         foreach ($this->adminer->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\")), null, "-- ") as $row) {
             $return .= "\nCREATE TRIGGER " . $this->idf_escape($row["Trigger"]) . " $row[Timing] $row[Event] ON " . $this->table($row["Table"]) . " FOR EACH ROW\n$row[Statement];;\n";
@@ -779,7 +823,8 @@ class Server extends AbstractServer
      * Get server variables
      * @return array ($name => $value)
      */
-    public function show_variables() {
+    public function show_variables()
+    {
         return $this->adminer->get_key_vals("SHOW VARIABLES");
     }
 
@@ -787,7 +832,8 @@ class Server extends AbstractServer
      * Get process list
      * @return array ($row)
      */
-    public function process_list() {
+    public function process_list()
+    {
         return $this->adminer->get_rows("SHOW FULL PROCESSLIST");
     }
 
@@ -795,14 +841,16 @@ class Server extends AbstractServer
      * Get status variables
      * @return array ($name => $value)
      */
-    public function show_status() {
+    public function show_status()
+    {
         return $this->adminer->get_key_vals("SHOW STATUS");
     }
 
     /**
      * @inheritDoc
      */
-    public function convert_field(array $field) {
+    public function convert_field(array $field)
+    {
         if (preg_match("~binary~", $field["type"])) {
             return "HEX(" . $this->idf_escape($field["field"]) . ")";
         }
@@ -817,7 +865,8 @@ class Server extends AbstractServer
     /**
      * @inheritDoc
      */
-    public function unconvert_field(array $field, $return) {
+    public function unconvert_field(array $field, $return)
+    {
         if (preg_match("~binary~", $field["type"])) {
             $return = "UNHEX($return)";
         }
@@ -835,7 +884,8 @@ class Server extends AbstractServer
      * @param string "comment", "copy", "database", "descidx", "drop_col", "dump", "event", "indexes", "kill", "materializedview", "partitioning", "privileges", "procedure", "processlist", "routine", "scheme", "sequence", "status", "table", "trigger", "type", "variables", "view", "view_trigger"
      * @return bool
      */
-    public function support($feature) {
+    public function support($feature)
+    {
         return !preg_match("~scheme|sequence|type|view_trigger|materializedview" . ($this->min_version(8) ? "" : "|descidx" . ($this->min_version(5.1) ? "" : "|event|partitioning" . ($this->min_version(5) ? "" : "|routine|trigger|view"))) . "~", $feature);
     }
 
@@ -844,7 +894,8 @@ class Server extends AbstractServer
      * @param int
      * @return bool
      */
-    public function kill_process($val) {
+    public function kill_process($val)
+    {
         return $this->adminer->queries("KILL " . $this->adminer->number($val));
     }
 
@@ -852,7 +903,8 @@ class Server extends AbstractServer
      * Return query to get connection ID
      * @return string
      */
-    public function connection_id(){
+    public function connection_id()
+    {
         return "SELECT CONNECTION_ID()";
     }
 
@@ -860,7 +912,8 @@ class Server extends AbstractServer
      * Get maximum number of connections
      * @return int
      */
-    public function max_connections() {
+    public function max_connections()
+    {
         return $this->connection->result("SELECT @@max_connections");
     }
 
@@ -868,7 +921,8 @@ class Server extends AbstractServer
      * Get driver config
      * @return array array('possible_drivers' => , 'jush' => , 'types' => , 'structured_types' => , 'unsigned' => , 'operators' => , 'functions' => , 'grouping' => , 'edit_functions' => )
      */
-    public function driver_config() {
+    public function driver_config()
+    {
         $types = []; ///< @var array ($type => $maximum_unsigned_length, ...)
         $structured_types = []; ///< @var array ($description => array($type, ...), ...)
         foreach (array(

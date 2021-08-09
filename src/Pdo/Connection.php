@@ -18,7 +18,8 @@ abstract class Connection extends AbstractConnection
     //     }
     // }
 
-    public function dsn($dsn, $username, $password, $options = []) {
+    public function dsn($dsn, $username, $password, $options = [])
+    {
         try {
             $this->client = new PDO($dsn, $username, $password, $options);
         } catch (Exception $ex) {
@@ -30,11 +31,13 @@ abstract class Connection extends AbstractConnection
         $this->server_info = @$this->client->getAttribute(PDO::ATTR_SERVER_VERSION);
     }
 
-    public function quote($string) {
+    public function quote($string)
+    {
         return $this->client->quote($string);
     }
 
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         $result = $this->client->query($query);
         $this->error = "";
         if (!$result) {
@@ -48,11 +51,13 @@ abstract class Connection extends AbstractConnection
         return $result;
     }
 
-    public function multi_query($query) {
+    public function multi_query($query)
+    {
         return $this->_result = $this->query($query);
     }
 
-    public function store_result($result = null) {
+    public function store_result($result = null)
+    {
         if (!$result) {
             $result = $this->_result;
             if (!$result) {
@@ -67,7 +72,8 @@ abstract class Connection extends AbstractConnection
         return true;
     }
 
-    public function next_result() {
+    public function next_result()
+    {
         if (!$this->_result) {
             return false;
         }
@@ -75,7 +81,8 @@ abstract class Connection extends AbstractConnection
         return @$this->_result->nextRowset(); // @ - PDO_PgSQL doesn't support it
     }
 
-    public function result($query, $field = 0) {
+    public function result($query, $field = 0)
+    {
         $result = $this->query($query);
         if (!$result) {
             return false;

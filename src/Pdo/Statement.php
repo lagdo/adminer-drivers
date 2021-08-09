@@ -21,15 +21,18 @@ class Statement extends PDOStatement
      */
     public $num_rows;
 
-    public function fetch_assoc() {
+    public function fetch_assoc()
+    {
         return $this->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function fetch_row() {
+    public function fetch_row()
+    {
         return $this->fetch(PDO::FETCH_NUM);
     }
 
-    public function fetch_field() {
+    public function fetch_field()
+    {
         $row = (object) $this->getColumnMeta($this->_offset++);
         $row->orgtable = $row->table;
         $row->orgname = $row->name;

@@ -14,35 +14,37 @@ class Statement
      *
      * @var object
      */
-    protected $_result;
+    public $_result;
 
     /**
      * Undocumented variable
      *
      * @var int
      */
-    protected $_offset = 0;
+    public $_offset = 0;
 
     /**
      * Undocumented variable
      *
      * @var array
      */
-    protected $_fields;
+    public $_fields;
 
     /**
      * Undocumented variable
      *
      * @var int
      */
-    protected $num_rows;
+    public $num_rows;
 
-    public function __construct($result) {
+    public function __construct($result)
+    {
         $this->_result = $result;
         // $this->num_rows = sqlsrv_num_rows($result); // available only in scrollable results
     }
 
-    public function _convert($row) {
+    public function _convert($row)
+    {
         foreach ((array) $row as $key => $val) {
             if (is_a($val, 'DateTime')) {
                 $row[$key] = $val->format("Y-m-d H:i:s");
@@ -52,15 +54,18 @@ class Statement
         return $row;
     }
 
-    public function fetch_assoc() {
+    public function fetch_assoc()
+    {
         return $this->_convert(sqlsrv_fetch_array($this->_result, SQLSRV_FETCH_ASSOC));
     }
 
-    public function fetch_row() {
+    public function fetch_row()
+    {
         return $this->_convert(sqlsrv_fetch_array($this->_result, SQLSRV_FETCH_NUMERIC));
     }
 
-    public function fetch_field() {
+    public function fetch_field()
+    {
         if (!$this->_fields) {
             $this->_fields = sqlsrv_field_metadata($this->_result);
         }
@@ -72,13 +77,15 @@ class Statement
         return $return;
     }
 
-    public function seek($offset) {
+    public function seek($offset)
+    {
         for ($i=0; $i < $offset; $i++) {
             sqlsrv_fetch($this->_result); // SQLSRV_SCROLL_ABSOLUTE added in sqlsrv 1.1
         }
     }
 
-    public function __destruct() {
+    public function __destruct()
+    {
         sqlsrv_free_stmt($this->_result);
     }
 }

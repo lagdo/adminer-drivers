@@ -8,8 +8,10 @@ class Driver extends AbstractDriver
 {
     public $primary = "_id";
 
-    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0) {
-        $select = ($select == array("*")
+    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0)
+    {
+        $select = (
+            $select == array("*")
             ? []
             : array_fill_keys($select, 1)
         );
@@ -37,7 +39,8 @@ class Driver extends AbstractDriver
         }
     }
 
-    public function update($table, $set, $queryWhere, $limit = 0, $separator = "\n") {
+    public function update($table, $set, $queryWhere, $limit = 0, $separator = "\n")
+    {
         $db = $this->connection->_db_name;
         $where = sql_query_where_parser($queryWhere);
         $class = 'MongoDB\Driver\BulkWrite';
@@ -60,7 +63,8 @@ class Driver extends AbstractDriver
         return $this->connection->executeBulkWrite("$db.$table", $bulk, 'getModifiedCount');
     }
 
-    public function delete($table, $queryWhere, $limit = 0) {
+    public function delete($table, $queryWhere, $limit = 0)
+    {
         $db = $this->connection->_db_name;
         $where = sql_query_where_parser($queryWhere);
         $class = 'MongoDB\Driver\BulkWrite';
@@ -69,7 +73,8 @@ class Driver extends AbstractDriver
         return $this->connection->executeBulkWrite("$db.$table", $bulk, 'getDeletedCount');
     }
 
-    public function insert($table, $set) {
+    public function insert($table, $set)
+    {
         $db = $this->connection->_db_name;
         $class = 'MongoDB\Driver\BulkWrite';
         $bulk = new $class(array());

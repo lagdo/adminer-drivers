@@ -14,11 +14,11 @@ class Connection extends AbstractConnection
      *
      * @var string
      */
-    protected $_database = true;
+    public $_database = true;
 
-     /**
-     * @inheritDoc
-     */
+    /**
+    * @inheritDoc
+    */
     public function open($server, array $options)
     {
         $username = $options['username'];
@@ -48,7 +48,8 @@ class Connection extends AbstractConnection
      * @param string
      * @return bool
      */
-    public function set_charset($charset) {
+    public function set_charset($charset)
+    {
         if (function_exists('mysql_set_charset')) {
             if (mysql_set_charset($charset, $this->client)) {
                 return true;
@@ -64,7 +65,8 @@ class Connection extends AbstractConnection
      * @param string
      * @return string escaped string enclosed in '
      */
-    public function quote($string) {
+    public function quote($string)
+    {
         return "'" . mysql_real_escape_string($string, $this->client) . "'";
     }
 
@@ -73,7 +75,8 @@ class Connection extends AbstractConnection
      * @param string
      * @return bool
      */
-    public function select_db($database) {
+    public function select_db($database)
+    {
         return mysql_select_db($database, $this->client);
     }
 
@@ -83,7 +86,8 @@ class Connection extends AbstractConnection
      * @param bool
      * @return mixed bool or Statement
      */
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         // @ - mute mysql.trace_mode
         $result = @($unbuffered ? mysql_unbuffered_query($query, $this->client) : mysql_query($query, $this->client));
         $this->error = "";
@@ -105,7 +109,8 @@ class Connection extends AbstractConnection
      * @param string
      * @return bool
      */
-    public function multi_query($query) {
+    public function multi_query($query)
+    {
         return $this->_result = $this->query($query);
     }
 
@@ -113,7 +118,8 @@ class Connection extends AbstractConnection
      * Get current resultset
      * @return Statement
      */
-    public function store_result() {
+    public function store_result()
+    {
         return $this->_result;
     }
 
@@ -121,7 +127,8 @@ class Connection extends AbstractConnection
      * Fetch next resultset
      * @return bool
      */
-    public function next_result() {
+    public function next_result()
+    {
         // MySQL extension doesn't support multiple results
         return false;
     }
@@ -132,7 +139,8 @@ class Connection extends AbstractConnection
      * @param int
      * @return string
      */
-    public function result($query, $field = 0) {
+    public function result($query, $field = 0)
+    {
         $result = $this->query($query);
         if (!$result || !$result->num_rows) {
             return false;

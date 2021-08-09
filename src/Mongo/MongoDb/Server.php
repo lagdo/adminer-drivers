@@ -46,8 +46,7 @@ class Server extends MongoServer
      */
     protected function createConnection()
     {
-        if(($this->connection))
-        {
+        if (($this->connection)) {
             // Do not create if it already exists
             return;
         }
@@ -56,7 +55,8 @@ class Server extends MongoServer
         $this->driver = new Driver($this->adminer, $this, $this->connection);
     }
 
-    public function get_databases($flush) {
+    public function get_databases($flush)
+    {
         $return = [];
         foreach ($this->connection->executeCommand('admin', array('listDatabases' => 1)) as $dbs) {
             foreach ($dbs->databases as $db) {
@@ -66,12 +66,14 @@ class Server extends MongoServer
         return $return;
     }
 
-    public function count_tables($databases) {
+    public function count_tables($databases)
+    {
         $return = [];
         return $return;
     }
 
-    public function tables_list() {
+    public function tables_list()
+    {
         $collections = [];
         foreach ($this->connection->executeCommand($this->connection->_db_name, array('listCollections' => 1)) as $result) {
             $collections[$result->name] = 'table';
@@ -79,11 +81,13 @@ class Server extends MongoServer
         return $collections;
     }
 
-    public function drop_databases($databases) {
+    public function drop_databases($databases)
+    {
         return false;
     }
 
-    public function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null)
+    {
         $return = [];
         foreach ($this->connection->executeCommand($this->connection->_db_name, array('listIndexes' => $table)) as $index) {
             $descs = [];
@@ -102,7 +106,8 @@ class Server extends MongoServer
         return $return;
     }
 
-    public function fields($table) {
+    public function fields($table)
+    {
         $fields = fields_from_edit();
         if (!$fields) {
             $result = $this->driver->select($table, array("*"), null, null, [], 10);
@@ -128,13 +133,15 @@ class Server extends MongoServer
         return $fields;
     }
 
-    public function found_rows($table_status, $where) {
+    public function found_rows($table_status, $where)
+    {
         $where = $this->where_to_query($where);
         $toArray = $this->connection->executeCommand($this->connection->_db_name, array('count' => $table_status['Name'], 'query' => $where))->toArray();
         return $toArray[0]->n;
     }
 
-    public function sql_query_where_parser($queryWhere) {
+    public function sql_query_where_parser($queryWhere)
+    {
         $queryWhere = preg_replace('~^\sWHERE \(?\(?(.+?)\)?\)?$~', '\1', $queryWhere);
         $wheres = explode(' AND ', $queryWhere);
         $wheresOr = explode(') OR (', $queryWhere);
@@ -150,7 +157,8 @@ class Server extends MongoServer
         return $this->where_to_query($where, $wheresOr);
     }
 
-    public function where_to_query($whereAnd = [], $whereOr = []) {
+    public function where_to_query($whereAnd = [], $whereOr = [])
+    {
         $data = [];
         foreach (array('and' => $whereAnd, 'or' => $whereOr) as $type => $where) {
             if (is_array($where)) {

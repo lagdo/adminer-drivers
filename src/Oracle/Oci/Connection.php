@@ -14,9 +14,10 @@ class Connection extends AbstractConnection
      *
      * @var string
      */
-    protected $_current_db;
+    public $_current_db;
 
-    public function _error($errno, $error) {
+    public function _error($errno, $error)
+    {
         if ($this->adminer->ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));
         }
@@ -24,9 +25,9 @@ class Connection extends AbstractConnection
         $this->error = $error;
     }
 
-     /**
-     * @inheritDoc
-     */
+    /**
+    * @inheritDoc
+    */
     public function open($server, array $options)
     {
         $username = $options['username'];
@@ -42,16 +43,19 @@ class Connection extends AbstractConnection
         return false;
     }
 
-    public function quote($string) {
+    public function quote($string)
+    {
         return "'" . str_replace("'", "''", $string) . "'";
     }
 
-    public function select_db($database) {
+    public function select_db($database)
+    {
         $this->_current_db = $database;
         return true;
     }
 
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         $result = oci_parse($this->client, $query);
         $this->error = "";
         if (!$result) {
@@ -73,19 +77,23 @@ class Connection extends AbstractConnection
         return $return;
     }
 
-    public function multi_query($query) {
+    public function multi_query($query)
+    {
         return $this->_result = $this->query($query);
     }
 
-    public function store_result() {
+    public function store_result()
+    {
         return $this->_result;
     }
 
-    public function next_result() {
+    public function next_result()
+    {
         return false;
     }
 
-    public function result($query, $field = 1) {
+    public function result($query, $field = 1)
+    {
         $result = $this->query($query);
         if (!is_object($result) || !oci_fetch($result->_result)) {
             return false;

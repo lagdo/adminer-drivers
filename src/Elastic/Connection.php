@@ -11,14 +11,14 @@ class Connection extends AbstractConnection
      *
      * @var [type]
      */
-    protected $_url;
+    public $_url;
 
     /**
      * Undocumented variable
      *
      * @var [type]
      */
-    protected $_db;
+    public $_db;
 
     /**
      * Performs query
@@ -27,7 +27,8 @@ class Connection extends AbstractConnection
      * @param string
      * @return mixed
      */
-    public function rootQuery($path, $content = [], $method = 'GET') {
+    public function rootQuery($path, $content = [], $method = 'GET')
+    {
         @ini_set('track_errors', 1); // @ - may be disabled
         $file = @file_get_contents("$this->_url/" . ltrim($path, '/'), false, stream_context_create(array('http' => array(
             'method' => $method,
@@ -68,7 +69,8 @@ class Connection extends AbstractConnection
      * @param string
      * @return mixed
      */
-    public function query($path, $content = [], $method = 'GET') {
+    public function query($path, $content = [], $method = 'GET')
+    {
         return $this->rootQuery(($this->_db != "" ? "$this->_db/" : "/") . ltrim($path, '/'), $content, $method);
     }
 
@@ -89,7 +91,8 @@ class Connection extends AbstractConnection
         return (bool) $return;
     }
 
-    public function select_db($database) {
+    public function select_db($database)
+    {
         $this->_db = $database;
         return true;
     }

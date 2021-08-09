@@ -9,9 +9,10 @@ namespace Lagdo\Adminer\Drivers\MsSql;
 
 use Lagdo\Adminer\Drivers\AbstractDriver;
 
-class Driver extends AbstractDriver {
-
-    public function insertUpdate($table, $rows, $primary) {
+class Driver extends AbstractDriver
+{
+    public function insertUpdate($table, $rows, $primary)
+    {
         foreach ($rows as $set) {
             $update = [];
             $where = [];
@@ -22,7 +23,8 @@ class Driver extends AbstractDriver {
                 }
             }
             //! can use only one query for all rows
-            if (!$this->adminer->queries("MERGE " . $this->server->table($table) . " USING (VALUES(" .
+            if (!$this->adminer->queries(
+                "MERGE " . $this->server->table($table) . " USING (VALUES(" .
                 implode(", ", $set) . ")) AS source (c" . implode(", c", range(1, count($set))) .
                 ") ON " . implode(" AND ", $where) . //! source, c1 - possible conflict
                 " WHEN MATCHED THEN UPDATE SET " . implode(", ", $update) .
@@ -35,8 +37,8 @@ class Driver extends AbstractDriver {
         return true;
     }
 
-    public function begin() {
+    public function begin()
+    {
         return $this->adminer->queries("BEGIN TRANSACTION");
     }
-
 }

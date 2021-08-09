@@ -6,7 +6,8 @@ use Lagdo\Adminer\Drivers\AbstractDriver;
 
 class Driver extends AbstractDriver
 {
-    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0) {
+    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0)
+    {
         $data = [];
         $query = "$table/_search";
         if ($select != array("*")) {
@@ -30,8 +31,7 @@ class Driver extends AbstractDriver
             list($col, $op, $val) = explode(" ", $val, 3);
             if ($col == "_id") {
                 $data["query"]["ids"]["values"][] = $val;
-            }
-            elseif ($col . $val != "") {
+            } elseif ($col . $val != "") {
                 $term = array("term" => array(($col != "" ? $col : "_all") => $val));
                 if ($op == "=") {
                     $data["query"]["filtered"]["filter"]["and"][] = $term;
@@ -72,7 +72,8 @@ class Driver extends AbstractDriver
         return new Statement($return);
     }
 
-    public function update($type, $record, $queryWhere, $limit = 0, $separator = "\n") {
+    public function update($type, $record, $queryWhere, $limit = 0, $separator = "\n")
+    {
         //! use $limit
         $parts = preg_split('~ *= *~', $queryWhere);
         if (count($parts) == 2) {
@@ -83,7 +84,8 @@ class Driver extends AbstractDriver
         return false;
     }
 
-    public function insert($type, $record) {
+    public function insert($type, $record)
+    {
         $id = ""; //! user should be able to inform _id
         $query = "$type/$id";
         $response = $this->connection->query($query, $record, 'POST');
@@ -99,7 +101,8 @@ class Driver extends AbstractDriver
         return false;
     }
 
-    public function delete($type, $queryWhere, $limit = 0) {
+    public function delete($type, $queryWhere, $limit = 0)
+    {
         //! use $limit
         $ids = [];
         $where = $this->adminer->input()->where();

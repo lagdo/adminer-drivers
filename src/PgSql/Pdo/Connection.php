@@ -14,11 +14,11 @@ class Connection extends PdoConnection
      *
      * @var int
      */
-    protected $timeout;
+    public $timeout;
 
-     /**
-     * @inheritDoc
-     */
+    /**
+    * @inheritDoc
+    */
     public function open($server, array $options)
     {
         $username = $options['username'];
@@ -33,15 +33,18 @@ class Connection extends PdoConnection
         return true;
     }
 
-    public function select_db($database) {
+    public function select_db($database)
+    {
         return ($this->server->getCurrentDatabase() == $database);
     }
 
-    public function quoteBinary($string) {
+    public function quoteBinary($string)
+    {
         return $this->quote($string);
     }
 
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         $return = parent::query($query, $unbuffered);
         if ($this->timeout) {
             $this->timeout = 0;
@@ -50,10 +53,12 @@ class Connection extends PdoConnection
         return $return;
     }
 
-    public function warnings() {
+    public function warnings()
+    {
         return ''; // not implemented in PDO_PgSQL as of PHP 7.2.1
     }
 
-    public function close() {
+    public function close()
+    {
     }
 }

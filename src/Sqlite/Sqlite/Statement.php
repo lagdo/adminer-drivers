@@ -9,35 +9,39 @@ class Statement
      *
      * @var object
      */
-    protected $_result;
+    public $_result;
 
     /**
      * Undocumented variable
      *
      * @var int
      */
-    protected $_offset = 0;
+    public $_offset = 0;
 
     /**
      * Undocumented variable
      *
      * @var int
      */
-    protected $num_rows;
+    public $num_rows;
 
-    public function __construct($result) {
+    public function __construct($result)
+    {
         $this->_result = $result;
     }
 
-    public function fetch_assoc() {
+    public function fetch_assoc()
+    {
         return $this->_result->fetchArray(SQLITE3_ASSOC);
     }
 
-    public function fetch_row() {
+    public function fetch_row()
+    {
         return $this->_result->fetchArray(SQLITE3_NUM);
     }
 
-    public function fetch_field() {
+    public function fetch_field()
+    {
         $column = $this->_offset++;
         $type = $this->_result->columnType($column);
         return (object) array(
@@ -47,7 +51,8 @@ class Statement
         );
     }
 
-    public function __desctruct() {
+    public function __desctruct()
+    {
         return $this->_result->finalize();
     }
 }

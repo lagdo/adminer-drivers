@@ -19,14 +19,12 @@ class Server extends AbstractServer
      */
     protected function createConnection()
     {
-        if(($this->connection))
-        {
+        if (($this->connection)) {
             // Do not create if it already exists
             return;
         }
 
-        if(function_exists('json_decode') && $this->adminer->ini_bool('allow_url_fopen'))
-        {
+        if (function_exists('json_decode') && $this->adminer->ini_bool('allow_url_fopen')) {
             $this->connection = new Connection($this->adminer, $this, 'JSON');
             return;
         }
@@ -43,8 +41,7 @@ class Server extends AbstractServer
 
         list($server, $username, $password) = $this->adminer->credentials();
         if ($password != "" &&
-            $this->connection->open($server, ['username' => $username, 'password' => ""]))
-        {
+            $this->connection->open($server, ['username' => $username, 'password' => ""])) {
             return $this->adminer->lang('Database does not support password.');
         }
         if (!$this->connection->open($server, \compact('username', 'password'))) {
@@ -55,16 +52,19 @@ class Server extends AbstractServer
         return $this->connection;
     }
 
-    public function support($feature) {
+    public function support($feature)
+    {
         return preg_match("~database|table|columns~", $feature);
     }
 
-    public function logged_user() {
+    public function logged_user()
+    {
         $credentials = $this->adminer->credentials();
         return $credentials[1];
     }
 
-    public function get_databases($flush) {
+    public function get_databases($flush)
+    {
         $return = $this->connection->rootQuery('_aliases');
         if ($return) {
             $return = array_keys($return);
@@ -73,7 +73,8 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function count_tables($databases) {
+    public function count_tables($databases)
+    {
         $return = [];
         $result = $this->connection->query('_stats');
         if ($result && $result['indices']) {
@@ -86,7 +87,8 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function tables_list() {
+    public function tables_list()
+    {
         if ($this->min_version(6)) {
             return array('_doc' => 'table');
         }
@@ -98,7 +100,8 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function table_status($name = "", $fast = false) {
+    public function table_status($name = "", $fast = false)
+    {
         $search = $this->connection->query("_search", array(
             "size" => 0,
             "aggregations" => array(
@@ -126,13 +129,15 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null)
+    {
         return array(
             array("type" => "PRIMARY", "columns" => array("_id")),
         );
     }
 
-    public function fields($table) {
+    public function fields($table)
+    {
         $mappings = [];
         if ($this->min_version(6)) {
             $result = $this->connection->query("_mapping");
@@ -172,7 +177,8 @@ class Server extends AbstractServer
      * @param string
      * @return mixed
      */
-    public function create_database($db, $collation) {
+    public function create_database($db, $collation)
+    {
         return $this->connection->rootQuery(urlencode($db), null, 'PUT');
     }
 
@@ -181,7 +187,8 @@ class Server extends AbstractServer
      * @param array
      * @return mixed
      */
-    public function drop_databases($databases) {
+    public function drop_databases($databases)
+    {
         return $this->connection->rootQuery(urlencode(implode(',', $databases)), [], 'DELETE');
     }
 
@@ -190,7 +197,8 @@ class Server extends AbstractServer
      * @param array
      * @return mixed
      */
-    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning)
+    {
         $properties = [];
         foreach ($fields as $f) {
             $field_name = trim($f[1][0]);
@@ -210,7 +218,8 @@ class Server extends AbstractServer
      * @param array
      * @return bool
      */
-    public function drop_tables($tables) {
+    public function drop_tables($tables)
+    {
         $return = true;
         foreach ($tables as $table) { //! convert to bulk api
             $return = $return && $this->connection->query(urlencode($table), [], 'DELETE');
@@ -218,7 +227,8 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function driver_config() {
+    public function driver_config()
+    {
         $types = [];
         $structured_types = [];
         foreach (array(

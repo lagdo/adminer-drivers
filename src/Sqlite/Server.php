@@ -37,24 +37,20 @@ class Server extends AbstractServer
      */
     protected function createConnection()
     {
-        if(($this->connection))
-        {
+        if (($this->connection)) {
             // Do not create if it already exists
             return;
         }
 
-        if($this->server === "sqlite" && class_exists("SQLite3"))
-        {
+        if ($this->server === "sqlite" && class_exists("SQLite3")) {
             $this->connection = new Sqlite\Connection($this->adminer, $this, 'SQLite3');
             return;
         }
-        if($this->server === "sqlite2" && class_exists("SQLiteDatabase"))
-        {
+        if ($this->server === "sqlite2" && class_exists("SQLiteDatabase")) {
             $this->connection = new Sqlite2\Connection($this->adminer, $this, 'SQLite');
             return;
         }
-        if(extension_loaded("pdo_sqlite"))
-        {
+        if (extension_loaded("pdo_sqlite")) {
             $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_SQLite');
             return;
         }
@@ -88,15 +84,18 @@ class Server extends AbstractServer
         return '"' . str_replace('"', '""', $idf) . '"';
     }
 
-    public function get_databases($flush) {
+    public function get_databases($flush)
+    {
         return [];
     }
 
-    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
+    public function limit($query, $where, $limit, $offset = 0, $separator = " ")
+    {
         return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
     }
 
-    public function limit1($table, $query, $where, $separator = "\n") {
+    public function limit1($table, $query, $where, $separator = "\n")
+    {
         return preg_match('~^INTO~', $query) ||
             $this->connection->result("SELECT sqlite_compileoption_used('ENABLE_UPDATE_DELETE_LIMIT')") ?
             $this->limit($query, $where, 1, 0, $separator) :
@@ -104,23 +103,28 @@ class Server extends AbstractServer
             " $query WHERE rowid = (SELECT rowid FROM " . $this->table($table) . $where . $separator . "LIMIT 1)";
     }
 
-    public function db_collation($db, $collations) {
+    public function db_collation($db, $collations)
+    {
         return $this->connection->result("PRAGMA encoding"); // there is no database list so $db == $this->getCurrentDatabase()
     }
 
-    public function logged_user() {
+    public function logged_user()
+    {
         return get_current_user(); // should return effective user
     }
 
-    public function tables_list() {
+    public function tables_list()
+    {
         return $this->adminer->get_key_vals("SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') ORDER BY (name = 'sqlite_sequence'), name");
     }
 
-    public function count_tables($databases) {
+    public function count_tables($databases)
+    {
         return [];
     }
 
-    public function table_status($name = "", $fast = false) {
+    public function table_status($name = "", $fast = false)
+    {
         $return = [];
         foreach ($this->adminer->get_rows("SELECT name AS Name, type AS Engine, 'rowid' AS Oid, '' AS Auto_increment FROM sqlite_master WHERE type IN ('table', 'view') " . ($name != "" ? "AND name = " . $this->q($name) : "ORDER BY name")) as $row) {
             $row["Rows"] = $this->connection->result("SELECT COUNT(*) FROM " . $this->idf_escape($row["Name"]));
@@ -132,15 +136,18 @@ class Server extends AbstractServer
         return ($name != "" ? $return[$name] : $return);
     }
 
-    public function is_view($table_status) {
+    public function is_view($table_status)
+    {
         return $table_status["Engine"] == "view";
     }
 
-    public function fk_support($table_status) {
+    public function fk_support($table_status)
+    {
         return !$this->connection->result("SELECT sqlite_compileoption_used('OMIT_FOREIGN_KEY')");
     }
 
-    public function fields($table) {
+    public function fields($table)
+    {
         $return = [];
         $primary = "";
         foreach ($this->adminer->get_rows("PRAGMA table_info(" . $this->table($table) . ")") as $row) {
@@ -176,7 +183,8 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null)
+    {
         if (!is_object($connection2)) {
             $connection2 = $this->connection;
         }
@@ -222,7 +230,8 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function foreign_keys($table) {
+    public function foreign_keys($table)
+    {
         $return = [];
         foreach ($this->adminer->get_rows("PRAGMA foreign_key_list(" . $this->table($table) . ")") as $row) {
             $foreign_key = &$return[$row["id"]];
@@ -236,18 +245,24 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function view($name) {
-        return array("select" => preg_replace('~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU', '',
+    public function view($name)
+    {
+        return array("select" => preg_replace(
+            '~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU',
+            '',
             $this->connection->result("SELECT sql FROM sqlite_master WHERE name = " .
-            $this->q($name)))); //! identifiers may be inside []
+            $this->q($name))
+        )); //! identifiers may be inside []
     }
 
-    public function collations() {
+    public function collations()
+    {
         $create = $this->adminer->input()->create();
         return (($create) ? $this->adminer->get_vals("PRAGMA collation_list", 1) : []);
     }
 
-    public function check_sqlite_name($name) {
+    public function check_sqlite_name($name)
+    {
         // avoid creating PHP files on unsecured servers
         $extensions = "db|sdb|sqlite";
         if (!preg_match("~^[^\\0]*\\.($extensions)\$~", $name)) {
@@ -257,7 +272,8 @@ class Server extends AbstractServer
         return true;
     }
 
-    public function create_database($db, $collation) {
+    public function create_database($db, $collation)
+    {
         if (file_exists($db)) {
             $this->connection->error = $this->adminer->lang('File exists.');
             return false;
@@ -277,7 +293,8 @@ class Server extends AbstractServer
         return true;
     }
 
-    public function drop_databases($databases) {
+    public function drop_databases($databases)
+    {
         $this->connection->__construct(":memory:"); // to unlock file, doesn't work in PDO on Windows
         foreach ($databases as $db) {
             if (!@unlink($db)) {
@@ -288,7 +305,8 @@ class Server extends AbstractServer
         return true;
     }
 
-    public function rename_database($name, $collation) {
+    public function rename_database($name, $collation)
+    {
         if (!check_sqlite_name($name)) {
             return false;
         }
@@ -297,11 +315,13 @@ class Server extends AbstractServer
         return @rename($this->getCurrentDatabase(), $name);
     }
 
-    public function auto_increment() {
+    public function auto_increment()
+    {
         return " PRIMARY KEY" . (DRIVER == "sqlite" ? " AUTOINCREMENT" : "");
     }
 
-    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning)
+    {
         $use_all_fields = ($table == "" || $foreign);
         foreach ($fields as $field) {
             if ($field[0] != "" || !$field[1] || $field[2]) {
@@ -342,7 +362,8 @@ class Server extends AbstractServer
         return true;
     }
 
-    protected function recreate_table($table, $name, $fields, $originals, $foreign, $auto_increment, $indexes = []) {
+    protected function recreate_table($table, $name, $fields, $originals, $foreign, $auto_increment, $indexes = [])
+    {
         if ($table != "") {
             if (!$fields) {
                 foreach ($this->fields($table) as $key => $field) {
@@ -410,10 +431,12 @@ class Server extends AbstractServer
         }
         if ($table != "") {
             if ($originals && !$this->adminer->queries("INSERT INTO " . $this->table($temp_name) .
-                " (" . implode(", ", $originals) . ") SELECT " . implode(", ",
-               array_map(function($key) {
+                " (" . implode(", ", $originals) . ") SELECT " . implode(
+                    ", ",
+                    array_map(function ($key) {
                    return $this->idf_escape($key);
-               }, array_keys($originals))) . " FROM " . $this->table($table))) {
+               }, array_keys($originals))
+                ) . " FROM " . $this->table($table))) {
                 return false;
             }
             $triggers = [];
@@ -445,7 +468,8 @@ class Server extends AbstractServer
         return true;
     }
 
-    protected function index_sql($table, $type, $name, $columns) {
+    protected function index_sql($table, $type, $name, $columns)
+    {
         return "CREATE $type " . ($type != "INDEX" ? "INDEX " : "")
             . $this->idf_escape($name != "" ? $name : uniqid($table . "_"))
             . " ON " . $this->table($table)
@@ -453,14 +477,16 @@ class Server extends AbstractServer
         ;
     }
 
-    public function alter_indexes($table, $alter) {
+    public function alter_indexes($table, $alter)
+    {
         foreach ($alter as $primary) {
             if ($primary[0] == "PRIMARY") {
                 return $this->recreate_table($table, $table, [], [], [], 0, $alter);
             }
         }
         foreach (array_reverse($alter) as $val) {
-            if (!$this->adminer->queries($val[2] == "DROP" ? "DROP INDEX " . $this->idf_escape($val[1]) :
+            if (!$this->adminer->queries(
+                $val[2] == "DROP" ? "DROP INDEX " . $this->idf_escape($val[1]) :
                 $this->index_sql($table, $val[0], $val[1], "(" . implode(", ", $val[2]) . ")")
             )) {
                 return false;
@@ -469,23 +495,28 @@ class Server extends AbstractServer
         return true;
     }
 
-    public function truncate_tables($tables) {
+    public function truncate_tables($tables)
+    {
         return $this->adminer->apply_queries("DELETE FROM", $tables);
     }
 
-    public function drop_views($views) {
+    public function drop_views($views)
+    {
         return $this->adminer->apply_queries("DROP VIEW", $views);
     }
 
-    public function drop_tables($tables) {
+    public function drop_tables($tables)
+    {
         return $this->adminer->apply_queries("DROP TABLE", $tables);
     }
 
-    public function move_tables($tables, $views, $target) {
+    public function move_tables($tables, $views, $target)
+    {
         return false;
     }
 
-    public function trigger($name) {
+    public function trigger($name)
+    {
         if ($name == "") {
             return array("Statement" => "BEGIN\n\t;\nEND");
         }
@@ -506,7 +537,8 @@ class Server extends AbstractServer
         );
     }
 
-    public function triggers($table) {
+    public function triggers($table)
+    {
         $return = [];
         $trigger_options = trigger_options();
         foreach ($this->adminer->get_rows("SELECT * FROM sqlite_master WHERE type = 'trigger' AND tbl_name = " . $this->q($table)) as $row) {
@@ -516,7 +548,8 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function trigger_options() {
+    public function trigger_options()
+    {
         return array(
             "Timing" => array("BEFORE", "AFTER", "INSTEAD OF"),
             "Event" => array("INSERT", "UPDATE", "UPDATE OF", "DELETE"),
@@ -524,41 +557,52 @@ class Server extends AbstractServer
         );
     }
 
-    public function begin() {
+    public function begin()
+    {
         return $this->adminer->queries("BEGIN");
     }
 
-    public function last_id() {
+    public function last_id()
+    {
         return $this->connection->result("SELECT LAST_INSERT_ROWID()");
     }
 
-    public function explain($connection, $query) {
+    public function explain($connection, $query)
+    {
         return $connection->query("EXPLAIN QUERY PLAN $query");
     }
 
-    public function create_sql($table, $auto_increment, $style) {
+    public function create_sql($table, $auto_increment, $style)
+    {
         $return = $this->connection->result("SELECT sql FROM sqlite_master WHERE type IN ('table', 'view') AND name = " . $this->q($table));
         foreach ($this->indexes($table) as $name => $index) {
             if ($name == '') {
                 continue;
             }
-            $return .= ";\n\n" . $this->index_sql($table, $index['type'], $name,
-                "(" . implode(", ", array_map(function($key) {
+            $return .= ";\n\n" . $this->index_sql(
+                $table,
+                $index['type'],
+                $name,
+                "(" . implode(", ", array_map(function ($key) {
                     return $this->idf_escape($key);
-                }, $index['columns'])) . ")");
+                }, $index['columns'])) . ")"
+            );
         }
         return $return;
     }
 
-    public function truncate_sql($table) {
+    public function truncate_sql($table)
+    {
         return "DELETE FROM " . $this->table($table);
     }
 
-    public function trigger_sql($table) {
+    public function trigger_sql($table)
+    {
         return implode($this->adminer->get_vals("SELECT sql || ';;\n' FROM sqlite_master WHERE type = 'trigger' AND tbl_name = " . $this->q($table)));
     }
 
-    public function show_variables() {
+    public function show_variables()
+    {
         $return = [];
         foreach (array("auto_vacuum", "cache_size", "count_changes", "default_cache_size", "empty_result_callbacks", "encoding", "foreign_keys", "full_column_names", "fullfsync", "journal_mode", "journal_size_limit", "legacy_file_format", "locking_mode", "page_size", "max_page_count", "read_uncommitted", "recursive_triggers", "reverse_unordered_selects", "secure_delete", "short_column_names", "synchronous", "temp_store", "temp_store_directory", "schema_version", "integrity_check", "quick_check") as $key) {
             $return[$key] = $this->connection->result("PRAGMA $key");
@@ -566,7 +610,8 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function show_status() {
+    public function show_status()
+    {
         $return = [];
         foreach ($this->adminer->get_vals("PRAGMA compile_options") as $option) {
             list($key, $val) = explode("=", $option, 2);
@@ -575,11 +620,13 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function support($feature) {
+    public function support($feature)
+    {
         return preg_match('~^(columns|database|drop_col|dump|indexes|descidx|move_col|sql|status|table|trigger|variables|view|view_trigger)$~', $feature);
     }
 
-    public function driver_config() {
+    public function driver_config()
+    {
         return array(
             'possible_drivers' => array(($this->server == "sqlite" ? "SQLite3" : "SQLite"), "PDO_SQLite"),
             'jush' => "sqlite",

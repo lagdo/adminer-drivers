@@ -96,11 +96,9 @@ abstract class AbstractServer implements ServerInterface
     {
         $this->database = $database;
         $this->schema = $schema;
-        if($database !== '')
-        {
+        if ($database !== '') {
             $this->connection->select_db($database);
-            if($schema !== '')
-            {
+            if ($schema !== '') {
                 $this->set_schema($schema);
             }
         }
@@ -122,7 +120,8 @@ abstract class AbstractServer implements ServerInterface
         return $this->schema;
     }
 
-    public function error() {
+    public function error()
+    {
         return $this->adminer->h($this->connection->error);
     }
 
@@ -178,7 +177,8 @@ abstract class AbstractServer implements ServerInterface
     /**
      * @inheritDoc
      */
-    public function db_collation($db, $collations) {
+    public function db_collation($db, $collations)
+    {
         return "";
     }
 
@@ -223,69 +223,79 @@ abstract class AbstractServer implements ServerInterface
     /**
      * @inheritDoc
      */
-    public function information_schema($db) {
+    public function information_schema($db)
+    {
         return false;
     }
 
     /**
      * @inheritDoc
      */
-    public function is_view($table_status) {
+    public function is_view($table_status)
+    {
         return false;
     }
 
     /**
      * @inheritDoc
      */
-    public function foreign_keys($table) {
+    public function foreign_keys($table)
+    {
         return [];
     }
 
     /**
      * @inheritDoc
      */
-    public function fk_support($table_status) {
+    public function fk_support($table_status)
+    {
         return false;
     }
 
     /**
      * @inheritDoc
      */
-    public function convert_field(array $field) {
+    public function convert_field(array $field)
+    {
     }
 
     /**
      * @inheritDoc
      */
-    public function unconvert_field(array $field, $return) {
+    public function unconvert_field(array $field, $return)
+    {
         return $return;
     }
 
     /**
      * @inheritDoc
      */
-    public function show_variables() {
+    public function show_variables()
+    {
         return [];
     }
 
     /**
      * @inheritDoc
      */
-    public function show_status() {
+    public function show_status()
+    {
         return [];
     }
 
     /**
      * @inheritDoc
      */
-    public function explain($connection, $query) {
+    public function explain($connection, $query)
+    {
         return null;
     }
 
     /**
      * @inheritDoc
      */
-    public function use_sql($database) {
+    public function use_sql($database)
+    {
         return "";
     }
 
@@ -300,63 +310,72 @@ abstract class AbstractServer implements ServerInterface
     /**
      * @inheritDoc
      */
-    public function last_id() {
+    public function last_id()
+    {
         return $this->connection->last_id;
     }
 
     /**
      * @inheritDoc
      */
-    public function found_rows($table_status, $where) {
+    public function found_rows($table_status, $where)
+    {
         return null;
     }
 
     /**
      * @inheritDoc
      */
-    public function rename_database($name, $collation) {
+    public function rename_database($name, $collation)
+    {
         return false;
     }
 
     /**
      * @inheritDoc
      */
-    public function auto_increment() {
+    public function auto_increment()
+    {
         return "";
     }
 
     /**
      * @inheritDoc
      */
-    public function alter_indexes($table, $alter) {
+    public function alter_indexes($table, $alter)
+    {
         return false;
     }
 
     /**
      * @inheritDoc
      */
-    public function drop_views($views) {
+    public function drop_views($views)
+    {
         return false;
     }
 
     /**
      * @inheritDoc
      */
-    public function truncate_tables($tables) {
+    public function truncate_tables($tables)
+    {
         return false;
     }
 
     /**
      * @inheritDoc
      */
-    public function limit($query, $where, $limit, $offset = 0, $separator = " ") {
+    public function limit($query, $where, $limit, $offset = 0, $separator = " ")
+    {
         return "";
     }
 
     /**
      * @inheritDoc
      */
-    public function limit1($table, $query, $where, $separator = "\n") {
+    public function limit1($table, $query, $where, $separator = "\n")
+    {
         return $this->limit($query, $where, 1, 0, $separator);
     }
 
@@ -376,12 +395,12 @@ abstract class AbstractServer implements ServerInterface
     {
         $db = $foreign_key["db"];
         $ns = $foreign_key["ns"];
-        return " FOREIGN KEY (" . implode(", ", array_map(function($idf) {
-                return $this->idf_escape($idf);
-            }, $foreign_key["source"])) . ") REFERENCES " .
+        return " FOREIGN KEY (" . implode(", ", array_map(function ($idf) {
+            return $this->idf_escape($idf);
+        }, $foreign_key["source"])) . ") REFERENCES " .
             ($db != "" && $db != $this->database ? $this->idf_escape($db) . "." : "") .
             ($ns != "" && $ns != $this->schema ? $this->idf_escape($ns) . "." : "") .
-            $this->table($foreign_key["table"]) . " (" . implode(", ", array_map(function($idf) {
+            $this->table($foreign_key["table"]) . " (" . implode(", ", array_map(function ($idf) {
                 return $this->idf_escape($idf);
             }, $foreign_key["target"])) . ")" . //! reuse $name - check in older MySQL versions
             (preg_match("~^($this->on_actions)\$~", $foreign_key["on_delete"]) ? " ON DELETE $foreign_key[on_delete]" : "") .

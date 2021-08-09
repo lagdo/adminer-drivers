@@ -24,11 +24,13 @@ trait ConnectionTrait
         // return false;
     }
 
-    public function multi_query($query) {
+    public function multi_query($query)
+    {
         return $this->_result = $this->query($query);
     }
 
-    public function next_result() {
+    public function next_result()
+    {
         return false;
     }
 }

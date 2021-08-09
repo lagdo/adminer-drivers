@@ -4,15 +4,18 @@ namespace Lagdo\Adminer\Drivers\Oracle;
 
 use Lagdo\Adminer\Drivers\AbstractDriver;
 
-class Driver extends AbstractDriver {
+class Driver extends AbstractDriver
+{
 
     //! support empty $set in insert()
 
-    public function begin() {
+    public function begin()
+    {
         return true; // automatic start
     }
 
-    public function insertUpdate($table, $rows, $primary) {
+    public function insertUpdate($table, $rows, $primary)
+    {
         foreach ($rows as $set) {
             $update = [];
             $where = [];
@@ -22,7 +25,8 @@ class Driver extends AbstractDriver {
                     $where[] = "$key = $val";
                 }
             }
-            if (!(($where && $this->adminer->queries("UPDATE " . $this->server->table($table) . " SET " .
+            if (!(
+                ($where && $this->adminer->queries("UPDATE " . $this->server->table($table) . " SET " .
                 implode(", ", $update) . " WHERE " . implode(" AND ", $where)) && $this->connection->affected_rows) ||
                 $this->adminer->queries("INSERT INTO " . $this->server->table($table) .
                 " (" . implode(", ", array_keys($set)) . ") VALUES (" . implode(", ", $set) . ")")

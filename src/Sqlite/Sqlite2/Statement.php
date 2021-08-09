@@ -9,30 +9,32 @@ class Statement
      *
      * @var object
      */
-    protected $_result;
+    public $_result;
 
     /**
      * Undocumented variable
      *
      * @var int
      */
-    protected $_offset = 0;
+    public $_offset = 0;
 
     /**
      * Undocumented variable
      *
      * @var int
      */
-    protected $num_rows;
+    public $num_rows;
 
-    public function __construct($result) {
+    public function __construct($result)
+    {
         $this->_result = $result;
         if (method_exists($result, 'numRows')) { // not available in unbuffered query
             $this->num_rows = $result->numRows();
         }
     }
 
-    public function fetch_assoc() {
+    public function fetch_assoc()
+    {
         $row = $this->_result->fetch(SQLITE_ASSOC);
         if (!$row) {
             return false;
@@ -44,11 +46,13 @@ class Statement
         return $return;
     }
 
-    public function fetch_row() {
+    public function fetch_row()
+    {
         return $this->_result->fetch(SQLITE_NUM);
     }
 
-    public function fetch_field() {
+    public function fetch_field()
+    {
         $name = $this->_result->fieldName($this->_offset++);
         $pattern = '(\[.*]|"(?:[^"]|"")*"|(.+))';
         if (preg_match("~^($pattern\\.)?$pattern\$~", $name, $match)) {

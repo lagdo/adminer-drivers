@@ -31,8 +31,7 @@ trait AdminerTrait
      */
     public function connect(AdminerInterface $adminer, string $driver)
     {
-        switch($driver)
-        {
+        switch ($driver) {
         case "mysql":
             $this->server = new MySql\Server($adminer);
             break;
@@ -46,12 +45,10 @@ trait AdminerTrait
             $this->server = new MsSql\Server($adminer);
             break;
         case "mongo":
-            if(class_exists('MongoDB'))
-            {
+            if (class_exists('MongoDB')) {
                 $this->server = new Mongo\Mongo\Server($adminer);
             }
-            if(class_exists('MongoDB\Driver\Manager'))
-            {
+            if (class_exists('MongoDB\Driver\Manager')) {
                 $this->server = new Mongo\MongoDb\Server($adminer);
             }
             break;
@@ -64,8 +61,7 @@ trait AdminerTrait
             break;
         }
 
-        if(!$this->server)
-        {
+        if (!$this->server) {
             return;
         }
 

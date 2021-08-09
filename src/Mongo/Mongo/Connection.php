@@ -14,16 +14,16 @@ class Connection extends AbstractConnection
      *
      * @var [type]
      */
-    protected $last_id;
+    public $last_id;
 
     /**
      * Undocumented variable
      *
      * @var [type]
      */
-    protected $_db;
+    public $_db;
 
-     /**
+    /**
      * @inheritDoc
      */
     public function open($server, array $options)
@@ -46,11 +46,13 @@ class Connection extends AbstractConnection
         }
     }
 
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         return false;
     }
 
-    public function select_db($database) {
+    public function select_db($database)
+    {
         try {
             $this->_db = $this->client->selectDB($database);
             return true;

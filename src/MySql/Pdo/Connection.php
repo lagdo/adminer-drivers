@@ -11,9 +11,9 @@ use PDO;
  */
 class Connection extends PdoConnection
 {
-     /**
-     * @inheritDoc
-     */
+    /**
+    * @inheritDoc
+    */
     public function open($server, array $options)
     {
         $username = $options['username'];
@@ -41,16 +41,19 @@ class Connection extends PdoConnection
         return true;
     }
 
-    public function set_charset($charset) {
+    public function set_charset($charset)
+    {
         $this->query("SET NAMES $charset"); // charset in DSN is ignored before PHP 5.3.6
     }
 
-    public function select_db($database) {
+    public function select_db($database)
+    {
         // database selection is separated from the connection so dbname in DSN can't be used
         return $this->query("USE " . $this->server->idf_escape($database));
     }
 
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         $this->client->setAttribute(1000, !$unbuffered); // 1000 - PDO::MYSQL_ATTR_USE_BUFFERED_QUERY
         return parent::query($query, $unbuffered);
     }

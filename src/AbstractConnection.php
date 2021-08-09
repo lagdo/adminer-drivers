@@ -11,7 +11,7 @@ abstract class AbstractConnection implements ConnectionInterface
      *
      * @var mixed
      */
-    protected $_result;
+    public $_result;
 
     /**
      * The server description

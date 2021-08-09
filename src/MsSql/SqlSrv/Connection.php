@@ -11,7 +11,8 @@ use Lagdo\Adminer\Drivers\AbstractConnection;
 
 class Connection extends AbstractConnection
 {
-    protected function _get_error() {
+    protected function _get_error()
+    {
         $this->error = "";
         foreach (sqlsrv_errors() as $error) {
             $this->errno = $error["code"];
@@ -20,7 +21,7 @@ class Connection extends AbstractConnection
         $this->error = rtrim($this->error);
     }
 
-     /**
+    /**
      * @inheritDoc
      */
     public function open($server, array $options)
@@ -43,15 +44,18 @@ class Connection extends AbstractConnection
         return (bool) $this->client;
     }
 
-    public function quote($string) {
+    public function quote($string)
+    {
         return "'" . str_replace("'", "''", $string) . "'";
     }
 
-    public function select_db($database) {
+    public function select_db($database)
+    {
         return $this->query("USE " . $this->server->idf_escape($database));
     }
 
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         $result = sqlsrv_query($this->client, $query); //! , [], ($unbuffered ? [] : array("Scrollable" => "keyset"))
         $this->error = "";
         if (!$result) {
@@ -61,7 +65,8 @@ class Connection extends AbstractConnection
         return $this->store_result($result);
     }
 
-    public function multi_query($query) {
+    public function multi_query($query)
+    {
         $this->_result = sqlsrv_query($this->client, $query);
         $this->error = "";
         if (!$this->_result) {
@@ -71,7 +76,8 @@ class Connection extends AbstractConnection
         return true;
     }
 
-    public function store_result($result = null) {
+    public function store_result($result = null)
+    {
         if (!$result) {
             $result = $this->_result;
         }
@@ -85,11 +91,13 @@ class Connection extends AbstractConnection
         return true;
     }
 
-    public function next_result() {
+    public function next_result()
+    {
         return $this->_result ? sqlsrv_next_result($this->_result) : null;
     }
 
-    public function result($query, $field = 0) {
+    public function result($query, $field = 0)
+    {
         $result = $this->query($query);
         if (!is_object($result)) {
             return false;

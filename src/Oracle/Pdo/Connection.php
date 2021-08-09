@@ -14,11 +14,11 @@ class Connection extends PdoConnection
      *
      * @var string
      */
-    protected $_current_db;
+    public $_current_db;
 
-     /**
-     * @inheritDoc
-     */
+    /**
+    * @inheritDoc
+    */
     public function open($server, array $options)
     {
         $username = $options['username'];
@@ -28,7 +28,8 @@ class Connection extends PdoConnection
         return true;
     }
 
-    public function select_db($database) {
+    public function select_db($database)
+    {
         $this->_current_db = $database;
         return true;
     }

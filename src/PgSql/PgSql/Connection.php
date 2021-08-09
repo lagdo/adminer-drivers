@@ -14,23 +14,24 @@ class Connection extends AbstractConnection
      *
      * @var string
      */
-    protected $_string;
+    public $_string;
 
     /**
      * Undocumented variable
      *
      * @var string
      */
-    protected $_database = true;
+    public $_database = true;
 
     /**
      * Undocumented variable
      *
      * @var int
      */
-    protected $timeout;
+    public $timeout;
 
-    public function _error($errno, $error) {
+    public function _error($errno, $error)
+    {
         if ($this->adminer->ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));
         }
@@ -69,18 +70,21 @@ class Connection extends AbstractConnection
     /**
      * @inheritDoc
      */
-    public function quote($string) {
+    public function quote($string)
+    {
         return "'" . pg_escape_string($this->client, $string) . "'";
     }
 
-    public function quoteBinary($string) {
+    public function quoteBinary($string)
+    {
         return "'" . pg_escape_bytea($this->client, $string) . "'";
     }
 
     /**
      * @inheritDoc
      */
-    public function select_db($database) {
+    public function select_db($database)
+    {
         if ($database == $this->server->getCurrentDatabase()) {
             return $this->_database;
         }
@@ -91,11 +95,13 @@ class Connection extends AbstractConnection
         return $return;
     }
 
-    public function close() {
+    public function close()
+    {
         $this->client = @pg_connect("$this->_string dbname='postgres'");
     }
 
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         $result = @pg_query($this->client, $query);
         $this->error = "";
         if (!$result) {
@@ -114,20 +120,24 @@ class Connection extends AbstractConnection
         return $return;
     }
 
-    public function multi_query($query) {
+    public function multi_query($query)
+    {
         return $this->_result = $this->query($query);
     }
 
-    public function store_result() {
+    public function store_result()
+    {
         return $this->_result;
     }
 
-    public function next_result() {
+    public function next_result()
+    {
         // PgSQL extension doesn't support multiple results
         return false;
     }
 
-    public function result($query, $field = 0) {
+    public function result($query, $field = 0)
+    {
         $result = $this->query($query);
         if (!$result || !$result->num_rows) {
             return false;
@@ -135,7 +145,8 @@ class Connection extends AbstractConnection
         return pg_fetch_result($result->_result, 0, $field);
     }
 
-    public function warnings() {
+    public function warnings()
+    {
         // second parameter is available since PHP 7.1.0
         return $this->adminer->h(pg_last_notice($this->client));
     }

@@ -15,21 +15,21 @@ class Connection extends AbstractConnection
      * @var int
      */
 
-     protected $last_id;
+    public $last_id;
 
     /**
      * Undocumented variable
      *
      * @var [type]
      */
-    protected $_db;
+    public $_db;
 
     /**
      * Undocumented variable
      *
      * @var string
      */
-    protected $_db_name;
+    public $_db_name;
 
     /**
      * @inheritDoc
@@ -44,7 +44,8 @@ class Connection extends AbstractConnection
         $this->executeCommand('admin', array('ping' => 1));
     }
 
-    public function executeCommand($db, $command) {
+    public function executeCommand($db, $command)
+    {
         // $class = 'MongoDB\Driver\Command';
         try {
             // return $this->client->executeCommand($db, new $class($command));
@@ -55,7 +56,8 @@ class Connection extends AbstractConnection
         }
     }
 
-    public function executeBulkWrite($namespace, $bulk, $counter) {
+    public function executeBulkWrite($namespace, $bulk, $counter)
+    {
         try {
             $results = $this->client->executeBulkWrite($namespace, $bulk);
             $this->affected_rows = $results->$counter();
@@ -66,11 +68,13 @@ class Connection extends AbstractConnection
         }
     }
 
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         return false;
     }
 
-    public function select_db($database) {
+    public function select_db($database)
+    {
         $this->_db_name = $database;
         return true;
     }

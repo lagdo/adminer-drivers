@@ -21,7 +21,8 @@ class Connection extends AbstractConnection
         $this->server_info = $version["versionString"];
     }
 
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         $result = @$this->client->query($query);
         $this->error = "";
         if (!$result) {
@@ -35,18 +36,21 @@ class Connection extends AbstractConnection
         return true;
     }
 
-    public function quote($string) {
+    public function quote($string)
+    {
         return ($this->adminer->is_utf8($string)
             ? "'" . $this->client->escapeString($string) . "'"
             : "x'" . reset(unpack('H*', $string)) . "'"
         );
     }
 
-    public function store_result() {
+    public function store_result()
+    {
         return $this->_result;
     }
 
-    public function result($query, $field = 0) {
+    public function result($query, $field = 0)
+    {
         $result = $this->query($query);
         if (!is_object($result)) {
             return false;

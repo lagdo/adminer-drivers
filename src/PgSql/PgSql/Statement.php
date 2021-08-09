@@ -11,36 +11,40 @@ class Statement
      *
      * @var object
      */
-    protected $_result;
+    public $_result;
 
     /**
      * Undocumented variable
      *
      * @var int
      */
-    protected $_offset = 0;
+    public $_offset = 0;
 
     /**
      * Undocumented variable
      *
      * @var int
      */
-    protected $num_rows;
+    public $num_rows;
 
-    public function __construct($result) {
+    public function __construct($result)
+    {
         $this->_result = $result;
         $this->num_rows = pg_num_rows($result);
     }
 
-    public function fetch_assoc() {
+    public function fetch_assoc()
+    {
         return pg_fetch_assoc($this->_result);
     }
 
-    public function fetch_row() {
+    public function fetch_row()
+    {
         return pg_fetch_row($this->_result);
     }
 
-    public function fetch_field() {
+    public function fetch_field()
+    {
         $column = $this->_offset++;
         $return = new stdClass;
         if (function_exists('pg_field_table')) {
@@ -53,7 +57,8 @@ class Statement
         return $return;
     }
 
-    public function __destruct() {
+    public function __destruct()
+    {
         pg_free_result($this->_result);
     }
 }

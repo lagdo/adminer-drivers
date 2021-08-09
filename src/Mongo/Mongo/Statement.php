@@ -9,30 +9,31 @@ class Statement
      *
      * @var int
      */
-    protected $num_rows;
+    public $num_rows;
 
     /**
      * Undocumented variable
      *
      * @var array
      */
-    protected $_rows = [];
+    public $_rows = [];
 
     /**
      * Undocumented variable
      *
      * @var int
      */
-    protected $_offset = 0;
+    public $_offset = 0;
 
     /**
      * Undocumented variable
      *
      * @var array
      */
-    protected $_charset = [];
+    public $_charset = [];
 
-    public function __construct($result) {
+    public function __construct($result)
+    {
         foreach ($result as $item) {
             $row = [];
             foreach ($item as $key => $val) {
@@ -44,9 +45,10 @@ class Statement
                     (is_a($val, 'MongoDate') ? gmdate("Y-m-d H:i:s", $val->sec) . " GMT" :
                     (is_a($val, 'MongoBinData') ? $val->bin : //! allow downloading
                     (is_a($val, 'MongoRegex') ? "$val" :
-                    (is_object($val) ? get_class($val) : // MongoMinKey, MongoMaxKey
+                    (
+                        is_object($val) ? get_class($val) : // MongoMinKey, MongoMaxKey
                     $val
-                )))));
+                    )))));
             }
             $this->_rows[] = $row;
             foreach ($row as $key => $val) {
@@ -58,7 +60,8 @@ class Statement
         $this->num_rows = count($this->_rows);
     }
 
-    public function fetch_assoc() {
+    public function fetch_assoc()
+    {
         $row = current($this->_rows);
         if (!$row) {
             return $row;
@@ -71,7 +74,8 @@ class Statement
         return $return;
     }
 
-    public function fetch_row() {
+    public function fetch_row()
+    {
         $return = $this->fetch_assoc();
         if (!$return) {
             return $return;
@@ -79,7 +83,8 @@ class Statement
         return array_values($return);
     }
 
-    public function fetch_field() {
+    public function fetch_field()
+    {
         $keys = array_keys($this->_rows[0]);
         $name = $keys[$this->_offset++];
         return (object) array(
@@ -87,5 +92,4 @@ class Statement
             'charsetnr' => $this->_charset[$name],
         );
     }
-
 }

@@ -20,7 +20,8 @@ class Connection extends AbstractConnection
         $this->client = new SQLiteDatabase($filename);
     }
 
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         $method = ($unbuffered ? "unbufferedQuery" : "query");
         $result = @$this->client->$method($query, SQLITE_BOTH, $error);
         $this->error = "";
@@ -34,15 +35,18 @@ class Connection extends AbstractConnection
         return new Statement($result);
     }
 
-    public function quote($string) {
+    public function quote($string)
+    {
         return "'" . sqlite_escape_string($string) . "'";
     }
 
-    public function store_result() {
+    public function store_result()
+    {
         return $this->_result;
     }
 
-    public function result($query, $field = 0) {
+    public function result($query, $field = 0)
+    {
         $result = $this->query($query);
         if (!is_object($result)) {
             return false;

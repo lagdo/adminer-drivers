@@ -36,7 +36,8 @@ class Server extends AbstractServer
         return $this->connection;
     }
 
-    public function table_status($name = "", $fast = false) {
+    public function table_status($name = "", $fast = false)
+    {
         $return = [];
         foreach ($this->tables_list() as $table => $type) {
             $return[$table] = array("Name" => $table);
@@ -47,16 +48,19 @@ class Server extends AbstractServer
         return $return;
     }
 
-    public function create_database($db, $collation) {
+    public function create_database($db, $collation)
+    {
         return true;
     }
 
-    public function logged_user() {
+    public function logged_user()
+    {
         $credentials = $this->adminer->credentials();
         return $credentials[1];
     }
 
-    public function alter_indexes($table, $alter) {
+    public function alter_indexes($table, $alter)
+    {
         foreach ($alter as $val) {
             list($type, $name, $set) = $val;
             if ($set == "DROP") {
@@ -81,18 +85,21 @@ class Server extends AbstractServer
         return true;
     }
 
-    public function support($feature) {
+    public function support($feature)
+    {
         return preg_match("~database|indexes|descidx~", $feature);
     }
 
-    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+    public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning)
+    {
         if ($table == "") {
             $this->connection->_db->createCollection($name);
             return true;
         }
     }
 
-    public function drop_tables($tables) {
+    public function drop_tables($tables)
+    {
         foreach ($tables as $table) {
             $response = $this->connection->_db->selectCollection($table)->drop();
             if (!$response['ok']) {
@@ -102,7 +109,8 @@ class Server extends AbstractServer
         return true;
     }
 
-    public function truncate_tables($tables) {
+    public function truncate_tables($tables)
+    {
         foreach ($tables as $table) {
             $response = $this->connection->_db->selectCollection($table)->remove();
             if (!$response['ok']) {
@@ -112,7 +120,8 @@ class Server extends AbstractServer
         return true;
     }
 
-    public function driver_config() {
+    public function driver_config()
+    {
         return array(
             'possible_drivers' => array("mongo", "mongodb"),
             'jush' => "mongo",

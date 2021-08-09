@@ -11,9 +11,9 @@ use Lagdo\Adminer\Drivers\AbstractConnection;
 
 class Connection extends AbstractConnection
 {
-     /**
-     * @inheritDoc
-     */
+    /**
+    * @inheritDoc
+    */
     public function open($server, array $options)
     {
         $username = $options['username'];
@@ -32,15 +32,18 @@ class Connection extends AbstractConnection
         return (bool) $this->client;
     }
 
-    public function quote($string) {
+    public function quote($string)
+    {
         return "'" . str_replace("'", "''", $string) . "'";
     }
 
-    public function select_db($database) {
+    public function select_db($database)
+    {
         return mssql_select_db($database);
     }
 
-    public function query($query, $unbuffered = false) {
+    public function query($query, $unbuffered = false)
+    {
         $result = @mssql_query($query, $this->client); //! $unbuffered
         $this->error = "";
         if (!$result) {
@@ -54,19 +57,23 @@ class Connection extends AbstractConnection
         return new Statement($result);
     }
 
-    public function multi_query($query) {
+    public function multi_query($query)
+    {
         return $this->_result = $this->query($query);
     }
 
-    public function store_result() {
+    public function store_result()
+    {
         return $this->_result;
     }
 
-    public function next_result() {
+    public function next_result()
+    {
         return mssql_next_result($this->_result->_result);
     }
 
-    public function result($query, $field = 0) {
+    public function result($query, $field = 0)
+    {
         $result = $this->query($query);
         if (!is_object($result)) {
             return false;

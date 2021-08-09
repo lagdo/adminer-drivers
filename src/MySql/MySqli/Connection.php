@@ -33,9 +33,9 @@ class Connection extends MySQLi implements ConnectionInterface
         // $this->extension = $extension;
     }
 
-     /**
-     * @inheritDoc
-     */
+    /**
+    * @inheritDoc
+    */
     public function open($server, array $options)
     {
         $username = $options['username'];
@@ -63,7 +63,8 @@ class Connection extends MySQLi implements ConnectionInterface
         return $return;
     }
 
-    public function set_charset($charset) {
+    public function set_charset($charset)
+    {
         if (parent::set_charset($charset)) {
             return true;
         }
@@ -72,7 +73,8 @@ class Connection extends MySQLi implements ConnectionInterface
         return $this->query("SET NAMES $charset");
     }
 
-    public function result($query, $field = 0) {
+    public function result($query, $field = 0)
+    {
         $result = $this->query($query);
         if (!$result) {
             return false;

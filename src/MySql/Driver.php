@@ -4,14 +4,16 @@ namespace Lagdo\Adminer\Drivers\MySql;
 
 use Lagdo\Adminer\Drivers\AbstractDriver;
 
-class Driver extends AbstractDriver {
-
-    public function insert($table, $set) {
+class Driver extends AbstractDriver
+{
+    public function insert($table, $set)
+    {
         return ($set ? parent::insert($table, $set) : $this->adminer->queries("INSERT INTO " .
             $this->server->table($table) . " ()\nVALUES ()"));
     }
 
-    public function insertUpdate($table, $rows, $primary) {
+    public function insertUpdate($table, $rows, $primary)
+    {
         $columns = array_keys(reset($rows));
         $prefix = "INSERT INTO " . $this->server->table($table) . " (" . implode(", ", $columns) . ") VALUES\n";
         $values = [];
@@ -36,7 +38,8 @@ class Driver extends AbstractDriver {
         return $this->adminer->queries($prefix . implode(",\n", $values) . $suffix);
     }
 
-    public function slowQuery($query, $timeout) {
+    public function slowQuery($query, $timeout)
+    {
         if ($this->server->min_version('5.7.8', '10.1.2')) {
             if (preg_match('~MariaDB~', $this->connection->server_info)) {
                 return "SET STATEMENT max_statement_time=$timeout FOR $query";
@@ -46,7 +49,8 @@ class Driver extends AbstractDriver {
         }
     }
 
-    public function convertSearch($idf, $val, $field) {
+    public function convertSearch($idf, $val, $field)
+    {
         return (preg_match('~char|text|enum|set~', $field["type"]) &&
             !preg_match("~^utf8~", $field["collation"]) && preg_match('~[\x80-\xFF]~', $val['val']) ?
             "CONVERT($idf USING " . $this->server->charset() . ")" : $idf
@@ -62,7 +66,8 @@ class Driver extends AbstractDriver {
     //     }
     // }
 
-    public function tableHelp($name) {
+    public function tableHelp($name)
+    {
         $maria = preg_match('~MariaDB~', $this->connection->server_info);
         if ($this->server->information_schema($this->server->getCurrentDatabase())) {
             return strtolower(($maria ? "information-schema-$name-table/" : str_replace("_", "-", $name) . "-table.html"));
@@ -71,5 +76,4 @@ class Driver extends AbstractDriver {
             return ($maria ? "mysql$name-table/" : "system-database.html"); //! more precise link
         }
     }
-
 }

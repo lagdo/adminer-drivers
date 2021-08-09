@@ -44,7 +44,8 @@ abstract class AbstractDriver implements DriverInterface
      * @param int index of page starting at zero
      * @return Statement
      */
-    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0) {
+    public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0)
+    {
         $is_group = (count($group) < count($select));
         $query = $this->adminer->buildSelectQuery($select, $where, $group, $order, $limit, $page);
         if (!$query) {
@@ -54,7 +55,9 @@ abstract class AbstractDriver implements DriverInterface
                 $this->server->table($table),
                 ($where ? "\nWHERE " . implode(" AND ", $where) : "") . ($group && $is_group ?
                 "\nGROUP BY " . implode(", ", $group) : "") . ($order ? "\nORDER BY " .
-                implode(", ", $order) : ""), ($limit != "" ? +$limit : null), ($page ? $limit * $page : 0),
+                implode(", ", $order) : ""),
+                ($limit != "" ? +$limit : null),
+                ($page ? $limit * $page : 0),
                 "\n"
             );
         }
@@ -70,7 +73,8 @@ abstract class AbstractDriver implements DriverInterface
      * @param int 0 or 1
      * @return bool
      */
-    public function delete($table, $queryWhere, $limit = 0) {
+    public function delete($table, $queryWhere, $limit = 0)
+    {
         $query = "FROM " . $this->server->table($table);
         return $this->adminer->queries("DELETE" .
             ($limit ? $this->server->limit1($table, $query, $queryWhere) : " $query$queryWhere"));
@@ -85,7 +89,8 @@ abstract class AbstractDriver implements DriverInterface
      * @param string
      * @return bool
      */
-    public function update($table, $set, $queryWhere, $limit = 0, $separator = "\n") {
+    public function update($table, $set, $queryWhere, $limit = 0, $separator = "\n")
+    {
         $values = [];
         foreach ($set as $key => $val) {
             $values[] = "$key = $val";
@@ -101,8 +106,10 @@ abstract class AbstractDriver implements DriverInterface
      * @param array escaped columns in keys, quoted data in values
      * @return bool
      */
-    public function insert($table, $set) {
-        return $this->adminer->queries("INSERT INTO " . $this->server->table($table) . ($set
+    public function insert($table, $set)
+    {
+        return $this->adminer->queries("INSERT INTO " . $this->server->table($table) . (
+            $set
             ? " (" . implode(", ", array_keys($set)) . ")\nVALUES (" . implode(", ", $set) . ")"
             : " DEFAULT VALUES"
         ));
@@ -112,7 +119,8 @@ abstract class AbstractDriver implements DriverInterface
      * Begin transaction
      * @return bool
      */
-    public function begin() {
+    public function begin()
+    {
         return $this->adminer->queries("BEGIN");
     }
 
@@ -120,7 +128,8 @@ abstract class AbstractDriver implements DriverInterface
      * Commit transaction
      * @return bool
      */
-    public function commit() {
+    public function commit()
+    {
         return $this->adminer->queries("COMMIT");
     }
 
@@ -128,7 +137,8 @@ abstract class AbstractDriver implements DriverInterface
      * Rollback transaction
      * @return bool
      */
-    public function rollback() {
+    public function rollback()
+    {
         return $this->adminer->queries("ROLLBACK");
     }
 
@@ -138,7 +148,8 @@ abstract class AbstractDriver implements DriverInterface
      * @param int seconds
      * @return string or null if the driver doesn't support query timeouts
      */
-    public function slowQuery($query, $timeout) {
+    public function slowQuery($query, $timeout)
+    {
     }
 
     /**
@@ -148,7 +159,8 @@ abstract class AbstractDriver implements DriverInterface
      * @param array
      * @return string
      */
-    public function convertSearch($idf, $val, $field) {
+    public function convertSearch($idf, $val, $field)
+    {
         return $idf;
     }
 
@@ -158,7 +170,8 @@ abstract class AbstractDriver implements DriverInterface
      * @param array
      * @return string
      */
-    public function value($val, $field) {
+    public function value($val, $field)
+    {
         return (is_resource($val) ? stream_get_contents($val) : $val);
     }
 
@@ -167,7 +180,8 @@ abstract class AbstractDriver implements DriverInterface
      * @param string
      * @return string
      */
-    public function quoteBinary($string) {
+    public function quoteBinary($string)
+    {
         return $this->connection->quote($string);
     }
 
@@ -175,7 +189,8 @@ abstract class AbstractDriver implements DriverInterface
      * Get warnings about the last command
      * @return string HTML
      */
-    public function warnings() {
+    public function warnings()
+    {
         return '';
     }
 
@@ -184,7 +199,8 @@ abstract class AbstractDriver implements DriverInterface
      * @param string
      * @return string relative URL or null
      */
-    public function tableHelp($name) {
+    public function tableHelp($name)
+    {
         return '';
     }
 }

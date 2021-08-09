@@ -26,8 +26,7 @@ class Server extends MongoServer
      */
     protected function createConnection()
     {
-        if(($this->connection))
-        {
+        if (($this->connection)) {
             // Do not create if it already exists
             return;
         }
@@ -36,7 +35,8 @@ class Server extends MongoServer
         $this->driver = new Driver($this->adminer, $this, $this->connection);
     }
 
-    public function get_databases($flush) {
+    public function get_databases($flush)
+    {
         $return = [];
         $dbs = $this->connection->getClient()->listDBs();
         foreach ($dbs['databases'] as $db) {
@@ -45,7 +45,8 @@ class Server extends MongoServer
         return $return;
     }
 
-    public function count_tables($databases) {
+    public function count_tables($databases)
+    {
         $return = [];
         foreach ($databases as $db) {
             $return[$db] = count($this->connection->getClient()->selectDB($db)->getCollectionNames(true));
@@ -53,11 +54,13 @@ class Server extends MongoServer
         return $return;
     }
 
-    public function tables_list() {
+    public function tables_list()
+    {
         return array_fill_keys($this->connection->_db->getCollectionNames(true), 'table');
     }
 
-    public function drop_databases($databases) {
+    public function drop_databases($databases)
+    {
         foreach ($databases as $db) {
             $response = $this->connection->getClient()->selectDB($db)->drop();
             if (!$response['ok']) {
@@ -67,7 +70,8 @@ class Server extends MongoServer
         return true;
     }
 
-    public function indexes($table, $connection2 = null) {
+    public function indexes($table, $connection2 = null)
+    {
         $return = [];
         foreach ($this->connection->_db->selectCollection($table)->getIndexInfo() as $index) {
             $descs = [];
@@ -84,11 +88,13 @@ class Server extends MongoServer
         return $return;
     }
 
-    public function fields($table) {
+    public function fields($table)
+    {
         return fields_from_edit();
     }
 
-    public function found_rows($table_status, $where) {
+    public function found_rows($table_status, $where)
+    {
         //! don't call count_rows()
         $select = $this->adminer->input()->select();
         return $this->connection->_db->selectCollection($select)->count($where);

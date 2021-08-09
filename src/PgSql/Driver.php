@@ -6,7 +6,8 @@ use Lagdo\Adminer\Drivers\AbstractDriver;
 
 class Driver extends AbstractDriver
 {
-    public function insertUpdate($table, $rows, $primary) {
+    public function insertUpdate($table, $rows, $primary)
+    {
         foreach ($rows as $set) {
             $update = [];
             $where = [];
@@ -16,7 +17,8 @@ class Driver extends AbstractDriver
                     $where[] = "$key = $val";
                 }
             }
-            if (!(($where && $this->adminer->queries("UPDATE " . $this->server->table($table) .
+            if (!(
+                ($where && $this->adminer->queries("UPDATE " . $this->server->table($table) .
                 " SET " . implode(", ", $update) . " WHERE " . implode(" AND ", $where)) &&
                 $this->connection->affected_rows)
                 || $this->adminer->queries("INSERT INTO " . $this->server->table($table) .
@@ -28,28 +30,33 @@ class Driver extends AbstractDriver
         return true;
     }
 
-    public function value($val, $field) {
+    public function value($val, $field)
+    {
         return ($field["type"] == "bytea" && $val !== null ? pg_unescape_bytea($val) : $val);
     }
 
-    public function slowQuery($query, $timeout) {
+    public function slowQuery($query, $timeout)
+    {
         $this->connection->query("SET statement_timeout = " . (1000 * $timeout));
         $this->connection->timeout = 1000 * $timeout;
         return $query;
     }
 
-    public function convertSearch($idf, $val, $field) {
+    public function convertSearch($idf, $val, $field)
+    {
         return (preg_match('~char|text' . (!preg_match('~LIKE~', $val["op"]) ?
             '|date|time(stamp)?|boolean|uuid|' . $this->adminer->number_type() : '') . '~', $field["type"]) ?
             $idf : "CAST($idf AS text)"
         );
     }
 
-    public function warnings() {
+    public function warnings()
+    {
         return $this->connection->warnings();
     }
 
-    public function tableHelp($name) {
+    public function tableHelp($name)
+    {
         $links = array(
             "information_schema" => "infoschema",
             "pg_catalog" => "catalog",
