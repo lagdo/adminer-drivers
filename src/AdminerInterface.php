@@ -147,13 +147,6 @@ interface AdminerInterface
     public function ini_bytes($ini);
 
     /**
-     * Escape string to use inside ''
-     * @param string
-     * @return string
-     */
-    public function escape_string($val);
-
-    /**
      * Remove non-digits from a string
      * @param string
      * @return string

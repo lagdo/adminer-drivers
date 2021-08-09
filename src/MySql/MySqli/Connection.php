@@ -83,6 +83,6 @@ class Connection extends MySQLi implements ConnectionInterface
 
     public function quote($string)
     {
-        return "'" . $this->adminer->escape_string($string) . "'";
+        return "'" . $this->escape_string($string) . "'";
     }
 }
