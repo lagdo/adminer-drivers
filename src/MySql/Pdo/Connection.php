@@ -12,8 +12,8 @@ use PDO;
 class Connection extends PdoConnection
 {
     /**
-    * @inheritDoc
-    */
+     * @inheritDoc
+     */
     public function open($server, array $options)
     {
         $username = $options['username'];

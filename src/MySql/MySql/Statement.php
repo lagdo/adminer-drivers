@@ -5,10 +5,10 @@ namespace Lagdo\Adminer\Drivers\MySql\MySql;
 class Statement
 {
     public $num_rows;
-    ///< @var int number of rows in the result
-        public $_result;
-    public $_offset = 0 ///< @access private
-    ;
+
+    public $_result;
+
+    protected $_offset = 0 ;
 
     /**
      * Constructor

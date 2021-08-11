@@ -302,7 +302,7 @@ ORDER BY connamespace, conname") as $row) {
             $return = $match1 . preg_replace('~((?:[^&]|&[^;]*;){' .
                 strlen($match3) . '})(.*)~', '\1<b>\2</b>', $match2) . $match4;
         }
-        return nl_br($return);
+        return $this->adminer->nl_br($return);
     }
 
     public function create_database($db, $collation)

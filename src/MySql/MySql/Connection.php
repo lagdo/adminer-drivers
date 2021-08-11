@@ -44,9 +44,7 @@ class Connection extends AbstractConnection
     }
 
     /**
-     * Sets the client character set
-     * @param string
-     * @return bool
+     * @inheritDoc
      */
     public function set_charset($charset)
     {
@@ -58,6 +56,14 @@ class Connection extends AbstractConnection
             mysql_set_charset('utf8', $this->client);
         }
         return $this->query("SET NAMES $charset");
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function close()
+    {
+        mysql_close($this->client);
     }
 
     /**

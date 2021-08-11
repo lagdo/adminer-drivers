@@ -7,6 +7,8 @@ use Lagdo\Adminer\Drivers\AbstractConnection;
 use MongoDB\Driver\Manager;
 use MongoDB\Driver\Command;
 
+use Exception;
+
 class Connection extends AbstractConnection
 {
     /**
@@ -69,6 +71,11 @@ class Connection extends AbstractConnection
     }
 
     public function query($query, $unbuffered = false)
+    {
+        return false;
+    }
+
+    public function result($query, $field = 0)
     {
         return false;
     }

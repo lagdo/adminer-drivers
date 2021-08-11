@@ -4,7 +4,7 @@ namespace Lagdo\Adminer\Drivers\Mongo;
 
 use Lagdo\Adminer\Drivers\AbstractServer;
 
-class Server extends AbstractServer
+abstract class Server extends AbstractServer
 {
     /**
      * @inheritDoc

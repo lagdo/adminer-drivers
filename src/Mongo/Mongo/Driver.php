@@ -8,8 +8,6 @@ use Exception;
 
 class Driver extends AbstractDriver
 {
-    public $primary = "_id";
-
     public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0)
     {
         $select = (

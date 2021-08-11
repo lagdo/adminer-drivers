@@ -30,11 +30,6 @@ class Driver extends AbstractDriver
         return true;
     }
 
-    public function value($val, $field)
-    {
-        return ($field["type"] == "bytea" && $val !== null ? pg_unescape_bytea($val) : $val);
-    }
-
     public function slowQuery($query, $timeout)
     {
         $this->connection->query("SET statement_timeout = " . (1000 * $timeout));
@@ -48,11 +43,6 @@ class Driver extends AbstractDriver
             '|date|time(stamp)?|boolean|uuid|' . $this->adminer->number_type() : '') . '~', $field["type"]) ?
             $idf : "CAST($idf AS text)"
         );
-    }
-
-    public function warnings()
-    {
-        return $this->connection->warnings();
     }
 
     public function tableHelp($name)

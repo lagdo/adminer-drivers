@@ -6,6 +6,8 @@ use Lagdo\Adminer\Drivers\Mongo\Server as MongoServer;
 
 class Server extends MongoServer
 {
+    protected $primary = "_id";
+
     /**
      * Undocumented variable
      *
@@ -90,7 +92,7 @@ class Server extends MongoServer
 
     public function fields($table)
     {
-        return fields_from_edit();
+        return $this->adminer->fields_from_edit($this->primary);
     }
 
     public function found_rows($table_status, $where)

@@ -4,8 +4,12 @@ namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
 
 use Lagdo\Adminer\Drivers\Mongo\Server as MongoServer;
 
+use DateTime;
+
 class Server extends MongoServer
 {
+    protected $primary = "_id";
+
     /**
      * Undocumented variable
      *
@@ -108,7 +112,7 @@ class Server extends MongoServer
 
     public function fields($table)
     {
-        $fields = fields_from_edit();
+        $fields = $this->adminer->fields_from_edit($this->primary);
         if (!$fields) {
             $result = $this->driver->select($table, array("*"), null, null, [], 10);
             if ($result) {
@@ -118,8 +122,8 @@ class Server extends MongoServer
                         $fields[$key] = array(
                             "field" => $key,
                             "type" => "string",
-                            "null" => ($key != $this->driver->primary),
-                            "auto_increment" => ($key == $this->driver->primary),
+                            "null" => ($key != $this->primary),
+                            "auto_increment" => ($key == $this->primary),
                             "privileges" => array(
                                 "insert" => 1,
                                 "select" => 1,

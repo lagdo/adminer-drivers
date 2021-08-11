@@ -116,7 +116,7 @@ class Server extends AbstractServer
         foreach ($this->adminer->get_rows("SELECT ao.name AS Name, ao.type_desc AS Engine, " .
             "(SELECT value FROM fn_listextendedproperty(default, 'SCHEMA', schema_name(schema_id), " .
             "'TABLE', ao.name, null, null)) AS Comment FROM sys.all_objects AS ao WHERE schema_id = SCHEMA_ID(" .
-            $this->q(get_schema()) . ") AND type IN ('S', 'U', 'V') " . ($name != "" ? "AND name = " .
+            $this->q($this->get_schema()) . ") AND type IN ('S', 'U', 'V') " . ($name != "" ? "AND name = " .
             $this->q($name) : "ORDER BY name")) as $row) {
             if ($name != "") {
                 return $row;
@@ -138,7 +138,8 @@ class Server extends AbstractServer
 
     public function fields($table)
     {
-        $comments = $this->adminer->get_key_vals("SELECT objname, cast(value as varchar(max)) FROM fn_listextendedproperty('MS_DESCRIPTION', 'schema', " . $this->q(get_schema()) . ", 'table', " . $this->q($table) . ", 'column', NULL)");
+        $comments = $this->adminer->get_key_vals("SELECT objname, cast(value as varchar(max)) FROM fn_listextendedproperty('MS_DESCRIPTION', 'schema', " .
+            $this->q($this->get_schema()) . ", 'table', " . $this->q($table) . ", 'column', NULL)");
         $return = [];
         foreach ($this->adminer->get_rows(
             "SELECT c.max_length, c.precision, c.scale, c.name, c.is_nullable, c.is_identity, c.collation_name, t.name type, CAST(d.definition as text) [default]
@@ -146,7 +147,7 @@ FROM sys.all_columns c
 JOIN sys.all_objects o ON c.object_id = o.object_id
 JOIN sys.types t ON c.user_type_id = t.user_type_id
 LEFT JOIN sys.default_constraints d ON c.default_object_id = d.parent_column_id
-WHERE o.schema_id = SCHEMA_ID(" . $this->q(get_schema()) . ") AND o.type IN ('S', 'U', 'V') AND o.name = " . $this->q($table)
+WHERE o.schema_id = SCHEMA_ID(" . $this->q($this->get_schema()) . ") AND o.type IN ('S', 'U', 'V') AND o.name = " . $this->q($table)
         ) as $row) {
             $type = $row["type"];
             $length = (preg_match("~char|binary~", $type) ? $row["max_length"] : ($type == "decimal" ? "$row[precision],$row[scale]" : ""));
@@ -201,7 +202,7 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
 
     public function error()
     {
-        return nl_br($this->adminer->h(preg_replace('~^(\[[^]]*])+~m', '', $this->connection->error)));
+        return $this->adminer->nl_br($this->adminer->h(preg_replace('~^(\[[^]]*])+~m', '', $this->connection->error)));
     }
 
     public function create_database($db, $collation)
@@ -249,7 +250,7 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
                 } else {
                     unset($val[6]); //! identity can't be removed
                     if ($column != $val[0]) {
-                        $this->adminer->queries("EXEC sp_rename " . $this->q(table($table) . ".$column") . ", " . $this->q($this->idf_unescape($val[0])) . ", 'COLUMN'");
+                        $this->adminer->queries("EXEC sp_rename " . $this->q($this->table($table) . ".$column") . ", " . $this->q($this->idf_unescape($val[0])) . ", 'COLUMN'");
                     }
                     $alter["ALTER COLUMN " . implode("", $val)][] = "";
                 }
@@ -259,7 +260,7 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
             return $this->adminer->queries("CREATE TABLE " . $this->table($name) . " (" . implode(",", (array) $alter["ADD"]) . "\n)");
         }
         if ($table != $name) {
-            $this->adminer->queries("EXEC sp_rename " . $this->q(table($table)) . ", " . $this->q($name));
+            $this->adminer->queries("EXEC sp_rename " . $this->q($this->table($table)) . ", " . $this->q($name));
         }
         if ($foreign) {
             $alter[""] = $foreign;
@@ -271,8 +272,8 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
         }
         foreach ($comments as $key => $val) {
             $comment = substr($val, 9); // 9 - strlen(" COMMENT ")
-            $this->adminer->queries("EXEC sp_dropextendedproperty @name = N'MS_Description', @level0type = N'Schema', @level0name = " . $this->q(get_schema()) . ", @level1type = N'Table', @level1name = " . $this->q($name) . ", @level2type = N'Column', @level2name = " . $this->q($key));
-            $this->adminer->queries("EXEC sp_addextendedproperty @name = N'MS_Description', @value = " . $comment . ", @level0type = N'Schema', @level0name = " . $this->q(get_schema()) . ", @level1type = N'Table', @level1name = " . $this->q($name) . ", @level2type = N'Column', @level2name = " . $this->q($key));
+            $this->adminer->queries("EXEC sp_dropextendedproperty @name = N'MS_Description', @level0type = N'Schema', @level0name = " . $this->q($this->get_schema()) . ", @level1type = N'Table', @level1name = " . $this->q($name) . ", @level2type = N'Column', @level2name = " . $this->q($key));
+            $this->adminer->queries("EXEC sp_addextendedproperty @name = N'MS_Description', @value = " . $comment . ", @level0type = N'Schema', @level0name = " . $this->q($this->get_schema()) . ", @level1type = N'Table', @level1name = " . $this->q($name) . ", @level2type = N'Column', @level2name = " . $this->q($key));
         }
         return true;
     }

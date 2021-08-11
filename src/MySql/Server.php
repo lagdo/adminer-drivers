@@ -577,7 +577,7 @@ class Server extends AbstractServer
         if (!$rename || $this->adminer->queries("RENAME TABLE " . implode(", ", $rename))) {
             $definitions = [];
             foreach ($views as $table) {
-                $definitions[table($table)] = $this->view($table);
+                $definitions[$this->server->table($table)] = $this->view($table);
             }
             $this->connection->select_db($target);
             $db = $this->idf_escape($this->getCurrentDatabase());

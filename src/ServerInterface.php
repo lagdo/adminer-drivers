@@ -326,7 +326,7 @@ interface ServerInterface
      * @param string
      * @return bool
      */
-    // public function move_tables($tables, $views, $target);
+    public function move_tables($tables, $views, $target);
 
     /**
      * Copy tables to other schema
@@ -335,14 +335,14 @@ interface ServerInterface
      * @param string
      * @return bool
      */
-    // public function copy_tables($tables, $views, $target);
+    public function copy_tables($tables, $views, $target);
 
     /**
      * Get information about trigger
      * @param string trigger name
      * @return array array("Trigger" => , "Timing" => , "Event" => , "Of" => , "Type" => , "Statement" => )
      */
-    // public function trigger($name);
+    public function trigger($name);
 
     /**
      * Get defined triggers
@@ -355,7 +355,7 @@ interface ServerInterface
      * Get trigger options
      * @return array ("Timing" => [], "Event" => [], "Type" => [])
      */
-    // public function trigger_options();
+    public function trigger_options();
 
     /**
      * Get information about stored routine
@@ -363,19 +363,19 @@ interface ServerInterface
      * @param string "FUNCTION" or "PROCEDURE"
      * @return array ("fields" => array("field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ), "returns" => , "definition" => , "language" => )
      */
-    // public function routine($name, $type);
+    public function routine($name, $type);
 
     /**
      * Get list of routines
      * @return array ("SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => )
      */
-    // public function routines();
+    public function routines();
 
     /**
      * Get list of available routine languages
      * @return array
      */
-    // public function routine_languages() ;
+    public function routine_languages() ;
 
     /**
      * Get routine signature
@@ -383,7 +383,7 @@ interface ServerInterface
      * @param array result of routine()
      * @return string
      */
-    // public function routine_id($name, $row);
+    public function routine_id($name, $row);
 
     /**
      * Explain select

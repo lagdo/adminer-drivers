@@ -5,6 +5,8 @@ namespace Lagdo\Adminer\Drivers\Sqlite;
 use Lagdo\Adminer\Drivers\AdminerInterface;
 use Lagdo\Adminer\Drivers\AbstractServer;
 
+use Exception;
+
 class Server extends AbstractServer
 {
     /**
@@ -215,7 +217,7 @@ class Server extends AbstractServer
                 $index["columns"][] = $row1["name"];
                 $index["descs"][] = null;
             }
-            if (preg_match('~^CREATE( UNIQUE)? INDEX ' . preg_quote(idf_escape($name) . ' ON ' . $this->idf_escape($table), '~') . ' \((.*)\)$~i', $sqls[$name], $regs)) {
+            if (preg_match('~^CREATE( UNIQUE)? INDEX ' . preg_quote($this->idf_escape($name) . ' ON ' . $this->idf_escape($table), '~') . ' \((.*)\)$~i', $sqls[$name], $regs)) {
                 preg_match_all('/("[^"]*+")+( DESC)?/', $regs[2], $matches);
                 foreach ($matches[2] as $key => $val) {
                     if ($val) {
@@ -317,7 +319,7 @@ class Server extends AbstractServer
 
     public function auto_increment()
     {
-        return " PRIMARY KEY" . (DRIVER == "sqlite" ? " AUTOINCREMENT" : "");
+        return " PRIMARY KEY" . ($this->server == "sqlite" ? " AUTOINCREMENT" : "");
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning)
@@ -521,7 +523,7 @@ class Server extends AbstractServer
             return array("Statement" => "BEGIN\n\t;\nEND");
         }
         $idf = '(?:[^`"\s]+|`[^`]*`|"[^"]*")+';
-        $trigger_options = trigger_options();
+        $trigger_options = $this->trigger_options();
         preg_match(
             "~^CREATE\\s+TRIGGER\\s*$idf\\s*(" . implode("|", $trigger_options["Timing"]) . ")\\s+([a-z]+)(?:\\s+OF\\s+($idf))?\\s+ON\\s*$idf\\s*(?:FOR\\s+EACH\\s+ROW\\s)?(.*)~is",
             $this->connection->result("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = " . $this->q($name)),
@@ -540,7 +542,7 @@ class Server extends AbstractServer
     public function triggers($table)
     {
         $return = [];
-        $trigger_options = trigger_options();
+        $trigger_options = $this->trigger_options();
         foreach ($this->adminer->get_rows("SELECT * FROM sqlite_master WHERE type = 'trigger' AND tbl_name = " . $this->q($table)) as $row) {
             preg_match('~^CREATE\s+TRIGGER\s*(?:[^`"\s]+|`[^`]*`|"[^"]*")+\s*(' . implode("|", $trigger_options["Timing"]) . ')\s*(.*?)\s+ON\b~i', $row["sql"], $match);
             $return[$row["name"]] = array($match[1], $match[2]);
@@ -631,7 +633,7 @@ class Server extends AbstractServer
             'possible_drivers' => array(($this->server == "sqlite" ? "SQLite3" : "SQLite"), "PDO_SQLite"),
             'jush' => "sqlite",
             'types' => array("integer" => 0, "real" => 0, "numeric" => 0, "text" => 0, "blob" => 0),
-            'structured_types' => array_keys($types),
+            'structured_types' => array_keys($this->types),
             'unsigned' => [],
             'operators' => array("=", "<", ">", "<=", ">=", "!=", "LIKE", "LIKE %%", "IN", "IS NULL", "NOT LIKE", "NOT IN", "IS NOT NULL", "SQL"), // REGEXP can be user defined function
             'functions' => array("hex", "length", "lower", "round", "unixepoch", "upper"),

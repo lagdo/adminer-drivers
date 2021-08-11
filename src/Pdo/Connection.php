@@ -3,7 +3,6 @@
 namespace Lagdo\Adminer\Drivers\Pdo;
 
 use Lagdo\Adminer\Drivers\AbstractConnection;
-use Lagdo\Adminer\Drivers\ConnectionTrait;
 use Lagdo\Adminer\Drivers\AuthException;
 
 use PDO;
@@ -89,5 +88,13 @@ abstract class Connection extends AbstractConnection
         }
         $row = $result->fetch();
         return $row[$field];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function close()
+    {
+        $this->client = null;
     }
 }

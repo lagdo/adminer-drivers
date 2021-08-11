@@ -51,6 +51,11 @@ class Connection extends AbstractConnection
         return false;
     }
 
+    public function result($query, $field = 0)
+    {
+        return false;
+    }
+
     public function select_db($database)
     {
         try {

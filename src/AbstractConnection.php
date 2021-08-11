@@ -21,13 +21,6 @@ abstract class AbstractConnection implements ConnectionInterface
     public $server_info;
 
     /**
-     * The client object used to query the database server
-     *
-     * @var mixed
-     */
-    protected $client;
-
-    /**
      * Undocumented variable
      *
      * @var int
@@ -75,12 +68,17 @@ abstract class AbstractConnection implements ConnectionInterface
     }
 
     /**
-     * Get the client
-     *
-     * @return mixed
+     * @inheritDoc
      */
-    public function getClient()
+    public function set_charset($charset)
     {
-        return $this->client;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function close()
+    {
+        return false;
     }
 }

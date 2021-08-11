@@ -120,6 +120,9 @@ abstract class AbstractServer implements ServerInterface
         return $this->schema;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function error()
     {
         return $this->adminer->h($this->connection->error);
@@ -183,8 +186,7 @@ abstract class AbstractServer implements ServerInterface
     }
 
     /**
-     * Get user defined types
-     * @return array
+     * @inheritDoc
      */
     public function types()
     {
@@ -192,8 +194,7 @@ abstract class AbstractServer implements ServerInterface
     }
 
     /**
-     * Get existing schemas
-     * @return array
+     * @inheritDoc
      */
     public function schemas()
     {
@@ -201,8 +202,7 @@ abstract class AbstractServer implements ServerInterface
     }
 
     /**
-     * Get current schema
-     * @return string
+     * @inheritDoc
      */
     public function get_schema()
     {
@@ -210,10 +210,7 @@ abstract class AbstractServer implements ServerInterface
     }
 
     /**
-     * Set current schema
-     * @param string
-     * @param ConnectionInterface
-     * @return bool
+     * @inheritDoc
      */
     public function set_schema($schema, $connection2 = null)
     {
@@ -286,9 +283,97 @@ abstract class AbstractServer implements ServerInterface
     /**
      * @inheritDoc
      */
+    public function process_list()
+    {
+        return [];
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function explain($connection, $query)
     {
         return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function create_sql($table, $auto_increment, $style)
+    {
+        return '';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function move_tables($tables, $views, $target)
+    {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function copy_tables($tables, $views, $target)
+    {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function trigger($name)
+    {
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function triggers($table)
+    {
+        return [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function trigger_options()
+    {
+        return [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function routine($name, $type)
+    {
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function routines()
+    {
+        return [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function routine_languages()
+    {
+        return [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function routine_id($name, $row)
+    {
+        return '';
     }
 
     /**
@@ -303,6 +388,22 @@ abstract class AbstractServer implements ServerInterface
      * @inheritDoc
      */
     public function foreign_keys_sql($table)
+    {
+        return '';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function truncate_sql($table)
+    {
+        return '';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function trigger_sql($table)
     {
         return '';
     }

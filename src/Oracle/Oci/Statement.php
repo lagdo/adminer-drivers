@@ -2,6 +2,8 @@
 
 namespace Lagdo\Adminer\Drivers\Oracle\Oci;
 
+use stdClass;
+
 class Statement
 {
     public $_result;

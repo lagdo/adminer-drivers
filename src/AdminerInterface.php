@@ -174,6 +174,13 @@ interface AdminerInterface
     public function format_number($val);
 
     /**
+     * Convert \n to <br>
+     * @param string
+     * @return string
+     */
+    public function nl_br($string);
+
+    /**
      * Find unique identifier of a row
      * @param array
      * @param array result of indexes()
@@ -268,4 +275,11 @@ interface AdminerInterface
      * @return string
      */
     public function where($where, $fields = []);
+
+    /**
+     * Compute fields() from $_POST edit data
+     * @param string $primary
+     * @return array
+     */
+    public function fields_from_edit($primary);
 }

@@ -12,6 +12,13 @@ interface ConnectionInterface
     public function getExtension();
 
     /**
+     * Get the client
+     *
+     * @return mixed
+     */
+    public function getClient();
+
+    /**
      * Get the server description
      *
      * @return string
@@ -35,6 +42,13 @@ interface ConnectionInterface
     public function select_db($database);
 
     /**
+     * Sets the client character set
+     * @param string
+     * @return bool
+     */
+    public function set_charset($charset);
+
+    /**
      * Query the current database
      *
      * @param string $query
@@ -45,6 +59,29 @@ interface ConnectionInterface
     public function query($query, $unbuffered = false);
 
     /**
+     * Query the current database and fetch the specified field
+     *
+     * @param string $query
+     * @param mixed $field
+     *
+     * @return mixed
+     */
+    public function result($query, $field = 1);
+
+    /**
+     * Get warnings about the last command
+     * @return string
+     */
+    public function warnings();
+
+    /**
+     * Close the connection to the server
+     *
+     * @return void
+     */
+    public function close();
+
+    /**
      * Return a quoted string
      *
      * @param string $string
@@ -52,6 +89,14 @@ interface ConnectionInterface
      * @return string
      */
     public function quote($string);
+
+    /**
+     * Convert value returned by database to actual value
+     * @param string
+     * @param array
+     * @return string
+     */
+    public function value($val, $field);
 
     /**
      * Return a quoted string
@@ -71,11 +116,4 @@ interface ConnectionInterface
      * @return mixed
      */
     public function open($server, array $options);
-
-    /**
-     * Get the client
-     *
-     * @return mixed
-     */
-    // public function getClient();
 }

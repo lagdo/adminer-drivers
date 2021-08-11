@@ -6,7 +6,6 @@ use Lagdo\Adminer\Drivers\AbstractDriver;
 
 class Driver extends AbstractDriver
 {
-
     //! support empty $set in insert()
 
     public function begin()

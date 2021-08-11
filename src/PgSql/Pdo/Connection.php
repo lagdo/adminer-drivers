@@ -57,8 +57,4 @@ class Connection extends PdoConnection
     {
         return ''; // not implemented in PDO_PgSQL as of PHP 7.2.1
     }
-
-    public function close()
-    {
-    }
 }

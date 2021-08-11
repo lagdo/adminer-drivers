@@ -34,15 +34,7 @@ abstract class AbstractDriver implements DriverInterface
     }
 
     /**
-     * Select data from table
-     * @param string
-     * @param array result of $this->adminer->selectColumnsProcess()[0]
-     * @param array result of $this->adminer->selectSearchProcess()
-     * @param array result of $this->adminer->selectColumnsProcess()[1]
-     * @param array result of $this->adminer->selectOrderProcess()
-     * @param int result of $this->adminer->selectLimitProcess()
-     * @param int index of page starting at zero
-     * @return Statement
+     * @inheritDoc
      */
     public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0)
     {
@@ -165,17 +157,6 @@ abstract class AbstractDriver implements DriverInterface
     }
 
     /**
-     * Convert value returned by database to actual value
-     * @param string
-     * @param array
-     * @return string
-     */
-    public function value($val, $field)
-    {
-        return (is_resource($val) ? stream_get_contents($val) : $val);
-    }
-
-    /**
      * Quote binary string
      * @param string
      * @return string
@@ -191,7 +172,7 @@ abstract class AbstractDriver implements DriverInterface
      */
     public function warnings()
     {
-        return '';
+        return $this->connection->warnings();
     }
 
     /**

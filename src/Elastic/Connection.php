@@ -74,6 +74,11 @@ class Connection extends AbstractConnection
         return $this->rootQuery(($this->_db != "" ? "$this->_db/" : "/") . ltrim($path, '/'), $content, $method);
     }
 
+    public function result($query, $field = 0)
+    {
+        return false;
+    }
+
     /**
      * @inheritDoc
      */

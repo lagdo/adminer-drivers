@@ -22,6 +22,13 @@ trait ConnectionTrait
     public $extension;
 
     /**
+     * The client object used to query the database server
+     *
+     * @var mixed
+     */
+    protected $client;
+
+    /**
      * Get the extension name
      *
      * @return string
@@ -29,6 +36,16 @@ trait ConnectionTrait
     public function getExtension()
     {
         return $this->extension;
+    }
+
+    /**
+     * Get the client
+     *
+     * @return mixed
+     */
+    public function getClient()
+    {
+        return $this->client;
     }
 
     /**
@@ -61,5 +78,25 @@ trait ConnectionTrait
     public function quoteBinary($string)
     {
         return $this->quote($string);
+    }
+
+    /**
+     * Convert value returned by database to actual value
+     * @param string
+     * @param array
+     * @return string
+     */
+    public function value($val, $field)
+    {
+        return (is_resource($val) ? stream_get_contents($val) : $val);
+    }
+
+    /**
+     * Get warnings about the last command
+     * @return string
+     */
+    public function warnings()
+    {
+        return '';
     }
 }

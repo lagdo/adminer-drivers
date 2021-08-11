@@ -97,7 +97,7 @@ class Server extends AbstractServer
         return $db;
     }
 
-    public function where_owner($prefix, $owner = "owner")
+    private function where_owner($prefix, $owner = "owner")
     {
         if (!$this->schema) {
             return '';
@@ -105,16 +105,16 @@ class Server extends AbstractServer
         return "$prefix$owner = sys_context('USERENV', 'CURRENT_SCHEMA')";
     }
 
-    public function views_table($columns)
+    private function views_table($columns)
     {
-        $owner = where_owner('');
+        $owner = $this->where_owner('');
         return "(SELECT $columns FROM all_views WHERE " . ($owner ? $owner : "rownum < 0") . ")";
     }
 
     public function tables_list()
     {
-        $view = views_table("view_name");
-        $owner = where_owner(" AND ");
+        $view = $this->views_table("view_name");
+        $owner = $this->where_owner(" AND ");
         return $this->adminer->get_key_vals(
             "SELECT table_name, 'table' FROM all_tables WHERE tablespace_name = " . $this->q($this->getCurrentDatabase()) . "$owner
 UNION SELECT view_name, 'view' FROM $view
@@ -135,9 +135,9 @@ ORDER BY 1"
     {
         $return = [];
         $search = $this->q($name);
-        $db = get_current_db();
-        $view = views_table("view_name");
-        $owner = where_owner(" AND ");
+        $db = $this->get_current_db();
+        $view = $this->views_table("view_name");
+        $owner = $this->where_owner(" AND ");
         foreach ($this->adminer->get_rows(
             'SELECT table_name "Name", \'table\' "Engine", avg_row_len * num_rows "Data_length", num_rows "Rows" FROM all_tables WHERE tablespace_name = ' . $this->q($db) . $owner . ($name != "" ? " AND table_name = $search" : "") . "
 UNION SELECT view_name, 'view', 0, 0 FROM $view" . ($name != "" ? " WHERE view_name = $search" : "") . "
@@ -164,7 +164,7 @@ ORDER BY 1"
     public function fields($table)
     {
         $return = [];
-        $owner = where_owner(" AND ");
+        $owner = $this->where_owner(" AND ");
         foreach ($this->adminer->get_rows("SELECT * FROM all_tab_columns WHERE table_name = " . $this->q($table) . "$owner ORDER BY column_id") as $row) {
             $type = $row["DATA_TYPE"];
             $length = "$row[DATA_PRECISION],$row[DATA_SCALE]";
@@ -191,7 +191,7 @@ ORDER BY 1"
     public function indexes($table, $connection2 = null)
     {
         $return = [];
-        $owner = where_owner(" AND ", "aic.table_owner");
+        $owner = $this->where_owner(" AND ", "aic.table_owner");
         foreach ($this->adminer->get_rows("SELECT aic.*, ac.constraint_type, atc.data_default
 FROM all_ind_columns aic
 LEFT JOIN all_constraints ac ON aic.index_name = ac.constraint_name AND aic.table_name = ac.table_name AND aic.index_owner = ac.owner
@@ -215,7 +215,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
 
     public function view($name)
     {
-        $view = views_table("view_name, text");
+        $view = $this->views_table("view_name, text");
         $rows = $this->adminer->get_rows('SELECT text "select" FROM ' . $view . ' WHERE view_name = ' . $this->q($name));
         return reset($rows);
     }
