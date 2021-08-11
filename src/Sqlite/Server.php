@@ -10,28 +10,11 @@ use Exception;
 class Server extends AbstractServer
 {
     /**
-     * @var string
-     */
-    protected $server;
-
-    /**
-     * The constructor
-     *
-     * @param AdminerInterface
-     * @param string $server "sqlite" or "sqlite2"
-     */
-    public function __construct(AdminerInterface $adminer, $server)
-    {
-        parent::__construct($adminer);
-        $this->server = $server;
-    }
-
-    /**
      * @inheritDoc
      */
     public function getName()
     {
-        return ($this->server === "sqlite" ? "SQLite 3" : "SQLite 2");
+        return "SQLite 3";
     }
 
     /**
@@ -44,12 +27,8 @@ class Server extends AbstractServer
             return;
         }
 
-        if ($this->server === "sqlite" && class_exists("SQLite3")) {
+        if (class_exists("SQLite3")) {
             $this->connection = new Sqlite\Connection($this->adminer, $this, 'SQLite3');
-            return;
-        }
-        if ($this->server === "sqlite2" && class_exists("SQLiteDatabase")) {
-            $this->connection = new Sqlite2\Connection($this->adminer, $this, 'SQLite');
             return;
         }
         if (extension_loaded("pdo_sqlite")) {
@@ -319,7 +298,7 @@ class Server extends AbstractServer
 
     public function auto_increment()
     {
-        return " PRIMARY KEY" . ($this->server == "sqlite" ? " AUTOINCREMENT" : "");
+        return " PRIMARY KEY AUTOINCREMENT";
     }
 
     public function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning)
@@ -630,7 +609,7 @@ class Server extends AbstractServer
     public function driver_config()
     {
         return array(
-            'possible_drivers' => array(($this->server == "sqlite" ? "SQLite3" : "SQLite"), "PDO_SQLite"),
+            'possible_drivers' => array("SQLite3", "PDO_SQLite"),
             'jush' => "sqlite",
             'types' => array("integer" => 0, "real" => 0, "numeric" => 0, "text" => 0, "blob" => 0),
             'structured_types' => array_keys($this->types),

@@ -56,8 +56,7 @@ trait AdminerTrait
             $this->server = new Elastic\Server($adminer);
             break;
         case "sqlite":
-        case "sqlite2":
-            $this->server = new Sqlite\Server($adminer, $driver);
+            $this->server = new Sqlite\Server($adminer);
             break;
         }
 
