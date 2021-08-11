@@ -45,12 +45,7 @@ trait AdminerTrait
             $this->server = new MsSql\Server($adminer);
             break;
         case "mongo":
-            if (class_exists('MongoDB')) {
-                $this->server = new Mongo\Mongo\Server($adminer);
-            }
-            if (class_exists('MongoDB\Driver\Manager')) {
-                $this->server = new Mongo\MongoDb\Server($adminer);
-            }
+            $this->server = new MongoDb\Server($adminer);
             break;
         case "elastic":
             $this->server = new Elastic\Server($adminer);

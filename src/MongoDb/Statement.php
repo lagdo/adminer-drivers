@@ -1,6 +1,6 @@
 <?php
 
-namespace Lagdo\Adminer\Drivers\Mongo\Mongo;
+namespace Lagdo\Adminer\Drivers\MongoDb;
 
 class Statement
 {
@@ -37,17 +37,17 @@ class Statement
         foreach ($result as $item) {
             $row = [];
             foreach ($item as $key => $val) {
-                if (is_a($val, 'MongoBinData')) {
+                if (is_a($val, 'MongoDB\BSON\Binary')) {
                     $this->_charset[$key] = 63;
                 }
                 $row[$key] =
-                    (is_a($val, 'MongoId') ? "ObjectId(\"$val\")" :
-                    (is_a($val, 'MongoDate') ? gmdate("Y-m-d H:i:s", $val->sec) . " GMT" :
-                    (is_a($val, 'MongoBinData') ? $val->bin : //! allow downloading
-                    (is_a($val, 'MongoRegex') ? "$val" :
+                    (is_a($val, 'MongoDB\BSON\ObjectID') ? 'MongoDB\BSON\ObjectID("' . "$val\")" :
+                    (is_a($val, 'MongoDB\BSON\UTCDatetime') ? $val->toDateTime()->format('Y-m-d H:i:s') :
+                    (is_a($val, 'MongoDB\BSON\Binary') ? $val->getData() : //! allow downloading
+                    (is_a($val, 'MongoDB\BSON\Regex') ? "$val" :
                     (
-                        is_object($val) ? get_class($val) : // MongoMinKey, MongoMaxKey
-                    $val
+                        is_object($val) || is_array($val) ? json_encode($val, 256) : // 256 = JSON_UNESCAPED_UNICODE
+                    $val // MongoMinKey, MongoMaxKey
                     )))));
             }
             $this->_rows[] = $row;

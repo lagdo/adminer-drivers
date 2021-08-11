@@ -1,6 +1,6 @@
 <?php
 
-namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
+namespace Lagdo\Adminer\Drivers\MongoDb;
 
 use Lagdo\Adminer\Drivers\AbstractConnection;
 
@@ -50,7 +50,6 @@ class Connection extends AbstractConnection
     {
         // $class = 'MongoDB\Driver\Command';
         try {
-            // return $this->client->executeCommand($db, new $class($command));
             return $this->client->executeCommand($db, new Command($command));
         } catch (Exception $e) {
             $this->error = $e->getMessage();

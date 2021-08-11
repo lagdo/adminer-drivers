@@ -1,8 +1,11 @@
 <?php
 
-namespace Lagdo\Adminer\Drivers\Mongo\MongoDb;
+namespace Lagdo\Adminer\Drivers\MongoDb;
 
 use Lagdo\Adminer\Drivers\AbstractDriver;
+
+use MongoDB\Driver\Query;
+use MongoDB\Driver\BulkWrite;
 
 use Exception;
 
@@ -10,15 +13,11 @@ class Driver extends AbstractDriver
 {
     public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0)
     {
-        $select = (
-            $select == array("*")
-            ? []
-            : array_fill_keys($select, 1)
-        );
+        $select = ($select == array("*") ? [] : array_fill_keys($select, 1));
         if (count($select) && !isset($select['_id'])) {
             $select['_id'] = 0;
         }
-        $where = $this->connection->where_to_query($where);
+        $where = $this->server->where_to_query($where);
         $sort = [];
         foreach ($order as $val) {
             $val = preg_replace('~ DESC$~', '', $val, 1, $count);
@@ -30,9 +29,10 @@ class Driver extends AbstractDriver
         }
         $limit = min(200, max(1, (int) $limit));
         $skip = $page * $limit;
-        $class = 'MongoDB\Driver\Query';
+        // $class = 'MongoDB\Driver\Query';
         try {
-            return new Statement($this->connection->getClient()->executeQuery("$this->connection->_db_name.$table", new $class($where, array('projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort))));
+            return new Statement($this->connection->getClient()->executeQuery("$this->connection->_db_name.$table",
+                new Query($where, array('projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort))));
         } catch (Exception $e) {
             $this->connection->error = $e->getMessage();
             return false;
@@ -42,9 +42,9 @@ class Driver extends AbstractDriver
     public function update($table, $set, $queryWhere, $limit = 0, $separator = "\n")
     {
         $db = $this->connection->_db_name;
-        $where = sql_query_where_parser($queryWhere);
-        $class = 'MongoDB\Driver\BulkWrite';
-        $bulk = new $class(array());
+        $where = $this->server->sql_query_where_parser($queryWhere);
+        // $class = 'MongoDB\Driver\BulkWrite';
+        $bulk = new BulkWrite(array());
         if (isset($set['_id'])) {
             unset($set['_id']);
         }
@@ -66,9 +66,9 @@ class Driver extends AbstractDriver
     public function delete($table, $queryWhere, $limit = 0)
     {
         $db = $this->connection->_db_name;
-        $where = sql_query_where_parser($queryWhere);
-        $class = 'MongoDB\Driver\BulkWrite';
-        $bulk = new $class(array());
+        $where = $this->server->sql_query_where_parser($queryWhere);
+        // $class = 'MongoDB\Driver\BulkWrite';
+        $bulk = new BulkWrite(array());
         $bulk->delete($where, array('limit' => $limit));
         return $this->connection->executeBulkWrite("$db.$table", $bulk, 'getDeletedCount');
     }
@@ -76,8 +76,8 @@ class Driver extends AbstractDriver
     public function insert($table, $set)
     {
         $db = $this->connection->_db_name;
-        $class = 'MongoDB\Driver\BulkWrite';
-        $bulk = new $class(array());
+        // $class = 'MongoDB\Driver\BulkWrite';
+        $bulk = new BulkWrite(array());
         if ($set['_id'] == '') {
             unset($set['_id']);
         }
