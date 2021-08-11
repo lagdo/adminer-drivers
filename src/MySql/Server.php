@@ -28,11 +28,6 @@ class Server extends AbstractServer
             $this->connection = new MySqli\Connection($this->adminer, $this, 'MySQLi');
             return;
         }
-        if (extension_loaded("mysql") && !(($this->adminer->ini_bool("sql.safe_mode") ||
-            $this->adminer->ini_bool("mysql.allow_local_infile")) && extension_loaded("pdo_mysql"))) {
-            $this->connection = new MySql\Connection($this->adminer, $this, 'MySQL');
-            return;
-        }
         if (extension_loaded("pdo_mysql")) {
             $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_MySQL');
             return;
