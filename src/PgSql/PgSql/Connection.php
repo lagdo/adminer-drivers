@@ -75,6 +75,18 @@ class Connection extends AbstractConnection
         return "'" . pg_escape_string($this->client, $string) . "'";
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function value($val, $field)
+    {
+        $type = $field["type"] ?? '';
+        return ($type == "bytea" && $val !== null ? pg_unescape_bytea($val) : $val);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function quoteBinary($string)
     {
         return "'" . pg_escape_bytea($this->client, $string) . "'";
@@ -95,11 +107,17 @@ class Connection extends AbstractConnection
         return $return;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function close()
     {
         $this->client = @pg_connect("$this->_string dbname='postgres'");
     }
 
+    /**
+     * @inheritDoc
+     */
     public function query($query, $unbuffered = false)
     {
         $result = @pg_query($this->client, $query);
@@ -120,22 +138,34 @@ class Connection extends AbstractConnection
         return $return;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function multi_query($query)
     {
         return $this->_result = $this->query($query);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function store_result()
     {
         return $this->_result;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function next_result()
     {
         // PgSQL extension doesn't support multiple results
         return false;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function result($query, $field = 0)
     {
         $result = $this->query($query);
@@ -145,6 +175,9 @@ class Connection extends AbstractConnection
         return pg_fetch_result($result->_result, 0, $field);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function warnings()
     {
         // second parameter is available since PHP 7.1.0
