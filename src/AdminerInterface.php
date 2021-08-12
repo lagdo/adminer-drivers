@@ -22,11 +22,11 @@ interface AdminerInterface
     public function lang($idf);
 
     /**
-     * Get the database user credentials
+     * Get the database server options
      *
      * @return array
      */
-    public function credentials();
+    public function getOptions();
 
     /**
      * Get SSL connection options

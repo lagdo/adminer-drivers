@@ -39,12 +39,15 @@ class Server extends AbstractServer
             return null;
         }
 
-        list($server, $username, $password) = $this->adminer->credentials();
+        list($server, $options) = $this->adminer->getOptions();
+        $password = $options['password'];
+        $options['password'] = '';
         if ($password != "" &&
-            $this->connection->open($server, ['username' => $username, 'password' => ""])) {
+            $this->connection->open($server, $options)) {
             return $this->adminer->lang('Database does not support password.');
         }
-        if (!$this->connection->open($server, \compact('username', 'password'))) {
+        $options['password'] = $password;
+        if (!$this->connection->open($server, $options)) {
             return $this->connection->error;
         }
 
@@ -59,7 +62,7 @@ class Server extends AbstractServer
 
     public function logged_user()
     {
-        $credentials = $this->adminer->credentials();
+        $credentials = $this->adminer->getOptions();
         return $credentials[1];
     }
 

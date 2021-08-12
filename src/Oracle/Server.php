@@ -43,8 +43,8 @@ class Server extends AbstractServer
             return null;
         }
 
-        list($server, $username, $password) = $this->adminer->credentials();
-        if (!$this->connection->open($server, \compact('username', 'password'))) {
+        list($server, $options) = $this->adminer->getOptions();
+        if (!$this->connection->open($server, $options)) {
             return $this->connection->error;
         }
 

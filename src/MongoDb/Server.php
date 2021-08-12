@@ -70,12 +70,11 @@ class Server extends AbstractServer
             return null;
         }
 
-        list($server, $username, $password) = $this->adminer->credentials();
-        $options = [];
-        if ($username . $password != "") {
+        list($server, $options) = $this->adminer->getOptions();
+        /*if ($username . $password != "") {
             $options["username"] = $username;
             $options["password"] = $password;
-        }
+        }*/
         $db = $this->getCurrentDatabase();
         if ($db != "") {
             $options["db"] = $db;
@@ -111,7 +110,7 @@ class Server extends AbstractServer
 
     public function logged_user()
     {
-        $credentials = $this->adminer->credentials();
+        $credentials = $this->adminer->getOptions();
         return $credentials[1];
     }
 

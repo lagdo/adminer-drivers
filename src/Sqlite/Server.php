@@ -42,8 +42,8 @@ class Server extends AbstractServer
      */
     public function connect()
     {
-        list($filename, , $password) = $this->adminer->credentials();
-        if ($password != "") {
+        list($filename, $options) = $this->adminer->getOptions();
+        if ($options['password'] != "") {
             return $this->adminer->lang('Database does not support password.');
         }
 
@@ -51,7 +51,7 @@ class Server extends AbstractServer
             return null;
         }
 
-        $this->connection->open($filename, []);
+        $this->connection->open($filename, $options);
 
         $this->driver = new Driver($this->adminer, $this, $this->connection);
         return $this->connection;
