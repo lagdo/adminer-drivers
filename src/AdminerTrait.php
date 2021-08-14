@@ -2,6 +2,18 @@
 
 namespace Lagdo\Adminer\Drivers;
 
+use Lagdo\Adminer\Drivers\Db\ServerInterface;
+use Lagdo\Adminer\Drivers\Db\DriverInterface;
+use Lagdo\Adminer\Drivers\Db\ConnectionInterface;
+
+use Lagdo\Adminer\Drivers\Db\MySql\Server as MySqlServer;
+use Lagdo\Adminer\Drivers\Db\PgSql\Server as PgSqlServer;
+use Lagdo\Adminer\Drivers\Db\Oracle\Server as OracleServer;
+use Lagdo\Adminer\Drivers\Db\MsSql\Server as MsSqlServer;
+use Lagdo\Adminer\Drivers\Db\Sqlite\Server as SqliteServer;
+use Lagdo\Adminer\Drivers\Db\Mongo\Server as MongoServer;
+use Lagdo\Adminer\Drivers\Db\Elastic\Server as ElasticServer;
+
 use function class_exists;
 
 trait AdminerTrait
@@ -33,25 +45,25 @@ trait AdminerTrait
     {
         switch ($driver) {
         case "mysql":
-            $this->server = new MySql\Server($adminer);
+            $this->server = new MySqlServer($adminer);
             break;
         case "pgsql":
-            $this->server = new PgSql\Server($adminer);
+            $this->server = new PgSqlServer($adminer);
             break;
         case "oracle":
-            $this->server = new Oracle\Server($adminer);
+            $this->server = new OracleServer($adminer);
             break;
         case "mssql":
-            $this->server = new MsSql\Server($adminer);
-            break;
-        case "mongo":
-            $this->server = new MongoDb\Server($adminer);
-            break;
-        case "elastic":
-            $this->server = new Elastic\Server($adminer);
+            $this->server = new MsSqlServer($adminer);
             break;
         case "sqlite":
-            $this->server = new Sqlite\Server($adminer);
+            $this->server = new SqliteServer($adminer);
+            break;
+        case "mongo":
+            $this->server = new MongoServer($adminer);
+            break;
+        case "elastic":
+            $this->server = new ElasticServer($adminer);
             break;
         }
 

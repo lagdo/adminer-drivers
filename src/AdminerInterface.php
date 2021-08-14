@@ -2,6 +2,8 @@
 
 namespace Lagdo\Adminer\Drivers;
 
+use Lagdo\Adminer\Drivers\Db\ConnectionInterface;
+
 interface AdminerInterface
 {
     /**
