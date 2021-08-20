@@ -238,7 +238,7 @@ class Server extends AbstractServer
 
     public function collations()
     {
-        $create = $this->adminer->input()->create();
+        $create = $this->adminer->input()->getCreate();
         return (($create) ? $this->adminer->get_vals("PRAGMA collation_list", 1) : []);
     }
 

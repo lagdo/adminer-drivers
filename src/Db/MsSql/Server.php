@@ -224,7 +224,7 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
 
     public function auto_increment()
     {
-        $autoIncrement = $this->adminer->input()->autoIncrementStep();
+        $autoIncrement = $this->adminer->input()->getAutoIncrementStep();
         return " IDENTITY" . ($autoIncrement > 0 ? "($autoIncrement,1)" : "") . " PRIMARY KEY";
     }
 

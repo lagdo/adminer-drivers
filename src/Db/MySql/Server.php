@@ -446,11 +446,11 @@ class Server extends AbstractServer
         $auto_increment_index = " PRIMARY KEY";
         // don't overwrite primary key by auto_increment
         $query = $this->adminer->input();
-        $create = $query->create();
-        $fields = $query->fields();
-        $autoIncrementField = $query->autoIncrementField();
-        if ($create != "" && $autoIncrementField) {
-            foreach ($this->indexes($create) as $index) {
+        $table = $query->getTable();
+        $fields = $query->getFields();
+        $autoIncrementField = $query->getAutoIncrementField();
+        if ($table != "" && $autoIncrementField) {
+            foreach ($this->indexes($table) as $index) {
                 if (in_array($fields[$autoIncrementField]["orig"], $index["columns"], true)) {
                     $auto_increment_index = "";
                     break;
@@ -597,7 +597,7 @@ class Server extends AbstractServer
     public function copy_tables($tables, $views, $target)
     {
         $this->adminer->queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
-        $overwrite = $this->adminer->input()->overwrite();
+        $overwrite = $this->adminer->input()->getOverwrite();
         foreach ($tables as $table) {
             $name = ($target == $this->getCurrentDatabase() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
             if (($overwrite && !$this->adminer->queries("\nDROP TABLE IF EXISTS $name"))

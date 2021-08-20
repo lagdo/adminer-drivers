@@ -459,7 +459,7 @@ ORDER BY connamespace, conname") as $row) {
             return array("Statement" => "EXECUTE PROCEDURE ()");
         }
         if ($table === null) {
-            $table = $this->adminer->input()->trigger();
+            $table = $this->adminer->input()->getTable();
         }
         $rows = $this->adminer->get_rows('SELECT t.trigger_name AS "Trigger", t.action_timing AS "Timing", ' .
             '(SELECT STRING_AGG(event_manipulation, \' OR \') FROM information_schema.triggers ' .

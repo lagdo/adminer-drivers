@@ -5,82 +5,72 @@ namespace Lagdo\Adminer\Drivers;
 interface InputInterface
 {
     /**
-     * Get the query table name (to be created)
-     * $_GET["create"]
+     * Get the query table/trigger name
      *
      * @return string
      */
-    public function create();
+    public function getTable();
 
     /**
-     * Get the query trigger name
-     * $_GET["trigger"]
+     * Get the query table name (to be created)
      *
      * @return string
      */
-    public function trigger();
+    public function getCreate();
 
     /**
      * Get the select query fields
-     * $_GET["select"]
      *
      * @return array
      */
-    public function select();
+    public function getSelect();
 
     /**
      * Get the query filters
-     * $_GET["where"]
      *
      * @return array
      */
-    public function where();
+    public function getWhere();
 
     /**
      * Get the query limit
-     * $_GET["limit"]
      *
      * @return int
      */
-    public function limit();
+    public function getLimit();
 
     /**
      * Get the query fields
-     * $_POST["fields"]
      *
      * @return array
      */
-    public function fields();
+    public function getFields();
 
     /**
      * Get the auto increment step
-     * $_POST["Auto_increment"], formatted with $this->adminer->number()
      *
      * @return string
      */
-    public function autoIncrementStep();
+    public function getAutoIncrementStep();
 
     /**
      * Get the auto increment field
-     * $_POST["auto_increment_col"]
      *
      * @return string
      */
-    public function autoIncrementField();
+    public function getAutoIncrementField();
 
     /**
      * Get the ??
-     * $_POST["check"]
      *
      * @return array
      */
-    public function checks();
+    public function getChecks();
 
     /**
      * Get the ??
-     * $_POST["overwrite"]
      *
      * @return bool
      */
-    public function overwrite();
+    public function getOverwrite();
 }
