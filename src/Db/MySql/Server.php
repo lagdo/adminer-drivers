@@ -25,12 +25,14 @@ class Server extends AbstractServer
         }
 
         if (extension_loaded("mysqli")) {
-            $this->connection = new MySqli\Connection($this->adminer, $this, 'MySQLi');
-            return;
+            $this->connection = new MySqli\Connection($this->db, $this->ui, $this, 'MySQLi');
         }
-        if (extension_loaded("pdo_mysql")) {
-            $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_MySQL');
-            return;
+        elseif (extension_loaded("pdo_mysql")) {
+            $this->connection = new Pdo\Connection($this->db, $this->ui, $this, 'PDO_MySQL');
+        }
+
+        if($this->connection !== null) {
+            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
         }
     }
 
@@ -43,11 +45,11 @@ class Server extends AbstractServer
             return null;
         }
 
-        list($server, $options) = $this->adminer->getOptions();
+        list($server, $options) = $this->db->getOptions();
         if (!$this->connection->open($server, $options)) {
             $return = $this->connection->error;
             // windows-1250 - most common Windows encoding
-            if (function_exists('iconv') && !$this->adminer->is_utf8($return) &&
+            if (function_exists('iconv') && !$this->ui->is_utf8($return) &&
                 strlen($s = iconv("windows-1250", "utf-8", $return)) > strlen($return)) {
                 $return = $s;
             }
@@ -58,11 +60,11 @@ class Server extends AbstractServer
         $this->connection->set_charset($this->charset());
         $this->connection->query("SET sql_quote_show_create = 1, autocommit = 1");
         if ($this->min_version('5.7.8', 10.2, $this->connection)) {
-            $this->structured_types[$this->adminer->lang('Strings')][] = "json";
+            $this->structured_types[$this->ui->lang('Strings')][] = "json";
             $this->types["json"] = 4294967295;
         }
 
-        $this->driver = new Driver($this->adminer, $this, $this->connection);
+        $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
         return $this->connection;
     }
 
@@ -85,7 +87,7 @@ class Server extends AbstractServer
         $query = $this->min_version(5) ?
             "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME" :
             "SHOW DATABASES";
-        return $this->adminer->get_vals($query);
+        return $this->db->get_vals($query);
 
         // SHOW DATABASES can take a very long time so it is cached
         // $return = get_session("dbs");
@@ -94,7 +96,7 @@ class Server extends AbstractServer
         //         ? "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME"
         //         : "SHOW DATABASES"
         //     ); // SHOW DATABASES can be disabled by skip_show_database
-        //     $return = ($flush ? slow_query($query) : $this->adminer->get_vals($query));
+        //     $return = ($flush ? slow_query($query) : $this->db->get_vals($query));
         //     restart_session();
         //     set_session("dbs", $return);
         //     stop_session();
@@ -142,7 +144,7 @@ class Server extends AbstractServer
     public function engines()
     {
         $return = [];
-        foreach ($this->adminer->get_rows("SHOW ENGINES") as $row) {
+        foreach ($this->db->get_rows("SHOW ENGINES") as $row) {
             if (preg_match("~YES|DEFAULT~", $row["Support"])) {
                 $return[] = $row["Engine"];
             }
@@ -165,7 +167,7 @@ class Server extends AbstractServer
      */
     public function tables_list()
     {
-        return $this->adminer->get_key_vals(
+        return $this->db->get_key_vals(
             $this->min_version(5)
             ? "SELECT TABLE_NAME, TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME"
             : "SHOW TABLES"
@@ -181,7 +183,7 @@ class Server extends AbstractServer
     {
         $return = [];
         foreach ($databases as $db) {
-            $return[$db] = count($this->adminer->get_vals("SHOW TABLES IN " . $this->idf_escape($db)));
+            $return[$db] = count($this->db->get_vals("SHOW TABLES IN " . $this->idf_escape($db)));
         }
         return $return;
     }
@@ -195,7 +197,7 @@ class Server extends AbstractServer
     public function table_status($name = "", $fast = false)
     {
         $return = [];
-        foreach ($this->adminer->get_rows(
+        foreach ($this->db->get_rows(
             $fast && $this->min_version(5)
             ? "SELECT TABLE_NAME AS Name, ENGINE AS Engine, TABLE_COMMENT AS Comment FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() " . ($name != "" ? "AND TABLE_NAME = " . $this->q($name) : "ORDER BY Name")
             : "SHOW TABLE STATUS" . ($name != "" ? " LIKE " . $this->q(addcslashes($name, "%_\\")) : "")
@@ -244,7 +246,7 @@ class Server extends AbstractServer
     public function fields($table)
     {
         $return = [];
-        foreach ($this->adminer->get_rows("SHOW FULL COLUMNS FROM " . $this->table($table)) as $row) {
+        foreach ($this->db->get_rows("SHOW FULL COLUMNS FROM " . $this->table($table)) as $row) {
             preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $row["Type"], $match);
             $matchCount = count($match);
             $match1 = $matchCount > 1 ? $match[1] : '';
@@ -282,7 +284,7 @@ class Server extends AbstractServer
     public function indexes($table, $connection2 = null)
     {
         $return = [];
-        foreach ($this->adminer->get_rows("SHOW INDEX FROM " . $this->table($table), $connection2) as $row) {
+        foreach ($this->db->get_rows("SHOW INDEX FROM " . $this->table($table), $connection2) as $row) {
             $name = $row["Key_name"];
             $return[$name]["type"] = ($name == "PRIMARY" ? "PRIMARY" : ($row["Index_type"] == "FULLTEXT" ? "FULLTEXT" : ($row["Non_unique"] ? ($row["Index_type"] == "SPATIAL" ? "SPATIAL" : "INDEX") : "UNIQUE")));
             $return[$name]["columns"][] = $row["Column_name"];
@@ -355,7 +357,7 @@ class Server extends AbstractServer
     public function collations()
     {
         $return = [];
-        foreach ($this->adminer->get_rows("SHOW COLLATION") as $row) {
+        foreach ($this->db->get_rows("SHOW COLLATION") as $row) {
             if ($row["Default"]) {
                 $return[$row["Charset"]][-1] = $row["Collation"];
             } else {
@@ -386,7 +388,7 @@ class Server extends AbstractServer
      */
     public function error()
     {
-        return $this->adminer->h(preg_replace('~^You have an error.*syntax to use~U', "Syntax error", $this->connection->error));
+        return $this->ui->h(preg_replace('~^You have an error.*syntax to use~U', "Syntax error", $this->connection->error));
     }
 
     /**
@@ -397,7 +399,7 @@ class Server extends AbstractServer
      */
     public function create_database($db, $collation)
     {
-        return $this->adminer->queries("CREATE DATABASE " . $this->idf_escape($db) . ($collation ? " COLLATE " . $this->q($collation) : ""));
+        return $this->db->queries("CREATE DATABASE " . $this->idf_escape($db) . ($collation ? " COLLATE " . $this->q($collation) : ""));
     }
 
     /**
@@ -407,7 +409,7 @@ class Server extends AbstractServer
      */
     public function drop_databases($databases)
     {
-        return $this->adminer->apply_queries("DROP DATABASE", $databases, function ($database) {
+        return $this->db->apply_queries("DROP DATABASE", $databases, function ($database) {
             return $this->idf_escape($database);
         });
     }
@@ -432,7 +434,7 @@ class Server extends AbstractServer
                 }
             }
             $return = (!$tables && !$views) || $this->move_tables($tables, $views, $name);
-            $this->drop_databases($return ? array($this->getCurrentDatabase()) : []);
+            $this->drop_databases($return ? array($this->current_db()) : []);
         }
         return $return;
     }
@@ -445,7 +447,7 @@ class Server extends AbstractServer
     {
         $auto_increment_index = " PRIMARY KEY";
         // don't overwrite primary key by auto_increment
-        $query = $this->adminer->input();
+        $query = $this->ui->input();
         $table = $query->getTable();
         $fields = $query->getFields();
         $autoIncrementField = $query->getAutoIncrementField();
@@ -493,7 +495,7 @@ class Server extends AbstractServer
             . ($auto_increment != "" ? " AUTO_INCREMENT=$auto_increment" : "")
         ;
         if ($table == "") {
-            return $this->adminer->queries("CREATE TABLE " . $this->table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning");
+            return $this->db->queries("CREATE TABLE " . $this->table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning");
         }
         if ($table != $name) {
             $alter[] = "RENAME TO " . $this->table($name);
@@ -501,7 +503,7 @@ class Server extends AbstractServer
         if ($status) {
             $alter[] = ltrim($status);
         }
-        return ($alter || $partitioning ? $this->adminer->queries("ALTER TABLE " . $this->table($table) . "\n" . implode(",\n", $alter) . $partitioning) : true);
+        return ($alter || $partitioning ? $this->db->queries("ALTER TABLE " . $this->table($table) . "\n" . implode(",\n", $alter) . $partitioning) : true);
     }
 
     /**
@@ -519,7 +521,7 @@ class Server extends AbstractServer
                 : "\nADD $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . ($val[1] != "" ? $this->idf_escape($val[1]) . " " : "") . "(" . implode(", ", $val[2]) . ")"
             );
         }
-        return $this->adminer->queries("ALTER TABLE " . $this->table($table) . implode(",", $alter));
+        return $this->db->queries("ALTER TABLE " . $this->table($table) . implode(",", $alter));
     }
 
     /**
@@ -529,7 +531,7 @@ class Server extends AbstractServer
      */
     public function truncate_tables($tables)
     {
-        return $this->adminer->apply_queries("TRUNCATE TABLE", $tables);
+        return $this->db->apply_queries("TRUNCATE TABLE", $tables);
     }
 
     /**
@@ -539,7 +541,7 @@ class Server extends AbstractServer
      */
     public function drop_views($views)
     {
-        return $this->adminer->queries("DROP VIEW " . implode(", ", array_map(function ($view) {
+        return $this->db->queries("DROP VIEW " . implode(", ", array_map(function ($view) {
             return $this->table($view);
         }, $views)));
     }
@@ -551,7 +553,7 @@ class Server extends AbstractServer
      */
     public function drop_tables($tables)
     {
-        return $this->adminer->queries("DROP TABLE " . implode(", ", array_map(function ($table) {
+        return $this->db->queries("DROP TABLE " . implode(", ", array_map(function ($table) {
             return $this->table($table);
         }, $tables)));
     }
@@ -569,15 +571,15 @@ class Server extends AbstractServer
         foreach ($tables as $table) {
             $rename[] = $this->table($table) . " TO " . $this->idf_escape($target) . "." . $this->table($table);
         }
-        if (!$rename || $this->adminer->queries("RENAME TABLE " . implode(", ", $rename))) {
+        if (!$rename || $this->db->queries("RENAME TABLE " . implode(", ", $rename))) {
             $definitions = [];
             foreach ($views as $table) {
                 $definitions[$this->server->table($table)] = $this->view($table);
             }
             $this->connection->select_db($target);
-            $db = $this->idf_escape($this->getCurrentDatabase());
+            $db = $this->idf_escape($this->current_db());
             foreach ($definitions as $name => $view) {
-                if (!$this->adminer->queries("CREATE VIEW $name AS " . str_replace(" $db.", " ", $view["select"])) || !$this->adminer->queries("DROP VIEW $db.$name")) {
+                if (!$this->db->queries("CREATE VIEW $name AS " . str_replace(" $db.", " ", $view["select"])) || !$this->db->queries("DROP VIEW $db.$name")) {
                     return false;
                 }
             }
@@ -596,28 +598,28 @@ class Server extends AbstractServer
      */
     public function copy_tables($tables, $views, $target)
     {
-        $this->adminer->queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
-        $overwrite = $this->adminer->input()->getOverwrite();
+        $this->db->queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
+        $overwrite = $this->ui->input()->getOverwrite();
         foreach ($tables as $table) {
-            $name = ($target == $this->getCurrentDatabase() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
-            if (($overwrite && !$this->adminer->queries("\nDROP TABLE IF EXISTS $name"))
-                || !$this->adminer->queries("CREATE TABLE $name LIKE " . $this->table($table))
-                || !$this->adminer->queries("INSERT INTO $name SELECT * FROM " . $this->table($table))
+            $name = ($target == $this->current_db() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
+            if (($overwrite && !$this->db->queries("\nDROP TABLE IF EXISTS $name"))
+                || !$this->db->queries("CREATE TABLE $name LIKE " . $this->table($table))
+                || !$this->db->queries("INSERT INTO $name SELECT * FROM " . $this->table($table))
             ) {
                 return false;
             }
-            foreach ($this->adminer->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\"))) as $row) {
+            foreach ($this->db->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\"))) as $row) {
                 $trigger = $row["Trigger"];
-                if (!$this->adminer->queries("CREATE TRIGGER " . ($target == $this->getCurrentDatabase() ? $this->idf_escape("copy_$trigger") : $this->idf_escape($target) . "." . $this->idf_escape($trigger)) . " $row[Timing] $row[Event] ON $name FOR EACH ROW\n$row[Statement];")) {
+                if (!$this->db->queries("CREATE TRIGGER " . ($target == $this->current_db() ? $this->idf_escape("copy_$trigger") : $this->idf_escape($target) . "." . $this->idf_escape($trigger)) . " $row[Timing] $row[Event] ON $name FOR EACH ROW\n$row[Statement];")) {
                     return false;
                 }
             }
         }
         foreach ($views as $table) {
-            $name = ($target == $this->getCurrentDatabase() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
+            $name = ($target == $this->current_db() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
             $view = $this->view($table);
-            if (($overwrite && !$this->adminer->queries("DROP VIEW IF EXISTS $name"))
-                || !$this->adminer->queries("CREATE VIEW $name AS $view[select]")) { //! USE to avoid db.table
+            if (($overwrite && !$this->db->queries("DROP VIEW IF EXISTS $name"))
+                || !$this->db->queries("CREATE VIEW $name AS $view[select]")) { //! USE to avoid db.table
                 return false;
             }
         }
@@ -634,7 +636,7 @@ class Server extends AbstractServer
         if ($name == "") {
             return [];
         }
-        $rows = $this->adminer->get_rows("SHOW TRIGGERS WHERE `Trigger` = " . $this->q($name));
+        $rows = $this->db->get_rows("SHOW TRIGGERS WHERE `Trigger` = " . $this->q($name));
         return reset($rows);
     }
 
@@ -646,7 +648,7 @@ class Server extends AbstractServer
     public function triggers($table)
     {
         $return = [];
-        foreach ($this->adminer->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\"))) as $row) {
+        foreach ($this->db->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\"))) as $row) {
             $return[$row["Trigger"]] = array($row["Timing"], $row["Event"]);
         }
         return $return;
@@ -710,7 +712,7 @@ class Server extends AbstractServer
      */
     public function routines()
     {
-        return $this->adminer->get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . $this->q($this->getCurrentDatabase()));
+        return $this->db->get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . $this->q($this->current_db()));
     }
 
     /**
@@ -808,7 +810,7 @@ class Server extends AbstractServer
     public function trigger_sql($table)
     {
         $return = "";
-        foreach ($this->adminer->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\")), null, "-- ") as $row) {
+        foreach ($this->db->get_rows("SHOW TRIGGERS LIKE " . $this->q(addcslashes($table, "%_\\")), null, "-- ") as $row) {
             $return .= "\nCREATE TRIGGER " . $this->idf_escape($row["Trigger"]) . " $row[Timing] $row[Event] ON " . $this->table($row["Table"]) . " FOR EACH ROW\n$row[Statement];;\n";
         }
         return $return;
@@ -820,7 +822,7 @@ class Server extends AbstractServer
      */
     public function show_variables()
     {
-        return $this->adminer->get_key_vals("SHOW VARIABLES");
+        return $this->db->get_key_vals("SHOW VARIABLES");
     }
 
     /**
@@ -829,7 +831,7 @@ class Server extends AbstractServer
      */
     public function process_list()
     {
-        return $this->adminer->get_rows("SHOW FULL PROCESSLIST");
+        return $this->db->get_rows("SHOW FULL PROCESSLIST");
     }
 
     /**
@@ -838,7 +840,7 @@ class Server extends AbstractServer
      */
     public function show_status()
     {
-        return $this->adminer->get_key_vals("SHOW STATUS");
+        return $this->db->get_key_vals("SHOW STATUS");
     }
 
     /**
@@ -891,7 +893,7 @@ class Server extends AbstractServer
      */
     public function kill_process($val)
     {
-        return $this->adminer->queries("KILL " . $this->adminer->number($val));
+        return $this->db->queries("KILL " . $this->ui->number($val));
     }
 
     /**
@@ -921,12 +923,12 @@ class Server extends AbstractServer
         $types = []; ///< @var array ($type => $maximum_unsigned_length, ...)
         $structured_types = []; ///< @var array ($description => array($type, ...), ...)
         foreach (array(
-            $this->adminer->lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "mediumint" => 8, "int" => 10, "bigint" => 20, "decimal" => 66, "float" => 12, "double" => 21),
-            $this->adminer->lang('Date and time') => array("date" => 10, "datetime" => 19, "timestamp" => 19, "time" => 10, "year" => 4),
-            $this->adminer->lang('Strings') => array("char" => 255, "varchar" => 65535, "tinytext" => 255, "text" => 65535, "mediumtext" => 16777215, "longtext" => 4294967295),
-            $this->adminer->lang('Lists') => array("enum" => 65535, "set" => 64),
-            $this->adminer->lang('Binary') => array("bit" => 20, "binary" => 255, "varbinary" => 65535, "tinyblob" => 255, "blob" => 65535, "mediumblob" => 16777215, "longblob" => 4294967295),
-            $this->adminer->lang('Geometry') => array("geometry" => 0, "point" => 0, "linestring" => 0, "polygon" => 0, "multipoint" => 0, "multilinestring" => 0, "multipolygon" => 0, "geometrycollection" => 0),
+            $this->ui->lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "mediumint" => 8, "int" => 10, "bigint" => 20, "decimal" => 66, "float" => 12, "double" => 21),
+            $this->ui->lang('Date and time') => array("date" => 10, "datetime" => 19, "timestamp" => 19, "time" => 10, "year" => 4),
+            $this->ui->lang('Strings') => array("char" => 255, "varchar" => 65535, "tinytext" => 255, "text" => 65535, "mediumtext" => 16777215, "longtext" => 4294967295),
+            $this->ui->lang('Lists') => array("enum" => 65535, "set" => 64),
+            $this->ui->lang('Binary') => array("bit" => 20, "binary" => 255, "varbinary" => 65535, "tinyblob" => 255, "blob" => 65535, "mediumblob" => 16777215, "longblob" => 4294967295),
+            $this->ui->lang('Geometry') => array("geometry" => 0, "point" => 0, "linestring" => 0, "polygon" => 0, "multipoint" => 0, "multilinestring" => 0, "multipolygon" => 0, "geometrycollection" => 0),
         ) as $key => $val) {
             $types += $val;
             $structured_types[$key] = array_keys($val);
@@ -946,7 +948,7 @@ class Server extends AbstractServer
                     "binary" => "md5/sha1",
                     "date|time" => "now",
                 ), array(
-                    $this->adminer->number_type() => "+/-",
+                    $this->db->number_type() => "+/-",
                     "date" => "+ interval/- interval",
                     "time" => "addtime/subtime",
                     "char|text" => "concat",

@@ -30,12 +30,14 @@ class Server extends AbstractServer
         }
 
         if (extension_loaded("sqlsrv")) {
-            $this->connection = new SqlSrv\Connection($this->adminer, $this, 'sqlsrv');
-            return;
+            $this->connection = new SqlSrv\Connection($this->db, $this->ui, $this, 'sqlsrv');
         }
-        if (extension_loaded("pdo_dblib")) {
-            $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_DBLIB');
-            return;
+        elseif (extension_loaded("pdo_dblib")) {
+            $this->connection = new Pdo\Connection($this->db, $this->ui, $this, 'PDO_DBLIB');
+        }
+
+        if($this->connection !== null) {
+            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
         }
     }
 
@@ -48,12 +50,10 @@ class Server extends AbstractServer
             return null;
         }
 
-        list($server, $options) = $this->adminer->getOptions();
+        list($server, $options) = $this->db->getOptions();
         if (!$this->connection->open($server, $options)) {
             return $this->connection->error;
         }
-
-        $this->driver = new Driver($this->adminer, $this, $this->connection);
         return $this->connection;
     }
 
@@ -72,7 +72,7 @@ class Server extends AbstractServer
 
     public function get_databases($flush)
     {
-        return $this->adminer->get_vals("SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')");
+        return $this->db->get_vals("SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')");
     }
 
     public function limit($query, $where, $limit, $offset = 0, $separator = " ")
@@ -92,7 +92,7 @@ class Server extends AbstractServer
 
     public function tables_list()
     {
-        return $this->adminer->get_key_vals("SELECT name, type_desc FROM sys.all_objects WHERE schema_id = SCHEMA_ID(" .
+        return $this->db->get_key_vals("SELECT name, type_desc FROM sys.all_objects WHERE schema_id = SCHEMA_ID(" .
             $this->q($this->get_schema()) . ") AND type IN ('S', 'U', 'V') ORDER BY name");
     }
 
@@ -109,7 +109,7 @@ class Server extends AbstractServer
     public function table_status($name = "", $fast = false)
     {
         $return = [];
-        foreach ($this->adminer->get_rows("SELECT ao.name AS Name, ao.type_desc AS Engine, " .
+        foreach ($this->db->get_rows("SELECT ao.name AS Name, ao.type_desc AS Engine, " .
             "(SELECT value FROM fn_listextendedproperty(default, 'SCHEMA', schema_name(schema_id), " .
             "'TABLE', ao.name, null, null)) AS Comment FROM sys.all_objects AS ao WHERE schema_id = SCHEMA_ID(" .
             $this->q($this->get_schema()) . ") AND type IN ('S', 'U', 'V') " . ($name != "" ? "AND name = " .
@@ -134,10 +134,10 @@ class Server extends AbstractServer
 
     public function fields($table)
     {
-        $comments = $this->adminer->get_key_vals("SELECT objname, cast(value as varchar(max)) FROM fn_listextendedproperty('MS_DESCRIPTION', 'schema', " .
+        $comments = $this->db->get_key_vals("SELECT objname, cast(value as varchar(max)) FROM fn_listextendedproperty('MS_DESCRIPTION', 'schema', " .
             $this->q($this->get_schema()) . ", 'table', " . $this->q($table) . ", 'column', NULL)");
         $return = [];
-        foreach ($this->adminer->get_rows(
+        foreach ($this->db->get_rows(
             "SELECT c.max_length, c.precision, c.scale, c.name, c.is_nullable, c.is_identity, c.collation_name, t.name type, CAST(d.definition as text) [default]
 FROM sys.all_columns c
 JOIN sys.all_objects o ON c.object_id = o.object_id
@@ -168,7 +168,7 @@ WHERE o.schema_id = SCHEMA_ID(" . $this->q($this->get_schema()) . ") AND o.type 
     {
         $return = [];
         // sp_statistics doesn't return information about primary key
-        foreach ($this->adminer->get_rows("SELECT i.name, key_ordinal, is_unique, is_primary_key, c.name AS column_name, is_descending_key
+        foreach ($this->db->get_rows("SELECT i.name, key_ordinal, is_unique, is_primary_key, c.name AS column_name, is_descending_key
 FROM sys.indexes i
 INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
 INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
@@ -190,7 +190,7 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
     public function collations()
     {
         $return = [];
-        foreach ($this->adminer->get_vals("SELECT name FROM fn_helpcollations()") as $collation) {
+        foreach ($this->db->get_vals("SELECT name FROM fn_helpcollations()") as $collation) {
             $return[preg_replace('~_.*~', '', $collation)][] = $collation;
         }
         return $return;
@@ -198,17 +198,17 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
 
     public function error()
     {
-        return $this->adminer->nl_br($this->adminer->h(preg_replace('~^(\[[^]]*])+~m', '', $this->connection->error)));
+        return $this->ui->nl_br($this->ui->h(preg_replace('~^(\[[^]]*])+~m', '', $this->connection->error)));
     }
 
     public function create_database($db, $collation)
     {
-        return $this->adminer->queries("CREATE DATABASE " . $this->idf_escape($db) . (preg_match('~^[a-z0-9_]+$~i', $collation) ? " COLLATE $collation" : ""));
+        return $this->db->queries("CREATE DATABASE " . $this->idf_escape($db) . (preg_match('~^[a-z0-9_]+$~i', $collation) ? " COLLATE $collation" : ""));
     }
 
     public function drop_databases($databases)
     {
-        return $this->adminer->queries("DROP DATABASE " . implode(", ", array_map(function ($database) {
+        return $this->db->queries("DROP DATABASE " . implode(", ", array_map(function ($database) {
             return $this->idf_escape($database);
         }, $databases)));
     }
@@ -216,15 +216,15 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
     public function rename_database($name, $collation)
     {
         if (preg_match('~^[a-z0-9_]+$~i', $collation)) {
-            $this->adminer->queries("ALTER DATABASE " . $this->idf_escape($this->getCurrentDatabase()) . " COLLATE $collation");
+            $this->db->queries("ALTER DATABASE " . $this->idf_escape($this->current_db()) . " COLLATE $collation");
         }
-        $this->adminer->queries("ALTER DATABASE " . $this->idf_escape($this->getCurrentDatabase()) . " MODIFY NAME = " . $this->idf_escape($name));
+        $this->db->queries("ALTER DATABASE " . $this->idf_escape($this->current_db()) . " MODIFY NAME = " . $this->idf_escape($name));
         return true; //! false negative "The database name 'test2' has been set."
     }
 
     public function auto_increment()
     {
-        $autoIncrement = $this->adminer->input()->getAutoIncrementStep();
+        $autoIncrement = $this->ui->number($this->ui->input()->getAutoIncrementStep());
         return " IDENTITY" . ($autoIncrement > 0 ? "($autoIncrement,1)" : "") . " PRIMARY KEY";
     }
 
@@ -246,30 +246,30 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
                 } else {
                     unset($val[6]); //! identity can't be removed
                     if ($column != $val[0]) {
-                        $this->adminer->queries("EXEC sp_rename " . $this->q($this->table($table) . ".$column") . ", " . $this->q($this->idf_unescape($val[0])) . ", 'COLUMN'");
+                        $this->db->queries("EXEC sp_rename " . $this->q($this->table($table) . ".$column") . ", " . $this->q($this->idf_unescape($val[0])) . ", 'COLUMN'");
                     }
                     $alter["ALTER COLUMN " . implode("", $val)][] = "";
                 }
             }
         }
         if ($table == "") {
-            return $this->adminer->queries("CREATE TABLE " . $this->table($name) . " (" . implode(",", (array) $alter["ADD"]) . "\n)");
+            return $this->db->queries("CREATE TABLE " . $this->table($name) . " (" . implode(",", (array) $alter["ADD"]) . "\n)");
         }
         if ($table != $name) {
-            $this->adminer->queries("EXEC sp_rename " . $this->q($this->table($table)) . ", " . $this->q($name));
+            $this->db->queries("EXEC sp_rename " . $this->q($this->table($table)) . ", " . $this->q($name));
         }
         if ($foreign) {
             $alter[""] = $foreign;
         }
         foreach ($alter as $key => $val) {
-            if (!$this->adminer->queries("ALTER TABLE " . $this->idf_escape($name) . " $key" . implode(",", $val))) {
+            if (!$this->db->queries("ALTER TABLE " . $this->idf_escape($name) . " $key" . implode(",", $val))) {
                 return false;
             }
         }
         foreach ($comments as $key => $val) {
             $comment = substr($val, 9); // 9 - strlen(" COMMENT ")
-            $this->adminer->queries("EXEC sp_dropextendedproperty @name = N'MS_Description', @level0type = N'Schema', @level0name = " . $this->q($this->get_schema()) . ", @level1type = N'Table', @level1name = " . $this->q($name) . ", @level2type = N'Column', @level2name = " . $this->q($key));
-            $this->adminer->queries("EXEC sp_addextendedproperty @name = N'MS_Description', @value = " . $comment . ", @level0type = N'Schema', @level0name = " . $this->q($this->get_schema()) . ", @level1type = N'Table', @level1name = " . $this->q($name) . ", @level2type = N'Column', @level2name = " . $this->q($key));
+            $this->db->queries("EXEC sp_dropextendedproperty @name = N'MS_Description', @level0type = N'Schema', @level0name = " . $this->q($this->get_schema()) . ", @level1type = N'Table', @level1name = " . $this->q($name) . ", @level2type = N'Column', @level2name = " . $this->q($key));
+            $this->db->queries("EXEC sp_addextendedproperty @name = N'MS_Description', @value = " . $comment . ", @level0type = N'Schema', @level0name = " . $this->q($this->get_schema()) . ", @level1type = N'Table', @level1name = " . $this->q($name) . ", @level2type = N'Column', @level2name = " . $this->q($key));
         }
         return true;
     }
@@ -285,7 +285,7 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
                 } else {
                     $index[] = $this->idf_escape($val[1]) . " ON " . $this->table($table);
                 }
-            } elseif (!$this->adminer->queries((
+            } elseif (!$this->db->queries((
                 $val[0] != "PRIMARY"
                 ? "CREATE $val[0] " . ($val[0] != "INDEX" ? "INDEX " : "") . $this->idf_escape($val[1] != "" ? $val[1] : uniqid($table . "_")) . " ON " . $this->table($table)
                 : "ALTER TABLE " . $this->table($table) . " ADD PRIMARY KEY"
@@ -293,8 +293,8 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
                 return false;
             }
         }
-        return (!$index || $this->adminer->queries("DROP INDEX " . implode(", ", $index)))
-            && (!$drop || $this->adminer->queries("ALTER TABLE " . $this->table($table) . " DROP " . implode(", ", $drop)))
+        return (!$index || $this->db->queries("DROP INDEX " . implode(", ", $index)))
+            && (!$drop || $this->db->queries("ALTER TABLE " . $this->table($table) . " DROP " . implode(", ", $drop)))
         ;
     }
 
@@ -314,7 +314,7 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
     public function foreign_keys($table)
     {
         $return = [];
-        foreach ($this->adminer->get_rows("EXEC sp_fkeys @fktable_name = " . $this->q($table)) as $row) {
+        foreach ($this->db->get_rows("EXEC sp_fkeys @fktable_name = " . $this->q($table)) as $row) {
             $foreign_key = &$return[$row["FK_NAME"]];
             $foreign_key["db"] = $row["PKTABLE_QUALIFIER"];
             $foreign_key["table"] = $row["PKTABLE_NAME"];
@@ -326,26 +326,26 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
 
     public function truncate_tables($tables)
     {
-        return $this->adminer->apply_queries("TRUNCATE TABLE", $tables);
+        return $this->db->apply_queries("TRUNCATE TABLE", $tables);
     }
 
     public function drop_views($views)
     {
-        return $this->adminer->queries("DROP VIEW " . implode(", ", array_map(function ($view) {
+        return $this->db->queries("DROP VIEW " . implode(", ", array_map(function ($view) {
             return $this->table($view);
         }, $views)));
     }
 
     public function drop_tables($tables)
     {
-        return $this->adminer->queries("DROP TABLE " . implode(", ", array_map(function ($table) {
+        return $this->db->queries("DROP TABLE " . implode(", ", array_map(function ($table) {
             return $this->table($table);
         }, $tables)));
     }
 
     public function move_tables($tables, $views, $target)
     {
-        return $this->adminer->apply_queries("ALTER SCHEMA " .
+        return $this->db->apply_queries("ALTER SCHEMA " .
             $this->idf_escape($target) . " TRANSFER", array_merge($tables, $views));
     }
 
@@ -354,7 +354,7 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
         if ($name == "") {
             return [];
         }
-        $rows = $this->adminer->get_rows(
+        $rows = $this->db->get_rows(
             "SELECT s.name [Trigger],
 CASE WHEN OBJECTPROPERTY(s.id, 'ExecIsInsertTrigger') = 1 THEN 'INSERT' WHEN OBJECTPROPERTY(s.id, 'ExecIsUpdateTrigger') = 1 THEN 'UPDATE' WHEN OBJECTPROPERTY(s.id, 'ExecIsDeleteTrigger') = 1 THEN 'DELETE' END [Event],
 CASE WHEN OBJECTPROPERTY(s.id, 'ExecIsInsteadOfTrigger') = 1 THEN 'INSTEAD OF' ELSE 'AFTER' END [Timing],
@@ -373,7 +373,7 @@ WHERE s.xtype = 'TR' AND s.name = " . $this->q($name)
     public function triggers($table)
     {
         $return = [];
-        foreach ($this->adminer->get_rows(
+        foreach ($this->db->get_rows(
             "SELECT sys1.name,
 CASE WHEN OBJECTPROPERTY(sys1.id, 'ExecIsInsertTrigger') = 1 THEN 'INSERT' WHEN OBJECTPROPERTY(sys1.id, 'ExecIsUpdateTrigger') = 1 THEN 'UPDATE' WHEN OBJECTPROPERTY(sys1.id, 'ExecIsDeleteTrigger') = 1 THEN 'DELETE' END [Event],
 CASE WHEN OBJECTPROPERTY(sys1.id, 'ExecIsInsteadOfTrigger') = 1 THEN 'INSTEAD OF' ELSE 'AFTER' END [Timing]
@@ -397,7 +397,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . $this->q($table)
 
     public function schemas()
     {
-        return $this->adminer->get_vals("SELECT name FROM sys.schemas");
+        return $this->db->get_vals("SELECT name FROM sys.schemas");
     }
 
     public function get_schema()
@@ -428,10 +428,10 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . $this->q($table)
         $types = [];
         $structured_types = [];
         foreach (array( //! use sys.types
-            $this->adminer->lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "int" => 10, "bigint" => 20, "bit" => 1, "decimal" => 0, "real" => 12, "float" => 53, "smallmoney" => 10, "money" => 20),
-            $this->adminer->lang('Date and time') => array("date" => 10, "smalldatetime" => 19, "datetime" => 19, "datetime2" => 19, "time" => 8, "datetimeoffset" => 10),
-            $this->adminer->lang('Strings') => array("char" => 8000, "varchar" => 8000, "text" => 2147483647, "nchar" => 4000, "nvarchar" => 4000, "ntext" => 1073741823),
-            $this->adminer->lang('Binary') => array("binary" => 8000, "varbinary" => 8000, "image" => 2147483647),
+            $this->ui->lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "int" => 10, "bigint" => 20, "bit" => 1, "decimal" => 0, "real" => 12, "float" => 53, "smallmoney" => 10, "money" => 20),
+            $this->ui->lang('Date and time') => array("date" => 10, "smalldatetime" => 19, "datetime" => 19, "datetime2" => 19, "time" => 8, "datetimeoffset" => 10),
+            $this->ui->lang('Strings') => array("char" => 8000, "varchar" => 8000, "text" => 2147483647, "nchar" => 4000, "nvarchar" => 4000, "ntext" => 1073741823),
+            $this->ui->lang('Binary') => array("binary" => 8000, "varbinary" => 8000, "image" => 2147483647),
         ) as $key => $val) {
             $types += $val;
             $structured_types[$key] = array_keys($val);

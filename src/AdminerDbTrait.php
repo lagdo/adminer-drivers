@@ -14,9 +14,7 @@ use Lagdo\Adminer\Drivers\Db\Sqlite\Server as SqliteServer;
 use Lagdo\Adminer\Drivers\Db\Mongo\Server as MongoServer;
 use Lagdo\Adminer\Drivers\Db\Elastic\Server as ElasticServer;
 
-use function class_exists;
-
-trait AdminerTrait
+trait AdminerDbTrait
 {
     /**
      * @var ServerInterface
@@ -36,34 +34,35 @@ trait AdminerTrait
     /**
      * Get an instance of a database server class
      *
-     * @param AdminerInterface $adminer
+     * @param AdminerDbInterface $db
+     * @param AdminerUiInterface $ui
      * @param string $driver
      *
      * @return void
      */
-    public function connect(AdminerInterface $adminer, string $driver)
+    public function connect(AdminerDbInterface $db, AdminerUiInterface $ui, string $driver)
     {
         switch ($driver) {
         case "mysql":
-            $this->server = new MySqlServer($adminer);
+            $this->server = new MySqlServer($db, $ui);
             break;
         case "pgsql":
-            $this->server = new PgSqlServer($adminer);
+            $this->server = new PgSqlServer($db, $ui);
             break;
         case "oracle":
-            $this->server = new OracleServer($adminer);
+            $this->server = new OracleServer($db, $ui);
             break;
         case "mssql":
-            $this->server = new MsSqlServer($adminer);
+            $this->server = new MsSqlServer($db, $ui);
             break;
         case "sqlite":
-            $this->server = new SqliteServer($adminer);
+            $this->server = new SqliteServer($db, $ui);
             break;
         case "mongo":
-            $this->server = new MongoServer($adminer);
+            $this->server = new MongoServer($db, $ui);
             break;
         case "elastic":
-            $this->server = new ElasticServer($adminer);
+            $this->server = new ElasticServer($db, $ui);
             break;
         }
 

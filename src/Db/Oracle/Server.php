@@ -25,12 +25,14 @@ class Server extends AbstractServer
         }
 
         if (extension_loaded("oci8")) {
-            $this->connection = new Oci\Connection($this->adminer, $this, 'oci8');
-            return;
+            $this->connection = new Oci\Connection($this->db, $this->ui, $this, 'oci8');
         }
-        if (extension_loaded("pdo_oci")) {
-            $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_OCI');
-            return;
+        elseif (extension_loaded("pdo_oci")) {
+            $this->connection = new Pdo\Connection($this->db, $this->ui, $this, 'PDO_OCI');
+        }
+
+        if($this->connection !== null) {
+            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
         }
     }
 
@@ -43,12 +45,10 @@ class Server extends AbstractServer
             return null;
         }
 
-        list($server, $options) = $this->adminer->getOptions();
+        list($server, $options) = $this->db->getOptions();
         if (!$this->connection->open($server, $options)) {
             return $this->connection->error;
         }
-
-        $this->driver = new Driver($this->adminer, $this, $this->connection);
         return $this->connection;
     }
 
@@ -62,7 +62,7 @@ class Server extends AbstractServer
 
     public function get_databases($flush)
     {
-        return $this->adminer->get_vals("SELECT tablespace_name FROM user_tablespaces ORDER BY 1");
+        return $this->db->get_vals("SELECT tablespace_name FROM user_tablespaces ORDER BY 1");
     }
 
     public function limit($query, $where, $limit, $offset = 0, $separator = " ")
@@ -92,7 +92,7 @@ class Server extends AbstractServer
 
     public function get_current_db()
     {
-        $db = $this->connection->_current_db ? $this->connection->_current_db : $this->getCurrentDatabase();
+        $db = $this->connection->_current_db ? $this->connection->_current_db : $this->current_db();
         unset($this->connection->_current_db);
         return $db;
     }
@@ -115,8 +115,8 @@ class Server extends AbstractServer
     {
         $view = $this->views_table("view_name");
         $owner = $this->where_owner(" AND ");
-        return $this->adminer->get_key_vals(
-            "SELECT table_name, 'table' FROM all_tables WHERE tablespace_name = " . $this->q($this->getCurrentDatabase()) . "$owner
+        return $this->db->get_key_vals(
+            "SELECT table_name, 'table' FROM all_tables WHERE tablespace_name = " . $this->q($this->current_db()) . "$owner
 UNION SELECT view_name, 'view' FROM $view
 ORDER BY 1"
         ); //! views don't have schema
@@ -138,7 +138,7 @@ ORDER BY 1"
         $db = $this->get_current_db();
         $view = $this->views_table("view_name");
         $owner = $this->where_owner(" AND ");
-        foreach ($this->adminer->get_rows(
+        foreach ($this->db->get_rows(
             'SELECT table_name "Name", \'table\' "Engine", avg_row_len * num_rows "Data_length", num_rows "Rows" FROM all_tables WHERE tablespace_name = ' . $this->q($db) . $owner . ($name != "" ? " AND table_name = $search" : "") . "
 UNION SELECT view_name, 'view', 0, 0 FROM $view" . ($name != "" ? " WHERE view_name = $search" : "") . "
 ORDER BY 1"
@@ -165,7 +165,7 @@ ORDER BY 1"
     {
         $return = [];
         $owner = $this->where_owner(" AND ");
-        foreach ($this->adminer->get_rows("SELECT * FROM all_tab_columns WHERE table_name = " . $this->q($table) . "$owner ORDER BY column_id") as $row) {
+        foreach ($this->db->get_rows("SELECT * FROM all_tab_columns WHERE table_name = " . $this->q($table) . "$owner ORDER BY column_id") as $row) {
             $type = $row["DATA_TYPE"];
             $length = "$row[DATA_PRECISION],$row[DATA_SCALE]";
             if ($length == ",") {
@@ -192,7 +192,7 @@ ORDER BY 1"
     {
         $return = [];
         $owner = $this->where_owner(" AND ", "aic.table_owner");
-        foreach ($this->adminer->get_rows("SELECT aic.*, ac.constraint_type, atc.data_default
+        foreach ($this->db->get_rows("SELECT aic.*, ac.constraint_type, atc.data_default
 FROM all_ind_columns aic
 LEFT JOIN all_constraints ac ON aic.index_name = ac.constraint_name AND aic.table_name = ac.table_name AND aic.index_owner = ac.owner
 LEFT JOIN all_tab_cols atc ON aic.column_name = atc.column_name AND aic.table_name = atc.table_name AND aic.index_owner = atc.owner
@@ -216,7 +216,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
     public function view($name)
     {
         $view = $this->views_table("view_name, text");
-        $rows = $this->adminer->get_rows('SELECT text "select" FROM ' . $view . ' WHERE view_name = ' . $this->q($name));
+        $rows = $this->db->get_rows('SELECT text "select" FROM ' . $view . ' WHERE view_name = ' . $this->q($name));
         return reset($rows);
     }
 
@@ -248,11 +248,11 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
         foreach ($fields as $field) {
             $val = $field[1];
             if ($val && $field[0] != "" && $this->idf_escape($field[0]) != $val[0]) {
-                $this->adminer->queries("ALTER TABLE " . $this->table($table) . " RENAME COLUMN " . $this->idf_escape($field[0]) . " TO $val[0]");
+                $this->db->queries("ALTER TABLE " . $this->table($table) . " RENAME COLUMN " . $this->idf_escape($field[0]) . " TO $val[0]");
             }
             $orig_field = $orig_fields[$field[0]];
             if ($val && $orig_field) {
-                $old = $this->adminer->process_field($orig_field, $orig_field);
+                $old = $this->ui->process_field($orig_field, $orig_field);
                 if ($val[2] == $old[2]) {
                     $val[2] = "";
                 }
@@ -264,11 +264,11 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
             }
         }
         if ($table == "") {
-            return $this->adminer->queries("CREATE TABLE " . $this->table($name) . " (\n" . implode(",\n", $alter) . "\n)");
+            return $this->db->queries("CREATE TABLE " . $this->table($name) . " (\n" . implode(",\n", $alter) . "\n)");
         }
-        return (!$alter || $this->adminer->queries("ALTER TABLE " . $this->table($table) . "\n" . implode("\n", $alter)))
-            && (!$drop || $this->adminer->queries("ALTER TABLE " . $this->table($table) . " DROP (" . implode(", ", $drop) . ")"))
-            && ($table == $name || $this->adminer->queries("ALTER TABLE " . $this->table($table) . " RENAME TO " . $this->table($name)))
+        return (!$alter || $this->db->queries("ALTER TABLE " . $this->table($table) . "\n" . implode("\n", $alter)))
+            && (!$drop || $this->db->queries("ALTER TABLE " . $this->table($table) . " DROP (" . implode(", ", $drop) . ")"))
+            && ($table == $name || $this->db->queries("ALTER TABLE " . $this->table($table) . " RENAME TO " . $this->table($name)))
         ;
     }
 
@@ -296,7 +296,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
             array_unshift($queries, "DROP INDEX " . implode(", ", $drop));
         }
         foreach ($queries as $query) {
-            if (!$this->adminer->queries($query)) {
+            if (!$this->db->queries($query)) {
                 return false;
             }
         }
@@ -317,7 +317,7 @@ WHERE c_list.CONSTRAINT_NAME = c_src.CONSTRAINT_NAME
 AND c_list.R_CONSTRAINT_NAME = c_dest.CONSTRAINT_NAME
 AND c_list.CONSTRAINT_TYPE = 'R'
 AND c_src.TABLE_NAME = " . $this->q($table);
-        foreach ($this->adminer->get_rows($query) as $row) {
+        foreach ($this->db->get_rows($query) as $row) {
             $return[$row['NAME']] = array(
                 "db" => $row['DEST_DB'],
                 "table" => $row['DEST_TABLE'],
@@ -332,17 +332,17 @@ AND c_src.TABLE_NAME = " . $this->q($table);
 
     public function truncate_tables($tables)
     {
-        return $this->adminer->apply_queries("TRUNCATE TABLE", $tables);
+        return $this->db->apply_queries("TRUNCATE TABLE", $tables);
     }
 
     public function drop_views($views)
     {
-        return $this->adminer->apply_queries("DROP VIEW", $views);
+        return $this->db->apply_queries("DROP VIEW", $views);
     }
 
     public function drop_tables($tables)
     {
-        return $this->adminer->apply_queries("DROP TABLE", $tables);
+        return $this->db->apply_queries("DROP TABLE", $tables);
     }
 
     public function last_id()
@@ -352,8 +352,8 @@ AND c_src.TABLE_NAME = " . $this->q($table);
 
     public function schemas()
     {
-        $return = $this->adminer->get_vals("SELECT DISTINCT owner FROM dba_segments WHERE owner IN (SELECT username FROM dba_users WHERE default_tablespace NOT IN ('SYSTEM','SYSAUX')) ORDER BY 1");
-        return ($return ? $return : $this->adminer->get_vals("SELECT DISTINCT owner FROM all_tables WHERE tablespace_name = " . $this->q($this->getCurrentDatabase()) . " ORDER BY 1"));
+        $return = $this->db->get_vals("SELECT DISTINCT owner FROM dba_segments WHERE owner IN (SELECT username FROM dba_users WHERE default_tablespace NOT IN ('SYSTEM','SYSAUX')) ORDER BY 1");
+        return ($return ? $return : $this->db->get_vals("SELECT DISTINCT owner FROM all_tables WHERE tablespace_name = " . $this->q($this->current_db()) . " ORDER BY 1"));
     }
 
     public function get_schema()
@@ -371,12 +371,12 @@ AND c_src.TABLE_NAME = " . $this->q($table);
 
     public function show_variables()
     {
-        return $this->adminer->get_key_vals('SELECT name, display_value FROM v$parameter');
+        return $this->db->get_key_vals('SELECT name, display_value FROM v$parameter');
     }
 
     public function process_list()
     {
-        return $this->adminer->get_rows('SELECT sess.process AS "process", sess.username AS "user", sess.schemaname AS "schema", sess.status AS "status", sess.wait_class AS "wait_class", sess.seconds_in_wait AS "seconds_in_wait", sql.sql_text AS "sql_text", sess.machine AS "machine", sess.port AS "port"
+        return $this->db->get_rows('SELECT sess.process AS "process", sess.username AS "user", sess.schemaname AS "schema", sess.status AS "status", sess.wait_class AS "wait_class", sess.seconds_in_wait AS "seconds_in_wait", sql.sql_text AS "sql_text", sess.machine AS "machine", sess.port AS "port"
 FROM v$session sess LEFT OUTER JOIN v$sql sql
 ON sql.sql_id = sess.sql_id
 WHERE sess.type = \'USER\'
@@ -386,7 +386,7 @@ ORDER BY PROCESS
 
     public function show_status()
     {
-        $rows = $this->adminer->get_rows('SELECT * FROM v$instance');
+        $rows = $this->db->get_rows('SELECT * FROM v$instance');
         return reset($rows);
     }
 
@@ -400,10 +400,10 @@ ORDER BY PROCESS
         $types = [];
         $structured_types = [];
         foreach (array(
-            $this->adminer->lang('Numbers') => array("number" => 38, "binary_float" => 12, "binary_double" => 21),
-            $this->adminer->lang('Date and time') => array("date" => 10, "timestamp" => 29, "interval year" => 12, "interval day" => 28), //! year(), day() to second()
-            $this->adminer->lang('Strings') => array("char" => 2000, "varchar2" => 4000, "nchar" => 2000, "nvarchar2" => 4000, "clob" => 4294967295, "nclob" => 4294967295),
-            $this->adminer->lang('Binary') => array("raw" => 2000, "long raw" => 2147483648, "blob" => 4294967295, "bfile" => 4294967296),
+            $this->ui->lang('Numbers') => array("number" => 38, "binary_float" => 12, "binary_double" => 21),
+            $this->ui->lang('Date and time') => array("date" => 10, "timestamp" => 29, "interval year" => 12, "interval day" => 28), //! year(), day() to second()
+            $this->ui->lang('Strings') => array("char" => 2000, "varchar2" => 4000, "nchar" => 2000, "nvarchar2" => 4000, "clob" => 4294967295, "nclob" => 4294967295),
+            $this->ui->lang('Binary') => array("raw" => 2000, "long raw" => 2147483648, "blob" => 4294967295, "bfile" => 4294967296),
         ) as $key => $val) {
             $types += $val;
             $structured_types[$key] = array_keys($val);

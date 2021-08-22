@@ -23,7 +23,7 @@ abstract class Connection extends AbstractConnection
             $this->client = new PDO($dsn, $username, $password, $options);
         } catch (Exception $ex) {
             // auth_error(h($ex->getMessage()));
-            throw new AuthException($this->adminer->h($ex->getMessage()));
+            throw new AuthException($this->ui->h($ex->getMessage()));
         }
         $this->client->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
         $this->client->setAttribute(PDO::ATTR_STATEMENT_CLASS, array(Statement::class));
@@ -42,7 +42,7 @@ abstract class Connection extends AbstractConnection
         if (!$result) {
             list(, $this->errno, $this->error) = $this->client->errorInfo();
             if (!$this->error) {
-                $this->error = $this->adminer->lang('Unknown error.');
+                $this->error = $this->ui->lang('Unknown error.');
             }
             return false;
         }

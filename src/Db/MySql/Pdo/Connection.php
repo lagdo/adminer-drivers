@@ -20,7 +20,7 @@ class Connection extends PdoConnection
         $password = $options['password'];
 
         $options = array(PDO::MYSQL_ATTR_LOCAL_INFILE => false);
-        $ssl = $this->adminer->connectSsl();
+        $ssl = $this->db->connectSsl();
         if ($ssl) {
             if (!empty($ssl['key'])) {
                 $options[PDO::MYSQL_ATTR_SSL_KEY] = $ssl['key'];

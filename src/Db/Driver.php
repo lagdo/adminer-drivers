@@ -2,14 +2,20 @@
 
 namespace Lagdo\Adminer\Drivers\Db;
 
-use Lagdo\Adminer\Drivers\AdminerInterface;
+use Lagdo\Adminer\Drivers\AdminerDbInterface;
+use Lagdo\Adminer\Drivers\AdminerUiInterface;
 
 abstract class Driver implements DriverInterface
 {
     /**
-     * @var AdminerInterface
+     * @var AdminerDbInterface
      */
-    protected $adminer;
+    protected $db;
+
+    /**
+     * @var AdminerUiInterface
+     */
+    protected $ui;
 
     /**
      * @var ServerInterface
@@ -24,13 +30,17 @@ abstract class Driver implements DriverInterface
     /**
      * The constructor
      *
-     * @param AdminerInterface
-     * @param ServerInterface
-     * @param ConnectionInterface
+     * @param AdminerDbInterface $db
+     * @param AdminerUiInterface $ui
+     * @param ServerInterface $server
+     * @param ConnectionInterface $connection
      */
-    public function __construct(AdminerInterface $adminer, ServerInterface $server, ConnectionInterface $connection)
+    public function __construct(AdminerDbInterface $db, AdminerUiInterface $ui,
+        ServerInterface $server, ConnectionInterface $connection)
     {
-        $this->adminer = $adminer;
+        $this->db = $db;
+        $this->ui = $ui;
+
         $this->server = $server;
         $this->connection = $connection;
     }
@@ -41,7 +51,7 @@ abstract class Driver implements DriverInterface
     public function select($table, $select, $where, $group, $order = [], $limit = 1, $page = 0)
     {
         $is_group = (count($group) < count($select));
-        $query = $this->adminer->buildSelectQuery($select, $where, $group, $order, $limit, $page);
+        $query = $this->db->buildSelectQuery($select, $where, $group, $order, $limit, $page);
         if (!$query) {
             $query = "SELECT" . $this->server->limit(
                 ($page != "last" && $limit != "" && $group && $is_group && $this->server->jush == "sql" ?
@@ -70,7 +80,7 @@ abstract class Driver implements DriverInterface
     public function delete($table, $queryWhere, $limit = 0)
     {
         $query = "FROM " . $this->server->table($table);
-        return $this->adminer->queries("DELETE" .
+        return $this->db->queries("DELETE" .
             ($limit ? $this->server->limit1($table, $query, $queryWhere) : " $query$queryWhere"));
     }
 
@@ -90,7 +100,7 @@ abstract class Driver implements DriverInterface
             $values[] = "$key = $val";
         }
         $query = $this->server->table($table) . " SET$separator" . implode(",$separator", $values);
-        return $this->adminer->queries("UPDATE" .
+        return $this->db->queries("UPDATE" .
             ($limit ? $this->server->limit1($table, $query, $queryWhere, $separator) : " $query$queryWhere"));
     }
 
@@ -102,7 +112,7 @@ abstract class Driver implements DriverInterface
      */
     public function insert($table, $set)
     {
-        return $this->adminer->queries("INSERT INTO " . $this->server->table($table) . (
+        return $this->db->queries("INSERT INTO " . $this->server->table($table) . (
             $set
             ? " (" . implode(", ", array_keys($set)) . ")\nVALUES (" . implode(", ", $set) . ")"
             : " DEFAULT VALUES"
@@ -115,7 +125,7 @@ abstract class Driver implements DriverInterface
      */
     public function begin()
     {
-        return $this->adminer->queries("BEGIN");
+        return $this->db->queries("BEGIN");
     }
 
     /**
@@ -124,7 +134,7 @@ abstract class Driver implements DriverInterface
      */
     public function commit()
     {
-        return $this->adminer->queries("COMMIT");
+        return $this->db->queries("COMMIT");
     }
 
     /**
@@ -133,7 +143,7 @@ abstract class Driver implements DriverInterface
      */
     public function rollback()
     {
-        return $this->adminer->queries("ROLLBACK");
+        return $this->db->queries("ROLLBACK");
     }
 
     /**

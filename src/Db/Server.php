@@ -2,14 +2,20 @@
 
 namespace Lagdo\Adminer\Drivers\Db;
 
-use Lagdo\Adminer\Drivers\AdminerInterface;
+use Lagdo\Adminer\Drivers\AdminerDbInterface;
+use Lagdo\Adminer\Drivers\AdminerUiInterface;
 
 abstract class Server implements ServerInterface
 {
     /**
-     * @var AdminerInterface
+     * @var AdminerDbInterface
      */
-    protected $adminer;
+    protected $db;
+
+    /**
+     * @var AdminerUiInterface
+     */
+    protected $ui;
 
     /**
      * @var DriverInterface
@@ -52,11 +58,13 @@ abstract class Server implements ServerInterface
     /**
      * The constructor
      *
-     * @param AdminerInterface $adminer
+     * @param AdminerDbInterface $db
+     * @param AdminerUiInterface $ui
      */
-    public function __construct(AdminerInterface $adminer)
+    public function __construct(AdminerDbInterface $db, AdminerUiInterface $ui)
     {
-        $this->adminer = $adminer;
+        $this->db = $db;
+        $this->ui = $ui;
 
         // From bootstrap.inc.php
         $config = $this->driver_config();
@@ -69,9 +77,6 @@ abstract class Server implements ServerInterface
         $this->functions = $config['functions'];
         $this->grouping = $config['grouping'];
         $this->edit_functions = $config['edit_functions'];
-        // if ($adminer->operators === null) {
-        //     $adminer->operators = $operators;
-        // }
 
         $this->createConnection();
     }
@@ -109,7 +114,7 @@ abstract class Server implements ServerInterface
     /**
      * @inheritDoc
      */
-    public function getCurrentDatabase()
+    public function current_db()
     {
         return $this->database;
     }
@@ -117,7 +122,7 @@ abstract class Server implements ServerInterface
     /**
      * @inheritDoc
      */
-    public function getCurrentSchema()
+    public function current_schema()
     {
         return $this->schema;
     }
@@ -127,7 +132,7 @@ abstract class Server implements ServerInterface
      */
     public function error()
     {
-        return $this->adminer->h($this->connection->error);
+        return $this->ui->h($this->connection->error);
     }
 
     /**

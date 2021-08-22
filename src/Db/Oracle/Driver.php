@@ -25,9 +25,9 @@ class Driver extends AbstractDriver
                 }
             }
             if (!(
-                ($where && $this->adminer->queries("UPDATE " . $this->server->table($table) . " SET " .
+                ($where && $this->db->queries("UPDATE " . $this->server->table($table) . " SET " .
                 implode(", ", $update) . " WHERE " . implode(" AND ", $where)) && $this->connection->affected_rows) ||
-                $this->adminer->queries("INSERT INTO " . $this->server->table($table) .
+                $this->db->queries("INSERT INTO " . $this->server->table($table) .
                 " (" . implode(", ", array_keys($set)) . ") VALUES (" . implode(", ", $set) . ")")
             )) {
                 return false;

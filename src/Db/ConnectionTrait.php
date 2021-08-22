@@ -2,14 +2,20 @@
 
 namespace Lagdo\Adminer\Drivers\Db;
 
-use Lagdo\Adminer\Drivers\AdminerInterface;
+use Lagdo\Adminer\Drivers\AdminerDbInterface;
+use Lagdo\Adminer\Drivers\AdminerUiInterface;
 
 trait ConnectionTrait
 {
     /**
-     * @var AdminerInterface
+     * @var AdminerDbInterface
      */
-    protected $adminer;
+    protected $db;
+
+    /**
+     * @var AdminerUiInterface
+     */
+    protected $ui;
 
     /**
      * @var ServerInterface

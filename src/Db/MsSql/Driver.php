@@ -23,7 +23,7 @@ class Driver extends AbstractDriver
                 }
             }
             //! can use only one query for all rows
-            if (!$this->adminer->queries(
+            if (!$this->db->queries(
                 "MERGE " . $this->server->table($table) . " USING (VALUES(" .
                 implode(", ", $set) . ")) AS source (c" . implode(", c", range(1, count($set))) .
                 ") ON " . implode(" AND ", $where) . //! source, c1 - possible conflict
@@ -39,6 +39,6 @@ class Driver extends AbstractDriver
 
     public function begin()
     {
-        return $this->adminer->queries("BEGIN TRANSACTION");
+        return $this->db->queries("BEGIN TRANSACTION");
     }
 }

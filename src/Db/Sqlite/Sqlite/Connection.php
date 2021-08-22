@@ -38,7 +38,7 @@ class Connection extends AbstractConnection
 
     public function quote($string)
     {
-        return ($this->adminer->is_utf8($string)
+        return ($this->ui->is_utf8($string)
             ? "'" . $this->client->escapeString($string) . "'"
             : "x'" . reset(unpack('H*', $string)) . "'"
         );

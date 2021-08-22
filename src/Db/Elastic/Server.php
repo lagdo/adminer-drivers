@@ -24,9 +24,12 @@ class Server extends AbstractServer
             return;
         }
 
-        if (function_exists('json_decode') && $this->adminer->ini_bool('allow_url_fopen')) {
-            $this->connection = new Connection($this->adminer, $this, 'JSON');
-            return;
+        if (function_exists('json_decode') && $this->ui->ini_bool('allow_url_fopen')) {
+            $this->connection = new Connection($this->db, $this->ui, $this, 'JSON');
+        }
+
+        if($this->connection !== null) {
+            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
         }
     }
 
@@ -39,19 +42,17 @@ class Server extends AbstractServer
             return null;
         }
 
-        list($server, $options) = $this->adminer->getOptions();
+        list($server, $options) = $this->db->getOptions();
         $password = $options['password'];
         $options['password'] = '';
         if ($password != "" &&
             $this->connection->open($server, $options)) {
-            return $this->adminer->lang('Database does not support password.');
+            return $this->ui->lang('Database does not support password.');
         }
         $options['password'] = $password;
         if (!$this->connection->open($server, $options)) {
             return $this->connection->error;
         }
-
-        $this->driver = new Driver($this->adminer, $this, $this->connection);
         return $this->connection;
     }
 
@@ -62,7 +63,7 @@ class Server extends AbstractServer
 
     public function logged_user()
     {
-        $credentials = $this->adminer->getOptions();
+        $credentials = $this->db->getOptions();
         return $credentials[1];
     }
 
@@ -235,11 +236,11 @@ class Server extends AbstractServer
         $types = [];
         $structured_types = [];
         foreach (array(
-            $this->adminer->lang('Numbers') => array("long" => 3, "integer" => 5, "short" => 8, "byte" => 10,
+            $this->ui->lang('Numbers') => array("long" => 3, "integer" => 5, "short" => 8, "byte" => 10,
                 "double" => 20, "float" => 66, "half_float" => 12, "scaled_float" => 21),
-            $this->adminer->lang('Date and time') => array("date" => 10),
-            $this->adminer->lang('Strings') => array("string" => 65535, "text" => 65535),
-            $this->adminer->lang('Binary') => array("binary" => 255),
+            $this->ui->lang('Date and time') => array("date" => 10),
+            $this->ui->lang('Strings') => array("string" => 65535, "text" => 65535),
+            $this->ui->lang('Binary') => array("binary" => 255),
         ) as $key => $val) {
             $types += $val;
             $structured_types[$key] = array_keys($val);

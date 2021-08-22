@@ -25,12 +25,14 @@ class Server extends AbstractServer
         }
 
         if (extension_loaded("pgsql")) {
-            $this->connection = new PgSql\Connection($this->adminer, $this, 'PgSQL');
-            return;
+            $this->connection = new PgSql\Connection($this->db, $this->ui, $this, 'PgSQL');
         }
-        if (extension_loaded("pdo_pgsql")) {
-            $this->connection = new Pdo\Connection($this->adminer, $this, 'PDO_PgSQL');
-            return;
+        elseif (extension_loaded("pdo_pgsql")) {
+            $this->connection = new Pdo\Connection($this->db, $this->ui, $this, 'PDO_PgSQL');
+        }
+
+        if($this->connection !== null) {
+            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
         }
     }
 
@@ -43,7 +45,7 @@ class Server extends AbstractServer
             return null;
         }
 
-        list($server, $options) = $this->adminer->getOptions();
+        list($server, $options) = $this->db->getOptions();
         if (!$this->connection->open($server, $options)) {
             return $this->connection->error;
         }
@@ -51,16 +53,14 @@ class Server extends AbstractServer
         if ($this->min_version(9, 0)) {
             $this->connection->query("SET application_name = 'Adminer'");
             if ($this->min_version(9.2, 0)) {
-                $this->structured_types[$this->adminer->lang('Strings')][] = "json";
+                $this->structured_types[$this->ui->lang('Strings')][] = "json";
                 $this->types["json"] = 4294967295;
                 if ($this->min_version(9.4, 0)) {
-                    $this->structured_types[$this->adminer->lang('Strings')][] = "jsonb";
+                    $this->structured_types[$this->ui->lang('Strings')][] = "jsonb";
                     $this->types["jsonb"] = 4294967295;
                 }
             }
         }
-
-        $this->driver = new Driver($this->adminer, $this, $this->connection);
         return $this->connection;
     }
 
@@ -74,7 +74,7 @@ class Server extends AbstractServer
 
     public function get_databases($flush)
     {
-        return $this->adminer->get_vals("SELECT datname FROM pg_database WHERE has_database_privilege(datname, 'CONNECT') ORDER BY datname");
+        return $this->db->get_vals("SELECT datname FROM pg_database WHERE has_database_privilege(datname, 'CONNECT') ORDER BY datname");
     }
 
     public function limit($query, $where, $limit, $offset = 0, $separator = " ")
@@ -112,7 +112,7 @@ WHERE schemaname = current_schema()";
         }
         $query .= "
 ORDER BY 1";
-        return $this->adminer->get_key_vals($query);
+        return $this->db->get_key_vals($query);
     }
 
     public function count_tables($databases)
@@ -123,7 +123,7 @@ ORDER BY 1";
     public function table_status($name = "", $fast = false)
     {
         $return = [];
-        foreach ($this->adminer->get_rows(
+        foreach ($this->db->get_rows(
             "SELECT c.relname AS \"Name\", CASE c.relkind WHEN 'r' THEN 'table' WHEN 'm' THEN 'materialized view' ELSE 'view' END AS \"Engine\", pg_relation_size(c.oid) AS \"Data_length\", pg_total_relation_size(c.oid) - pg_relation_size(c.oid) AS \"Index_length\", obj_description(c.oid, 'pg_class') AS \"Comment\", " . ($this->min_version(12) ? "''" : "CASE WHEN c.relhasoids THEN 'oid' ELSE '' END") . " AS \"Oid\", c.reltuples as \"Rows\", n.nspname
 FROM pg_class c
 JOIN pg_namespace n ON(n.nspname = current_schema() AND n.oid = c.relnamespace)
@@ -155,7 +155,7 @@ WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 
         $identity_column = $this->min_version(10) ? 'a.attidentity' : '0';
 
-        foreach ($this->adminer->get_rows(
+        foreach ($this->db->get_rows(
             "SELECT a.attname AS field, format_type(a.atttypid, a.atttypmod) AS full_type, " .
             "pg_get_expr(d.adbin, d.adrelid) AS default, a.attnotnull::int, " .
             "col_description(c.oid, a.attnum) AS comment, $identity_column AS identity
@@ -206,8 +206,8 @@ ORDER BY a.attnum"
         }
         $return = [];
         $table_oid = $connection2->result("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . $this->q($table));
-        $columns = $this->adminer->get_key_vals("SELECT attnum, attname FROM pg_attribute WHERE attrelid = $table_oid AND attnum > 0", $connection2);
-        foreach ($this->adminer->get_rows("SELECT relname, indisunique::int, indisprimary::int, indkey, indoption, (indpred IS NOT NULL)::int as indispartial FROM pg_index i, pg_class ci WHERE i.indrelid = $table_oid AND ci.oid = i.indexrelid", $connection2) as $row) {
+        $columns = $this->db->get_key_vals("SELECT attnum, attname FROM pg_attribute WHERE attrelid = $table_oid AND attnum > 0", $connection2);
+        foreach ($this->db->get_rows("SELECT relname, indisunique::int, indisprimary::int, indkey, indoption, (indpred IS NOT NULL)::int as indispartial FROM pg_index i, pg_class ci WHERE i.indrelid = $table_oid AND ci.oid = i.indexrelid", $connection2) as $row) {
             $relname = $row["relname"];
             $return[$relname]["type"] = ($row["indispartial"] ? "INDEX" : ($row["indisprimary"] ? "PRIMARY" : ($row["indisunique"] ? "UNIQUE" : "INDEX")));
             $return[$relname]["columns"] = [];
@@ -226,7 +226,7 @@ ORDER BY a.attnum"
     public function foreign_keys($table)
     {
         $return = [];
-        foreach ($this->adminer->get_rows("SELECT conname, condeferrable::int AS deferrable, pg_get_constraintdef(oid) AS definition
+        foreach ($this->db->get_rows("SELECT conname, condeferrable::int AS deferrable, pg_get_constraintdef(oid) AS definition
 FROM pg_constraint
 WHERE conrelid = (SELECT pc.oid FROM pg_class AS pc INNER JOIN pg_namespace AS pn ON (pn.oid = pc.relnamespace) WHERE pc.relname = " . $this->q($table) . " AND pn.nspname = current_schema())
 AND contype = 'f'::char
@@ -258,7 +258,7 @@ ORDER BY conkey, conname") as $row) {
     public function constraints($table)
     {
         $return = [];
-        foreach ($this->adminer->get_rows("SELECT conname, consrc
+        foreach ($this->db->get_rows("SELECT conname, consrc
 FROM pg_catalog.pg_constraint
 INNER JOIN pg_catalog.pg_namespace ON pg_constraint.connamespace = pg_namespace.oid
 INNER JOIN pg_catalog.pg_class ON pg_constraint.conrelid = pg_class.oid AND pg_constraint.connamespace = pg_class.relnamespace
@@ -302,19 +302,19 @@ ORDER BY connamespace, conname") as $row) {
             $return = $match1 . preg_replace('~((?:[^&]|&[^;]*;){' .
                 strlen($match3) . '})(.*)~', '\1<b>\2</b>', $match2) . $match4;
         }
-        return $this->adminer->nl_br($return);
+        return $this->ui->nl_br($return);
     }
 
     public function create_database($db, $collation)
     {
-        return $this->adminer->queries("CREATE DATABASE " . $this->idf_escape($db) .
+        return $this->db->queries("CREATE DATABASE " . $this->idf_escape($db) .
             ($collation ? " ENCODING " . $this->idf_escape($collation) : ""));
     }
 
     public function drop_databases($databases)
     {
         $this->connection->close();
-        return $this->adminer->apply_queries("DROP DATABASE", $databases, function ($database) {
+        return $this->db->apply_queries("DROP DATABASE", $databases, function ($database) {
             return $this->idf_escape($database);
         });
     }
@@ -322,7 +322,7 @@ ORDER BY connamespace, conname") as $row) {
     public function rename_database($name, $collation)
     {
         //! current database cannot be renamed
-        return $this->adminer->queries("ALTER DATABASE " . $this->idf_escape($this->getCurrentDatabase()) .
+        return $this->db->queries("ALTER DATABASE " . $this->idf_escape($this->current_db()) .
             " RENAME TO " . $this->idf_escape($name));
     }
 
@@ -377,7 +377,7 @@ ORDER BY connamespace, conname") as $row) {
             //! $queries[] = "SELECT setval(pg_get_serial_sequence(" . $this->q($name) . ", ), $auto_increment)";
         }
         foreach ($queries as $query) {
-            if (!$this->adminer->queries($query)) {
+            if (!$this->db->queries($query)) {
                 return false;
             }
         }
@@ -410,7 +410,7 @@ ORDER BY connamespace, conname") as $row) {
             array_unshift($queries, "DROP INDEX " . implode(", ", $drop));
         }
         foreach ($queries as $query) {
-            if (!$this->adminer->queries($query)) {
+            if (!$this->db->queries($query)) {
                 return false;
             }
         }
@@ -419,7 +419,7 @@ ORDER BY connamespace, conname") as $row) {
 
     public function truncate_tables($tables)
     {
-        return $this->adminer->queries("TRUNCATE " . implode(", ", array_map(function ($table) {
+        return $this->db->queries("TRUNCATE " . implode(", ", array_map(function ($table) {
             return $this->table($table);
         }, $tables)));
         return true;
@@ -434,7 +434,7 @@ ORDER BY connamespace, conname") as $row) {
     {
         foreach ($tables as $table) {
             $status = $this->table_status($table);
-            if (!$this->adminer->queries("DROP " . strtoupper($status["Engine"]) . " " . $this->table($table))) {
+            if (!$this->db->queries("DROP " . strtoupper($status["Engine"]) . " " . $this->table($table))) {
                 return false;
             }
         }
@@ -445,7 +445,7 @@ ORDER BY connamespace, conname") as $row) {
     {
         foreach (array_merge($tables, $views) as $table) {
             $status = $this->table_status($table);
-            if (!$this->adminer->queries("ALTER " . strtoupper($status["Engine"]) . " " .
+            if (!$this->db->queries("ALTER " . strtoupper($status["Engine"]) . " " .
                 $this->table($table) . " SET SCHEMA " . $this->idf_escape($target))) {
                 return false;
             }
@@ -459,9 +459,9 @@ ORDER BY connamespace, conname") as $row) {
             return array("Statement" => "EXECUTE PROCEDURE ()");
         }
         if ($table === null) {
-            $table = $this->adminer->input()->getTable();
+            $table = $this->ui->input()->getTable();
         }
-        $rows = $this->adminer->get_rows('SELECT t.trigger_name AS "Trigger", t.action_timing AS "Timing", ' .
+        $rows = $this->db->get_rows('SELECT t.trigger_name AS "Trigger", t.action_timing AS "Timing", ' .
             '(SELECT STRING_AGG(event_manipulation, \' OR \') FROM information_schema.triggers ' .
             'WHERE event_object_table = t.event_object_table AND trigger_name = t.trigger_name ) AS ' .
             '"Events", t.event_manipulation AS "Event", \'FOR EACH \' || t.action_orientation AS ' .
@@ -473,7 +473,7 @@ ORDER BY connamespace, conname") as $row) {
     public function triggers($table)
     {
         $return = [];
-        foreach ($this->adminer->get_rows("SELECT * FROM information_schema.triggers " .
+        foreach ($this->db->get_rows("SELECT * FROM information_schema.triggers " .
             "WHERE trigger_schema = current_schema() AND event_object_table = " . $this->q($table)) as $row) {
             $return[$row["trigger_name"]] = array($row["action_timing"], $row["event_manipulation"]);
         }
@@ -491,12 +491,12 @@ ORDER BY connamespace, conname") as $row) {
 
     public function routine($name, $type)
     {
-        $rows = $this->adminer->get_rows('SELECT routine_definition AS definition, LOWER(external_language) AS language, *
+        $rows = $this->db->get_rows('SELECT routine_definition AS definition, LOWER(external_language) AS language, *
 FROM information_schema.routines
 WHERE routine_schema = current_schema() AND specific_name = ' . $this->q($name));
         $return = $rows[0];
         $return["returns"] = array("type" => $return["type_udt_name"]);
-        $return["fields"] = $this->adminer->get_rows('SELECT parameter_name AS field, data_type AS type, character_maximum_length AS length, parameter_mode AS inout
+        $return["fields"] = $this->db->get_rows('SELECT parameter_name AS field, data_type AS type, character_maximum_length AS length, parameter_mode AS inout
 FROM information_schema.parameters
 WHERE specific_schema = current_schema() AND specific_name = ' . $this->q($name) . '
 ORDER BY ordinal_position');
@@ -505,7 +505,7 @@ ORDER BY ordinal_position');
 
     public function routines()
     {
-        return $this->adminer->get_rows('SELECT specific_name AS "SPECIFIC_NAME", routine_type AS "ROUTINE_TYPE", routine_name AS "ROUTINE_NAME", type_udt_name AS "DTD_IDENTIFIER"
+        return $this->db->get_rows('SELECT specific_name AS "SPECIFIC_NAME", routine_type AS "ROUTINE_TYPE", routine_name AS "ROUTINE_NAME", type_udt_name AS "DTD_IDENTIFIER"
 FROM information_schema.routines
 WHERE routine_schema = current_schema()
 ORDER BY SPECIFIC_NAME');
@@ -513,7 +513,7 @@ ORDER BY SPECIFIC_NAME');
 
     public function routine_languages()
     {
-        return $this->adminer->get_vals("SELECT LOWER(lanname) FROM pg_catalog.pg_language");
+        return $this->db->get_vals("SELECT LOWER(lanname) FROM pg_catalog.pg_language");
     }
 
     public function routine_id($name, $row)
@@ -549,7 +549,7 @@ ORDER BY SPECIFIC_NAME');
 
     public function types()
     {
-        return $this->adminer->get_vals(
+        return $this->db->get_vals(
             "SELECT typname
 FROM pg_type
 WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema())
@@ -560,7 +560,7 @@ AND typelem = 0"
 
     public function schemas()
     {
-        return $this->adminer->get_vals("SELECT nspname FROM pg_namespace ORDER BY nspname");
+        return $this->db->get_vals("SELECT nspname FROM pg_namespace ORDER BY nspname");
     }
 
     public function get_schema()
@@ -577,7 +577,7 @@ AND typelem = 0"
         foreach ($this->types() as $type) { //! get types from current_schemas('t')
             if (!isset($this->types[$type])) {
                 $this->types[$type] = 0;
-                $this->structured_types[$this->adminer->lang('User types')][] = $type;
+                $this->structured_types[$this->ui->lang('User types')][] = $type;
             }
         }
         return $return;
@@ -628,13 +628,13 @@ AND typelem = 0"
         // fields' definitions
         foreach ($fields as $field_name => $field) {
             $part = $this->idf_escape($field['field']) . ' ' . $field['full_type'] .
-                $this->adminer->default_value($field) . ($field['attnotnull'] ? " NOT NULL" : "");
+                $this->db->default_value($field) . ($field['attnotnull'] ? " NOT NULL" : "");
             $return_parts[] = $part;
 
             // sequences for fields
             if (preg_match('~nextval\(\'([^\']+)\'\)~', $field['default'], $matches)) {
                 $sequence_name = $matches[1];
-                $sq = reset($this->adminer->get_rows(
+                $sq = reset($this->db->get_rows(
                     $this->min_version(10) ?
                     "SELECT *, cache_size AS cache_value FROM pg_sequences WHERE schemaname = current_schema() AND sequencename = " .
                     $this->q($sequence_name) : "SELECT * FROM $sequence_name"
@@ -730,12 +730,12 @@ AND typelem = 0"
 
     public function show_variables()
     {
-        return $this->adminer->get_key_vals("SHOW ALL");
+        return $this->db->get_key_vals("SHOW ALL");
     }
 
     public function process_list()
     {
-        return $this->adminer->get_rows("SELECT * FROM pg_stat_activity ORDER BY " . ($this->min_version(9.2) ? "pid" : "procpid"));
+        return $this->db->get_rows("SELECT * FROM pg_stat_activity ORDER BY " . ($this->min_version(9.2) ? "pid" : "procpid"));
     }
 
     public function show_status()
@@ -751,7 +751,7 @@ AND typelem = 0"
 
     public function kill_process($val)
     {
-        return $this->adminer->queries("SELECT pg_terminate_backend(" . $this->adminer->number($val) . ")");
+        return $this->db->queries("SELECT pg_terminate_backend(" . $this->ui->number($val) . ")");
     }
 
     public function connection_id()
@@ -769,12 +769,12 @@ AND typelem = 0"
         $types = [];
         $structured_types = [];
         foreach (array( //! arrays
-            $this->adminer->lang('Numbers') => array("smallint" => 5, "integer" => 10, "bigint" => 19, "boolean" => 1, "numeric" => 0, "real" => 7, "double precision" => 16, "money" => 20),
-            $this->adminer->lang('Date and time') => array("date" => 13, "time" => 17, "timestamp" => 20, "timestamptz" => 21, "interval" => 0),
-            $this->adminer->lang('Strings') => array("character" => 0, "character varying" => 0, "text" => 0, "tsquery" => 0, "tsvector" => 0, "uuid" => 0, "xml" => 0),
-            $this->adminer->lang('Binary') => array("bit" => 0, "bit varying" => 0, "bytea" => 0),
-            $this->adminer->lang('Network') => array("cidr" => 43, "inet" => 43, "macaddr" => 17, "txid_snapshot" => 0),
-            $this->adminer->lang('Geometry') => array("box" => 0, "circle" => 0, "line" => 0, "lseg" => 0, "path" => 0, "point" => 0, "polygon" => 0),
+            $this->ui->lang('Numbers') => array("smallint" => 5, "integer" => 10, "bigint" => 19, "boolean" => 1, "numeric" => 0, "real" => 7, "double precision" => 16, "money" => 20),
+            $this->ui->lang('Date and time') => array("date" => 13, "time" => 17, "timestamp" => 20, "timestamptz" => 21, "interval" => 0),
+            $this->ui->lang('Strings') => array("character" => 0, "character varying" => 0, "text" => 0, "tsquery" => 0, "tsvector" => 0, "uuid" => 0, "xml" => 0),
+            $this->ui->lang('Binary') => array("bit" => 0, "bit varying" => 0, "bytea" => 0),
+            $this->ui->lang('Network') => array("cidr" => 43, "inet" => 43, "macaddr" => 17, "txid_snapshot" => 0),
+            $this->ui->lang('Geometry') => array("box" => 0, "circle" => 0, "line" => 0, "lseg" => 0, "path" => 0, "point" => 0, "polygon" => 0),
         ) as $key => $val) { //! can be retrieved from pg_type
             $types += $val;
             $structured_types[$key] = array_keys($val);
@@ -793,7 +793,7 @@ AND typelem = 0"
                     "char" => "md5",
                     "date|time" => "now",
                 ), array(
-                    $this->adminer->number_type() => "+/-",
+                    $this->db->number_type() => "+/-",
                     "date|time" => "+ interval/- interval", //! escape
                     "char|text" => "||",
                 )

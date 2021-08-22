@@ -8,7 +8,7 @@ class Driver extends AbstractDriver
 {
     public function insert($table, $set)
     {
-        return ($set ? parent::insert($table, $set) : $this->adminer->queries("INSERT INTO " .
+        return ($set ? parent::insert($table, $set) : $this->db->queries("INSERT INTO " .
             $this->server->table($table) . " ()\nVALUES ()"));
     }
 
@@ -26,7 +26,7 @@ class Driver extends AbstractDriver
         foreach ($rows as $set) {
             $value = "(" . implode(", ", $set) . ")";
             if ($values && (strlen($prefix) + $length + strlen($value) + strlen($suffix) > 1e6)) { // 1e6 - default max_allowed_packet
-                if (!$this->adminer->queries($prefix . implode(",\n", $values) . $suffix)) {
+                if (!$this->db->queries($prefix . implode(",\n", $values) . $suffix)) {
                     return false;
                 }
                 $values = [];
@@ -35,7 +35,7 @@ class Driver extends AbstractDriver
             $values[] = $value;
             $length += strlen($value) + 2; // 2 - strlen(",\n")
         }
-        return $this->adminer->queries($prefix . implode(",\n", $values) . $suffix);
+        return $this->db->queries($prefix . implode(",\n", $values) . $suffix);
     }
 
     public function slowQuery($query, $timeout)
@@ -69,10 +69,10 @@ class Driver extends AbstractDriver
     public function tableHelp($name)
     {
         $maria = preg_match('~MariaDB~', $this->connection->server_info);
-        if ($this->server->information_schema($this->server->getCurrentDatabase())) {
+        if ($this->server->information_schema($this->server->current_db())) {
             return strtolower(($maria ? "information-schema-$name-table/" : str_replace("_", "-", $name) . "-table.html"));
         }
-        if ($this->server->getCurrentDatabase() == "mysql") {
+        if ($this->server->current_db() == "mysql") {
             return ($maria ? "mysql$name-table/" : "system-database.html"); //! more precise link
         }
     }

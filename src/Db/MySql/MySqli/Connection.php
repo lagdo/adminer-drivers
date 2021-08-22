@@ -2,7 +2,8 @@
 
 namespace Lagdo\Adminer\Drivers\Db\MySql\MySqli;
 
-use Lagdo\Adminer\Drivers\AdminerInterface;
+use Lagdo\Adminer\Drivers\AdminerDbInterface;
+use Lagdo\Adminer\Drivers\AdminerUiInterface;
 use Lagdo\Adminer\Drivers\Db\ServerInterface;
 use Lagdo\Adminer\Drivers\Db\ConnectionInterface;
 use Lagdo\Adminer\Drivers\Db\ConnectionTrait;
@@ -19,18 +20,20 @@ class Connection extends MySQLi implements ConnectionInterface
     /**
      * The constructor
      *
-     * @param AdminerInterface
-     * @param ServerInterface
-     * @param string
+     * @param AdminerDbInterface $db
+     * @param AdminerUiInterface $ui
+     * @param ServerInterface $server
+     * @param string $extension
      */
-    public function __construct(AdminerInterface $adminer, ServerInterface $server, string $extension)
+    public function __construct(AdminerDbInterface $db, AdminerUiInterface $ui, ServerInterface $server, string $extension)
     {
         parent::init();
         $this->extension = 'MySQLi';
 
-        $this->adminer = $adminer;
+        $this->db = $db;
+        $this->ui = $ui;
         $this->server = $server;
-        // $this->extension = $extension;
+        $this->extension = $extension;
     }
 
     /**
@@ -46,7 +49,7 @@ class Connection extends MySQLi implements ConnectionInterface
 
         mysqli_report(MYSQLI_REPORT_OFF); // stays between requests, not required since PHP 5.3.4
         list($host, $port) = explode(":", $server, 2); // part after : is used for port or socket
-        $ssl = $this->adminer->connectSsl();
+        $ssl = $this->db->connectSsl();
         if ($ssl) {
             $this->ssl_set($ssl['key'], $ssl['cert'], $ssl['ca'], '', '');
         }

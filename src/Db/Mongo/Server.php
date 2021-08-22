@@ -56,8 +56,11 @@ class Server extends AbstractServer
         }
 
         if (class_exists('MongoDB\Driver\Manager')) {
-            $this->connection = new Connection($this->adminer, $this, 'MongoDB');
-            return;
+            $this->connection = new Connection($this->db, $this->ui, $this, 'MongoDB');
+        }
+
+        if($this->connection !== null) {
+            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
         }
     }
 
@@ -70,12 +73,12 @@ class Server extends AbstractServer
             return null;
         }
 
-        list($server, $options) = $this->adminer->getOptions();
+        list($server, $options) = $this->db->getOptions();
         /*if ($username . $password != "") {
             $options["username"] = $username;
             $options["password"] = $password;
         }*/
-        $db = $this->getCurrentDatabase();
+        $db = $this->current_db();
         if ($db != "") {
             $options["db"] = $db;
         }
@@ -86,8 +89,6 @@ class Server extends AbstractServer
         if ($this->connection->error) {
             return $this->connection->error;
         }
-
-        $this->driver = new Driver($this->adminer, $this, $this->connection);
         return $this->connection;
     }
 
@@ -110,7 +111,7 @@ class Server extends AbstractServer
 
     public function logged_user()
     {
-        $credentials = $this->adminer->getOptions();
+        $credentials = $this->db->getOptions();
         return $credentials[1];
     }
 
@@ -228,7 +229,7 @@ class Server extends AbstractServer
 
     public function fields($table)
     {
-        $fields = $this->adminer->fields_from_edit($this->primary);
+        $fields = $this->ui->fields_from_edit($this->primary);
         if (!$fields) {
             $result = $this->driver->select($table, array("*"), null, null, [], 10);
             if ($result) {

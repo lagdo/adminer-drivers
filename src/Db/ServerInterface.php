@@ -41,14 +41,14 @@ interface ServerInterface
      *
      * @return string
      */
-    public function getCurrentDatabase();
+    public function current_db();
 
     /**
      * Select the database and schema
      *
      * @return string
      */
-    public function getCurrentSchema();
+    public function current_schema();
 
     /**
      * Escape database identifier

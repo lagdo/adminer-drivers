@@ -18,10 +18,10 @@ class Driver extends AbstractDriver
                 }
             }
             if (!(
-                ($where && $this->adminer->queries("UPDATE " . $this->server->table($table) .
+                ($where && $this->db->queries("UPDATE " . $this->server->table($table) .
                 " SET " . implode(", ", $update) . " WHERE " . implode(" AND ", $where)) &&
                 $this->connection->affected_rows)
-                || $this->adminer->queries("INSERT INTO " . $this->server->table($table) .
+                || $this->db->queries("INSERT INTO " . $this->server->table($table) .
                 " (" . implode(", ", array_keys($set)) . ") VALUES (" . implode(", ", $set) . ")")
             )) {
                 return false;
@@ -40,7 +40,7 @@ class Driver extends AbstractDriver
     public function convertSearch($idf, $val, $field)
     {
         return (preg_match('~char|text' . (!preg_match('~LIKE~', $val["op"]) ?
-            '|date|time(stamp)?|boolean|uuid|' . $this->adminer->number_type() : '') . '~', $field["type"]) ?
+            '|date|time(stamp)?|boolean|uuid|' . $this->db->number_type() : '') . '~', $field["type"]) ?
             $idf : "CAST($idf AS text)"
         );
     }
@@ -51,7 +51,7 @@ class Driver extends AbstractDriver
             "information_schema" => "infoschema",
             "pg_catalog" => "catalog",
         );
-        $link = $links[$this->server->getCurrentSchema()];
+        $link = $links[$this->server->current_schema()];
         if ($link) {
             return "$link-" . str_replace("_", "-", $name) . ".html";
         }

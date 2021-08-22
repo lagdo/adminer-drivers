@@ -12,11 +12,11 @@ interface InputInterface
     public function getTable();
 
     /**
-     * Get the query table name (to be created)
+     * Return true if a table was defined
      *
      * @return string
      */
-    public function getCreate();
+    public function hasTable();
 
     /**
      * Get the select query fields

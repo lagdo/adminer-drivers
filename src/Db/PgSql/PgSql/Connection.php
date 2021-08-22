@@ -32,7 +32,7 @@ class Connection extends AbstractConnection
 
     public function _error($errno, $error)
     {
-        if ($this->adminer->ini_bool("html_errors")) {
+        if ($this->ui->ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));
         }
         $error = preg_replace('~^[^:]*: ~', '', $error);
@@ -47,7 +47,7 @@ class Connection extends AbstractConnection
         $username = $options['username'];
         $password = $options['password'];
 
-        $db = $this->server->getCurrentDatabase();
+        $db = $this->server->current_db();
         set_error_handler(array($this, '_error'));
         $this->_string = "host='" . str_replace(":", "' port='", addcslashes($server, "'\\")) .
             "' user='" . addcslashes($username, "'\\") . "' password='" . addcslashes($password, "'\\") . "'";
@@ -97,7 +97,7 @@ class Connection extends AbstractConnection
      */
     public function select_db($database)
     {
-        if ($database == $this->server->getCurrentDatabase()) {
+        if ($database == $this->server->current_db()) {
             return $this->_database;
         }
         $return = @pg_connect("$this->_string dbname='" . addcslashes($database, "'\\") . "'", PGSQL_CONNECT_FORCE_NEW);
@@ -181,6 +181,6 @@ class Connection extends AbstractConnection
     public function warnings()
     {
         // second parameter is available since PHP 7.1.0
-        return $this->adminer->h(pg_last_notice($this->client));
+        return $this->ui->h(pg_last_notice($this->client));
     }
 }
