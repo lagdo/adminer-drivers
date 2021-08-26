@@ -51,6 +51,13 @@ interface ServerInterface
     public function current_schema();
 
     /**
+     * Get the name of the primary id field
+     *
+     * @return string
+     */
+    public function primary();
+
+    /**
      * Escape database identifier
      *
      * @param string $idf
@@ -405,7 +412,7 @@ interface ServerInterface
      * Get user defined types
      * @return array
      */
-    public function types() ;
+    public function user_types() ;
 
     /**
      * Get existing schemas

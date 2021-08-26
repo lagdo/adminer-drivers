@@ -8,14 +8,12 @@ use DateTime;
 
 class Server extends AbstractServer
 {
-    protected $primary = "_id";
-
     /**
      * Undocumented variable
      *
      * @var array
      */
-    protected $operators = array(
+    public $operators = [
         "=",
         "!=",
         ">",
@@ -35,7 +33,7 @@ class Server extends AbstractServer
         "(date)<",
         "(date)>=",
         "(date)<=",
-    );
+    ];
 
     /**
      * @inheritDoc
@@ -113,6 +111,14 @@ class Server extends AbstractServer
     {
         $credentials = $this->db->getOptions();
         return $credentials[1];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function primary()
+    {
+        return '_id';
     }
 
     public function alter_indexes($table, $alter)
@@ -229,18 +235,19 @@ class Server extends AbstractServer
 
     public function fields($table)
     {
-        $fields = $this->ui->fields_from_edit($this->primary);
+        $fields = $this->ui->fields_from_edit();
         if (!$fields) {
             $result = $this->driver->select($table, array("*"), null, null, [], 10);
             if ($result) {
+                $primary = $this->primary();
                 while ($row = $result->fetch_assoc()) {
                     foreach ($row as $key => $val) {
                         $row[$key] = null;
                         $fields[$key] = array(
                             "field" => $key,
                             "type" => "string",
-                            "null" => ($key != $this->primary),
-                            "auto_increment" => ($key == $this->primary),
+                            "null" => ($key != $primary),
+                            "auto_increment" => ($key == $primary),
                             "privileges" => array(
                                 "insert" => 1,
                                 "select" => 1,

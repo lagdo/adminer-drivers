@@ -130,6 +130,14 @@ abstract class Server implements ServerInterface
     /**
      * @inheritDoc
      */
+    public function primary()
+    {
+        return '';
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function error()
     {
         return $this->ui->h($this->connection->error);
@@ -195,7 +203,7 @@ abstract class Server implements ServerInterface
     /**
      * @inheritDoc
      */
-    public function types()
+    public function user_types()
     {
         return [];
     }
@@ -524,7 +532,7 @@ abstract class Server implements ServerInterface
         if (!$connection2) {
             $connection2 = $this->connection;
         }
-        $server_info = $connection2->getServerInfo();
+        $server_info = $connection2->server_info;
         if ($maria_db && preg_match('~([\d.]+)-MariaDB~', $server_info, $match)) {
             $server_info = $match[1];
             $version = $maria_db;

@@ -547,7 +547,7 @@ ORDER BY SPECIFIC_NAME');
         return false;
     }
 
-    public function types()
+    public function user_types()
     {
         return $this->db->get_vals(
             "SELECT typname
@@ -574,7 +574,7 @@ AND typelem = 0"
             $connection2 = $this->connection;
         }
         $return = $connection2->query("SET search_path TO " . $this->idf_escape($schema));
-        foreach ($this->types() as $type) { //! get types from current_schemas('t')
+        foreach ($this->user_types() as $type) { //! get types from current_schemas('t')
             if (!isset($this->types[$type])) {
                 $this->types[$type] = 0;
                 $this->structured_types[$this->ui->lang('User types')][] = $type;

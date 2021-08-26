@@ -44,7 +44,7 @@ class Connection extends AbstractConnection
         );
     }
 
-    public function store_result()
+    public function store_result($result = null)
     {
         return $this->_result;
     }

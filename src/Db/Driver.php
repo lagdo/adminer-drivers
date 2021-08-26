@@ -72,9 +72,9 @@ abstract class Driver implements DriverInterface
 
     /**
      * Delete data from table
-     * @param string
-     * @param string " WHERE ..."
-     * @param int 0 or 1
+     * @param string $table
+     * @param string $queryWhere " WHERE ..."
+     * @param int $limit 0 or 1
      * @return bool
      */
     public function delete($table, $queryWhere, $limit = 0)
@@ -86,11 +86,11 @@ abstract class Driver implements DriverInterface
 
     /**
      * Update data in table
-     * @param string
-     * @param array escaped columns in keys, quoted data in values
-     * @param string " WHERE ..."
-     * @param int 0 or 1
-     * @param string
+     * @param string $table
+     * @param array $set escaped columns in keys, quoted data in values
+     * @param string $queryWhere " WHERE ..."
+     * @param int $limit 0 or 1
+     * @param string $separator
      * @return bool
      */
     public function update($table, $set, $queryWhere, $limit = 0, $separator = "\n")
@@ -106,8 +106,8 @@ abstract class Driver implements DriverInterface
 
     /**
      * Insert data into table
-     * @param string
-     * @param array escaped columns in keys, quoted data in values
+     * @param string $table
+     * @param array $set escaped columns in keys, quoted data in values
      * @return bool
      */
     public function insert($table, $set)
@@ -158,9 +158,9 @@ abstract class Driver implements DriverInterface
 
     /**
      * Convert column to be searchable
-     * @param string escaped column name
-     * @param array array("op" => , "val" => )
-     * @param array
+     * @param string $idf escaped column name
+     * @param array $val array("op" => , "val" => )
+     * @param array $field
      * @return string
      */
     public function convertSearch($idf, $val, $field)
@@ -189,7 +189,7 @@ abstract class Driver implements DriverInterface
 
     /**
      * Get help link for table
-     * @param string
+     * @param string $name
      * @return string relative URL or null
      */
     public function tableHelp($name)

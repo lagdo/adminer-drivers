@@ -54,7 +54,7 @@ class Connection extends PdoConnection
 
     public function query($query, $unbuffered = false)
     {
-        $this->client->setAttribute(1000, !$unbuffered); // 1000 - PDO::MYSQL_ATTR_USE_BUFFERED_QUERY
+        $this->client->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, !$unbuffered);
         return parent::query($query, $unbuffered);
     }
 }

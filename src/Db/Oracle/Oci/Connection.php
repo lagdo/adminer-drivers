@@ -82,7 +82,7 @@ class Connection extends AbstractConnection
         return $this->_result = $this->query($query);
     }
 
-    public function store_result()
+    public function store_result($result = null)
     {
         return $this->_result;
     }
@@ -99,5 +99,15 @@ class Connection extends AbstractConnection
             return false;
         }
         return oci_result($result->_result, $field);
+    }
+
+    /**
+     * Get the default field number
+     *
+     * @return integer
+     */
+    public function defaultField()
+    {
+        return 1;
     }
 }

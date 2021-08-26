@@ -149,7 +149,7 @@ class Connection extends AbstractConnection
     /**
      * @inheritDoc
      */
-    public function store_result()
+    public function store_result($result = null)
     {
         return $this->_result;
     }

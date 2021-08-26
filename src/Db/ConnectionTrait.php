@@ -37,16 +37,6 @@ trait ConnectionTrait
     protected $client;
 
     /**
-     * Get the extension name
-     *
-     * @return string
-     */
-    public function getExtension()
-    {
-        return $this->extension;
-    }
-
-    /**
      * Get the client
      *
      * @return mixed
@@ -54,26 +44,6 @@ trait ConnectionTrait
     public function getClient()
     {
         return $this->client;
-    }
-
-    /**
-     * Get the server description
-     *
-     * @return string
-     */
-    public function getServerInfo()
-    {
-        return $this->server_info;
-    }
-
-    /**
-     * Get the number of rows affected by the last query
-     *
-     * @return int
-     */
-    public function getAffectedRows()
-    {
-        return $this->affected_rows;
     }
 
     /**
@@ -97,6 +67,16 @@ trait ConnectionTrait
     public function value($val, $field)
     {
         return (is_resource($val) ? stream_get_contents($val) : $val);
+    }
+
+    /**
+     * Get the default field number
+     *
+     * @return integer
+     */
+    public function defaultField()
+    {
+        return 0;
     }
 
     /**

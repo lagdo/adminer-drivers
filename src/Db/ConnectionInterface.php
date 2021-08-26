@@ -5,32 +5,11 @@ namespace Lagdo\Adminer\Drivers\Db;
 interface ConnectionInterface
 {
     /**
-     * Get the extension name
-     *
-     * @return string
-     */
-    public function getExtension();
-
-    /**
      * Get the client
      *
      * @return mixed
      */
     public function getClient();
-
-    /**
-     * Get the server description
-     *
-     * @return string
-     */
-    public function getServerInfo();
-
-    /**
-     * Get the number of rows affected by the last query
-     *
-     * @return int
-     */
-    public function getAffectedRows();
 
     /**
      * Set the current database
@@ -49,7 +28,7 @@ interface ConnectionInterface
     public function set_charset($charset);
 
     /**
-     * Query the current database
+     * Execute a query on the current database
      *
      * @param string $query
      * @param boolean $unbuffered
@@ -59,7 +38,7 @@ interface ConnectionInterface
     public function query($query, $unbuffered = false);
 
     /**
-     * Query the current database and fetch the specified field
+     * Execute a query on the current database and fetch the specified field
      *
      * @param string $query
      * @param mixed $field
@@ -89,6 +68,13 @@ interface ConnectionInterface
      * @return string
      */
     public function quote($string);
+
+    /**
+     * Get the default field number
+     *
+     * @return integer
+     */
+    public function defaultField();
 
     /**
      * Convert value returned by database to actual value

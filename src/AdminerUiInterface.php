@@ -57,11 +57,10 @@ interface AdminerUiInterface
     public function nl_br($string);
 
     /**
-     * Compute fields() from $_POST edit data
-     * @param string $primary
+     * Compute fields() from input edit data
      * @return array
      */
-    public function fields_from_edit($primary);
+    public function fields_from_edit();
 
     /**
      * Create SQL string from field
