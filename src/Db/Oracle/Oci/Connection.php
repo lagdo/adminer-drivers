@@ -18,7 +18,7 @@ class Connection extends AbstractConnection
 
     public function _error($errno, $error)
     {
-        if ($this->ui->ini_bool("html_errors")) {
+        if ($this->util->ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));
         }
         $error = preg_replace('~^[^:]*: ~', '', $error);

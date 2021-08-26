@@ -3,7 +3,7 @@
 namespace Lagdo\Adminer\Drivers\Db\MySql\MySqli;
 
 use Lagdo\Adminer\Drivers\AdminerDbInterface;
-use Lagdo\Adminer\Drivers\AdminerUiInterface;
+use Lagdo\Adminer\Drivers\AdminerUtilInterface;
 use Lagdo\Adminer\Drivers\Db\ServerInterface;
 use Lagdo\Adminer\Drivers\Db\ConnectionInterface;
 use Lagdo\Adminer\Drivers\Db\ConnectionTrait;
@@ -21,17 +21,17 @@ class Connection extends MySQLi implements ConnectionInterface
      * The constructor
      *
      * @param AdminerDbInterface $db
-     * @param AdminerUiInterface $ui
+     * @param AdminerUtilInterface $util
      * @param ServerInterface $server
      * @param string $extension
      */
-    public function __construct(AdminerDbInterface $db, AdminerUiInterface $ui, ServerInterface $server, string $extension)
+    public function __construct(AdminerDbInterface $db, AdminerUtilInterface $util, ServerInterface $server, string $extension)
     {
         parent::init();
         $this->extension = 'MySQLi';
 
         $this->db = $db;
-        $this->ui = $ui;
+        $this->util = $util;
         $this->server = $server;
         $this->extension = $extension;
     }

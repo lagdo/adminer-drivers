@@ -32,7 +32,7 @@ class Connection extends AbstractConnection
 
     public function _error($errno, $error)
     {
-        if ($this->ui->ini_bool("html_errors")) {
+        if ($this->util->ini_bool("html_errors")) {
             $error = html_entity_decode(strip_tags($error));
         }
         $error = preg_replace('~^[^:]*: ~', '', $error);
@@ -181,6 +181,6 @@ class Connection extends AbstractConnection
     public function warnings()
     {
         // second parameter is available since PHP 7.1.0
-        return $this->ui->h(pg_last_notice($this->client));
+        return $this->util->h(pg_last_notice($this->client));
     }
 }

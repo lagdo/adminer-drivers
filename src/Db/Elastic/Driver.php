@@ -105,11 +105,11 @@ class Driver extends AbstractDriver
     {
         //! use $limit
         $ids = [];
-        $where = $this->ui->input()->getWhere();
+        $where = $this->util->input()->getWhere();
         if (is_array($where) && $where["_id"]) {
             $ids[] = $where["_id"];
         }
-        foreach ($this->ui->input()->getChecks() as $check) {
+        foreach ($this->util->input()->getChecks() as $check) {
             $parts = preg_split('~ *= *~', $check);
             if (count($parts) == 2) {
                 $ids[] = trim($parts[1]);

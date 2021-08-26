@@ -30,14 +30,14 @@ class Server extends AbstractServer
         }
 
         if (extension_loaded("sqlsrv")) {
-            $this->connection = new SqlSrv\Connection($this->db, $this->ui, $this, 'sqlsrv');
+            $this->connection = new SqlSrv\Connection($this->db, $this->util, $this, 'sqlsrv');
         }
         elseif (extension_loaded("pdo_dblib")) {
-            $this->connection = new Pdo\Connection($this->db, $this->ui, $this, 'PDO_DBLIB');
+            $this->connection = new Pdo\Connection($this->db, $this->util, $this, 'PDO_DBLIB');
         }
 
         if($this->connection !== null) {
-            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
+            $this->driver = new Driver($this->db, $this->util, $this, $this->connection);
         }
     }
 
@@ -198,7 +198,7 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
 
     public function error()
     {
-        return $this->ui->nl_br($this->ui->h(preg_replace('~^(\[[^]]*])+~m', '', $this->connection->error)));
+        return $this->util->nl_br($this->util->h(preg_replace('~^(\[[^]]*])+~m', '', $this->connection->error)));
     }
 
     public function create_database($db, $collation)
@@ -224,7 +224,7 @@ WHERE OBJECT_NAME(i.object_id) = " . $this->q($table), $connection2) as $row) {
 
     public function auto_increment()
     {
-        $autoIncrement = $this->ui->number($this->ui->input()->getAutoIncrementStep());
+        $autoIncrement = $this->util->number($this->util->input()->getAutoIncrementStep());
         return " IDENTITY" . ($autoIncrement > 0 ? "($autoIncrement,1)" : "") . " PRIMARY KEY";
     }
 
@@ -428,10 +428,10 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . $this->q($table)
         $types = [];
         $structured_types = [];
         foreach (array( //! use sys.types
-            $this->ui->lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "int" => 10, "bigint" => 20, "bit" => 1, "decimal" => 0, "real" => 12, "float" => 53, "smallmoney" => 10, "money" => 20),
-            $this->ui->lang('Date and time') => array("date" => 10, "smalldatetime" => 19, "datetime" => 19, "datetime2" => 19, "time" => 8, "datetimeoffset" => 10),
-            $this->ui->lang('Strings') => array("char" => 8000, "varchar" => 8000, "text" => 2147483647, "nchar" => 4000, "nvarchar" => 4000, "ntext" => 1073741823),
-            $this->ui->lang('Binary') => array("binary" => 8000, "varbinary" => 8000, "image" => 2147483647),
+            $this->util->lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "int" => 10, "bigint" => 20, "bit" => 1, "decimal" => 0, "real" => 12, "float" => 53, "smallmoney" => 10, "money" => 20),
+            $this->util->lang('Date and time') => array("date" => 10, "smalldatetime" => 19, "datetime" => 19, "datetime2" => 19, "time" => 8, "datetimeoffset" => 10),
+            $this->util->lang('Strings') => array("char" => 8000, "varchar" => 8000, "text" => 2147483647, "nchar" => 4000, "nvarchar" => 4000, "ntext" => 1073741823),
+            $this->util->lang('Binary') => array("binary" => 8000, "varbinary" => 8000, "image" => 2147483647),
         ) as $key => $val) {
             $types += $val;
             $structured_types[$key] = array_keys($val);

@@ -24,12 +24,12 @@ class Server extends AbstractServer
             return;
         }
 
-        if (function_exists('json_decode') && $this->ui->ini_bool('allow_url_fopen')) {
-            $this->connection = new Connection($this->db, $this->ui, $this, 'JSON');
+        if (function_exists('json_decode') && $this->util->ini_bool('allow_url_fopen')) {
+            $this->connection = new Connection($this->db, $this->util, $this, 'JSON');
         }
 
         if($this->connection !== null) {
-            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
+            $this->driver = new Driver($this->db, $this->util, $this, $this->connection);
         }
     }
 
@@ -47,7 +47,7 @@ class Server extends AbstractServer
         $options['password'] = '';
         if ($password != "" &&
             $this->connection->open($server, $options)) {
-            return $this->ui->lang('Database does not support password.');
+            return $this->util->lang('Database does not support password.');
         }
         $options['password'] = $password;
         if (!$this->connection->open($server, $options)) {
@@ -236,11 +236,11 @@ class Server extends AbstractServer
         $types = [];
         $structured_types = [];
         foreach (array(
-            $this->ui->lang('Numbers') => array("long" => 3, "integer" => 5, "short" => 8, "byte" => 10,
+            $this->util->lang('Numbers') => array("long" => 3, "integer" => 5, "short" => 8, "byte" => 10,
                 "double" => 20, "float" => 66, "half_float" => 12, "scaled_float" => 21),
-            $this->ui->lang('Date and time') => array("date" => 10),
-            $this->ui->lang('Strings') => array("string" => 65535, "text" => 65535),
-            $this->ui->lang('Binary') => array("binary" => 255),
+            $this->util->lang('Date and time') => array("date" => 10),
+            $this->util->lang('Strings') => array("string" => 65535, "text" => 65535),
+            $this->util->lang('Binary') => array("binary" => 255),
         ) as $key => $val) {
             $types += $val;
             $structured_types[$key] = array_keys($val);

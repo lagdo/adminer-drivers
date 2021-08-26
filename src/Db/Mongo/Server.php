@@ -54,11 +54,11 @@ class Server extends AbstractServer
         }
 
         if (class_exists('MongoDB\Driver\Manager')) {
-            $this->connection = new Connection($this->db, $this->ui, $this, 'MongoDB');
+            $this->connection = new Connection($this->db, $this->util, $this, 'MongoDB');
         }
 
         if($this->connection !== null) {
-            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
+            $this->driver = new Driver($this->db, $this->util, $this, $this->connection);
         }
     }
 
@@ -235,7 +235,7 @@ class Server extends AbstractServer
 
     public function fields($table)
     {
-        $fields = $this->ui->fields_from_edit();
+        $fields = $this->util->fields_from_edit();
         if (!$fields) {
             $result = $this->driver->select($table, array("*"), null, null, [], 10);
             if ($result) {

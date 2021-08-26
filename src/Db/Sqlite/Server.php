@@ -27,14 +27,14 @@ class Server extends AbstractServer
         }
 
         if (class_exists("SQLite3")) {
-            $this->connection = new Sqlite\Connection($this->db, $this->ui, $this, 'SQLite3');
+            $this->connection = new Sqlite\Connection($this->db, $this->util, $this, 'SQLite3');
         }
         elseif (extension_loaded("pdo_sqlite")) {
-            $this->connection = new Pdo\Connection($this->db, $this->ui, $this, 'PDO_SQLite');
+            $this->connection = new Pdo\Connection($this->db, $this->util, $this, 'PDO_SQLite');
         }
 
         if($this->connection !== null) {
-            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
+            $this->driver = new Driver($this->db, $this->util, $this, $this->connection);
         }
     }
 
@@ -45,7 +45,7 @@ class Server extends AbstractServer
     {
         list($filename, $options) = $this->db->getOptions();
         if ($options['password'] != "") {
-            return $this->ui->lang('Database does not support password.');
+            return $this->util->lang('Database does not support password.');
         }
         if (!$this->connection) {
             return null;
@@ -236,7 +236,7 @@ class Server extends AbstractServer
 
     public function collations()
     {
-        $create = $this->ui->input()->hasTable();
+        $create = $this->util->input()->hasTable();
         return (($create) ? $this->db->get_vals("PRAGMA collation_list", 1) : []);
     }
 
@@ -245,7 +245,7 @@ class Server extends AbstractServer
         // avoid creating PHP files on unsecured servers
         $extensions = "db|sdb|sqlite";
         if (!preg_match("~^[^\\0]*\\.($extensions)\$~", $name)) {
-            $this->connection->error = $this->ui->lang('Please use one of the extensions %s.', str_replace("|", ", ", $extensions));
+            $this->connection->error = $this->util->lang('Please use one of the extensions %s.', str_replace("|", ", ", $extensions));
             return false;
         }
         return true;
@@ -254,7 +254,7 @@ class Server extends AbstractServer
     public function create_database($db, $collation)
     {
         if (file_exists($db)) {
-            $this->connection->error = $this->ui->lang('File exists.');
+            $this->connection->error = $this->util->lang('File exists.');
             return false;
         }
         if (!check_sqlite_name($db)) {
@@ -277,7 +277,7 @@ class Server extends AbstractServer
         $this->connection->__construct(":memory:"); // to unlock file, doesn't work in PDO on Windows
         foreach ($databases as $db) {
             if (!@unlink($db)) {
-                $this->connection->error = $this->ui->lang('File exists.');
+                $this->connection->error = $this->util->lang('File exists.');
                 return false;
             }
         }
@@ -290,7 +290,7 @@ class Server extends AbstractServer
             return false;
         }
         $this->connection->__construct(":memory:");
-        $this->connection->error = $this->ui->lang('File exists.');
+        $this->connection->error = $this->util->lang('File exists.');
         return @rename($this->current_db(), $name);
     }
 
@@ -349,7 +349,7 @@ class Server extends AbstractServer
                     if ($indexes) {
                         $field["auto_increment"] = 0;
                     }
-                    $fields[] = $this->ui->process_field($field, $field);
+                    $fields[] = $this->util->process_field($field, $field);
                     $originals[$key] = $this->idf_escape($key);
                 }
             }

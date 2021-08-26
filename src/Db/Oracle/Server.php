@@ -25,14 +25,14 @@ class Server extends AbstractServer
         }
 
         if (extension_loaded("oci8")) {
-            $this->connection = new Oci\Connection($this->db, $this->ui, $this, 'oci8');
+            $this->connection = new Oci\Connection($this->db, $this->util, $this, 'oci8');
         }
         elseif (extension_loaded("pdo_oci")) {
-            $this->connection = new Pdo\Connection($this->db, $this->ui, $this, 'PDO_OCI');
+            $this->connection = new Pdo\Connection($this->db, $this->util, $this, 'PDO_OCI');
         }
 
         if($this->connection !== null) {
-            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
+            $this->driver = new Driver($this->db, $this->util, $this, $this->connection);
         }
     }
 
@@ -252,7 +252,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
             }
             $orig_field = $orig_fields[$field[0]];
             if ($val && $orig_field) {
-                $old = $this->ui->process_field($orig_field, $orig_field);
+                $old = $this->util->process_field($orig_field, $orig_field);
                 if ($val[2] == $old[2]) {
                     $val[2] = "";
                 }
@@ -400,10 +400,10 @@ ORDER BY PROCESS
         $types = [];
         $structured_types = [];
         foreach (array(
-            $this->ui->lang('Numbers') => array("number" => 38, "binary_float" => 12, "binary_double" => 21),
-            $this->ui->lang('Date and time') => array("date" => 10, "timestamp" => 29, "interval year" => 12, "interval day" => 28), //! year(), day() to second()
-            $this->ui->lang('Strings') => array("char" => 2000, "varchar2" => 4000, "nchar" => 2000, "nvarchar2" => 4000, "clob" => 4294967295, "nclob" => 4294967295),
-            $this->ui->lang('Binary') => array("raw" => 2000, "long raw" => 2147483648, "blob" => 4294967295, "bfile" => 4294967296),
+            $this->util->lang('Numbers') => array("number" => 38, "binary_float" => 12, "binary_double" => 21),
+            $this->util->lang('Date and time') => array("date" => 10, "timestamp" => 29, "interval year" => 12, "interval day" => 28), //! year(), day() to second()
+            $this->util->lang('Strings') => array("char" => 2000, "varchar2" => 4000, "nchar" => 2000, "nvarchar2" => 4000, "clob" => 4294967295, "nclob" => 4294967295),
+            $this->util->lang('Binary') => array("raw" => 2000, "long raw" => 2147483648, "blob" => 4294967295, "bfile" => 4294967296),
         ) as $key => $val) {
             $types += $val;
             $structured_types[$key] = array_keys($val);

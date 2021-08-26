@@ -2,7 +2,7 @@
 
 namespace Lagdo\Adminer\Drivers;
 
-interface AdminerUiInterface
+interface AdminerUtilInterface
 {
     /**
      * Get the request inputs

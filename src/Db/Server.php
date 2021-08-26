@@ -3,7 +3,7 @@
 namespace Lagdo\Adminer\Drivers\Db;
 
 use Lagdo\Adminer\Drivers\AdminerDbInterface;
-use Lagdo\Adminer\Drivers\AdminerUiInterface;
+use Lagdo\Adminer\Drivers\AdminerUtilInterface;
 
 abstract class Server implements ServerInterface
 {
@@ -13,9 +13,9 @@ abstract class Server implements ServerInterface
     protected $db;
 
     /**
-     * @var AdminerUiInterface
+     * @var AdminerUtilInterface
      */
-    protected $ui;
+    protected $util;
 
     /**
      * @var DriverInterface
@@ -59,12 +59,12 @@ abstract class Server implements ServerInterface
      * The constructor
      *
      * @param AdminerDbInterface $db
-     * @param AdminerUiInterface $ui
+     * @param AdminerUtilInterface $util
      */
-    public function __construct(AdminerDbInterface $db, AdminerUiInterface $ui)
+    public function __construct(AdminerDbInterface $db, AdminerUtilInterface $util)
     {
         $this->db = $db;
-        $this->ui = $ui;
+        $this->util = $util;
 
         // From bootstrap.inc.php
         $config = $this->driver_config();
@@ -140,7 +140,7 @@ abstract class Server implements ServerInterface
      */
     public function error()
     {
-        return $this->ui->h($this->connection->error);
+        return $this->util->h($this->connection->error);
     }
 
     /**

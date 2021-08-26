@@ -3,7 +3,7 @@
 namespace Lagdo\Adminer\Drivers\Db;
 
 use Lagdo\Adminer\Drivers\AdminerDbInterface;
-use Lagdo\Adminer\Drivers\AdminerUiInterface;
+use Lagdo\Adminer\Drivers\AdminerUtilInterface;
 
 abstract class Connection implements ConnectionInterface
 {
@@ -48,14 +48,14 @@ abstract class Connection implements ConnectionInterface
      * The constructor
      *
      * @param AdminerDbInterface $db
-     * @param AdminerUiInterface $ui
+     * @param AdminerUtilInterface $util
      * @param ServerInterface $server
      * @param string $extension
      */
-    public function __construct(AdminerDbInterface $db, AdminerUiInterface $ui, ServerInterface $server, string $extension)
+    public function __construct(AdminerDbInterface $db, AdminerUtilInterface $util, ServerInterface $server, string $extension)
     {
         $this->db = $db;
-        $this->ui = $ui;
+        $this->util = $util;
         $this->server = $server;
         $this->extension = $extension;
     }

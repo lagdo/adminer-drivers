@@ -3,7 +3,7 @@
 namespace Lagdo\Adminer\Drivers\Db;
 
 use Lagdo\Adminer\Drivers\AdminerDbInterface;
-use Lagdo\Adminer\Drivers\AdminerUiInterface;
+use Lagdo\Adminer\Drivers\AdminerUtilInterface;
 
 abstract class Driver implements DriverInterface
 {
@@ -13,9 +13,9 @@ abstract class Driver implements DriverInterface
     protected $db;
 
     /**
-     * @var AdminerUiInterface
+     * @var AdminerUtilInterface
      */
-    protected $ui;
+    protected $util;
 
     /**
      * @var ServerInterface
@@ -31,15 +31,15 @@ abstract class Driver implements DriverInterface
      * The constructor
      *
      * @param AdminerDbInterface $db
-     * @param AdminerUiInterface $ui
+     * @param AdminerUtilInterface $util
      * @param ServerInterface $server
      * @param ConnectionInterface $connection
      */
-    public function __construct(AdminerDbInterface $db, AdminerUiInterface $ui,
+    public function __construct(AdminerDbInterface $db, AdminerUtilInterface $util,
         ServerInterface $server, ConnectionInterface $connection)
     {
         $this->db = $db;
-        $this->ui = $ui;
+        $this->util = $util;
 
         $this->server = $server;
         $this->connection = $connection;

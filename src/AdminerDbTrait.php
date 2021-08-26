@@ -34,34 +34,34 @@ trait AdminerDbTrait
     /**
      * Get an instance of a database server class
      *
-     * @param AdminerUiInterface $ui
+     * @param AdminerUtilInterface $util
      * @param string $driver
      *
      * @return void
      */
-    public function connect(AdminerUiInterface $ui, string $driver)
+    public function connect(AdminerUtilInterface $util, string $driver)
     {
         switch ($driver) {
         case "mysql":
-            $this->server = new MySqlServer($this, $ui);
+            $this->server = new MySqlServer($this, $util);
             break;
         case "pgsql":
-            $this->server = new PgSqlServer($this, $ui);
+            $this->server = new PgSqlServer($this, $util);
             break;
         case "oracle":
-            $this->server = new OracleServer($this, $ui);
+            $this->server = new OracleServer($this, $util);
             break;
         case "mssql":
-            $this->server = new MsSqlServer($this, $ui);
+            $this->server = new MsSqlServer($this, $util);
             break;
         case "sqlite":
-            $this->server = new SqliteServer($this, $ui);
+            $this->server = new SqliteServer($this, $util);
             break;
         case "mongo":
-            $this->server = new MongoServer($this, $ui);
+            $this->server = new MongoServer($this, $util);
             break;
         case "elastic":
-            $this->server = new ElasticServer($this, $ui);
+            $this->server = new ElasticServer($this, $util);
             break;
         }
 

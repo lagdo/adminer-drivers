@@ -25,14 +25,14 @@ class Server extends AbstractServer
         }
 
         if (extension_loaded("mysqli")) {
-            $this->connection = new MySqli\Connection($this->db, $this->ui, $this, 'MySQLi');
+            $this->connection = new MySqli\Connection($this->db, $this->util, $this, 'MySQLi');
         }
         elseif (extension_loaded("pdo_mysql")) {
-            $this->connection = new Pdo\Connection($this->db, $this->ui, $this, 'PDO_MySQL');
+            $this->connection = new Pdo\Connection($this->db, $this->util, $this, 'PDO_MySQL');
         }
 
         if($this->connection !== null) {
-            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
+            $this->driver = new Driver($this->db, $this->util, $this, $this->connection);
         }
     }
 
@@ -49,7 +49,7 @@ class Server extends AbstractServer
         if (!$this->connection->open($server, $options)) {
             $return = $this->connection->error;
             // windows-1250 - most common Windows encoding
-            if (function_exists('iconv') && !$this->ui->is_utf8($return) &&
+            if (function_exists('iconv') && !$this->util->is_utf8($return) &&
                 strlen($s = iconv("windows-1250", "utf-8", $return)) > strlen($return)) {
                 $return = $s;
             }
@@ -60,11 +60,11 @@ class Server extends AbstractServer
         $this->connection->set_charset($this->charset());
         $this->connection->query("SET sql_quote_show_create = 1, autocommit = 1");
         if ($this->min_version('5.7.8', 10.2, $this->connection)) {
-            $this->structured_types[$this->ui->lang('Strings')][] = "json";
+            $this->structured_types[$this->util->lang('Strings')][] = "json";
             $this->types["json"] = 4294967295;
         }
 
-        $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
+        $this->driver = new Driver($this->db, $this->util, $this, $this->connection);
         return $this->connection;
     }
 
@@ -388,7 +388,7 @@ class Server extends AbstractServer
      */
     public function error()
     {
-        return $this->ui->h(preg_replace('~^You have an error.*syntax to use~U', "Syntax error", $this->connection->error));
+        return $this->util->h(preg_replace('~^You have an error.*syntax to use~U', "Syntax error", $this->connection->error));
     }
 
     /**
@@ -447,7 +447,7 @@ class Server extends AbstractServer
     {
         $auto_increment_index = " PRIMARY KEY";
         // don't overwrite primary key by auto_increment
-        $query = $this->ui->input();
+        $query = $this->util->input();
         $table = $query->getTable();
         $fields = $query->getFields();
         $autoIncrementField = $query->getAutoIncrementField();
@@ -599,7 +599,7 @@ class Server extends AbstractServer
     public function copy_tables($tables, $views, $target)
     {
         $this->db->queries("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
-        $overwrite = $this->ui->input()->getOverwrite();
+        $overwrite = $this->util->input()->getOverwrite();
         foreach ($tables as $table) {
             $name = ($target == $this->current_db() ? $this->table("copy_$table") : $this->idf_escape($target) . "." . $this->table($table));
             if (($overwrite && !$this->db->queries("\nDROP TABLE IF EXISTS $name"))
@@ -893,7 +893,7 @@ class Server extends AbstractServer
      */
     public function kill_process($val)
     {
-        return $this->db->queries("KILL " . $this->ui->number($val));
+        return $this->db->queries("KILL " . $this->util->number($val));
     }
 
     /**
@@ -923,12 +923,12 @@ class Server extends AbstractServer
         $types = []; ///< @var array ($type => $maximum_unsigned_length, ...)
         $structured_types = []; ///< @var array ($description => array($type, ...), ...)
         foreach (array(
-            $this->ui->lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "mediumint" => 8, "int" => 10, "bigint" => 20, "decimal" => 66, "float" => 12, "double" => 21),
-            $this->ui->lang('Date and time') => array("date" => 10, "datetime" => 19, "timestamp" => 19, "time" => 10, "year" => 4),
-            $this->ui->lang('Strings') => array("char" => 255, "varchar" => 65535, "tinytext" => 255, "text" => 65535, "mediumtext" => 16777215, "longtext" => 4294967295),
-            $this->ui->lang('Lists') => array("enum" => 65535, "set" => 64),
-            $this->ui->lang('Binary') => array("bit" => 20, "binary" => 255, "varbinary" => 65535, "tinyblob" => 255, "blob" => 65535, "mediumblob" => 16777215, "longblob" => 4294967295),
-            $this->ui->lang('Geometry') => array("geometry" => 0, "point" => 0, "linestring" => 0, "polygon" => 0, "multipoint" => 0, "multilinestring" => 0, "multipolygon" => 0, "geometrycollection" => 0),
+            $this->util->lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "mediumint" => 8, "int" => 10, "bigint" => 20, "decimal" => 66, "float" => 12, "double" => 21),
+            $this->util->lang('Date and time') => array("date" => 10, "datetime" => 19, "timestamp" => 19, "time" => 10, "year" => 4),
+            $this->util->lang('Strings') => array("char" => 255, "varchar" => 65535, "tinytext" => 255, "text" => 65535, "mediumtext" => 16777215, "longtext" => 4294967295),
+            $this->util->lang('Lists') => array("enum" => 65535, "set" => 64),
+            $this->util->lang('Binary') => array("bit" => 20, "binary" => 255, "varbinary" => 65535, "tinyblob" => 255, "blob" => 65535, "mediumblob" => 16777215, "longblob" => 4294967295),
+            $this->util->lang('Geometry') => array("geometry" => 0, "point" => 0, "linestring" => 0, "polygon" => 0, "multipoint" => 0, "multilinestring" => 0, "multipolygon" => 0, "geometrycollection" => 0),
         ) as $key => $val) {
             $types += $val;
             $structured_types[$key] = array_keys($val);

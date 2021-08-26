@@ -25,14 +25,14 @@ class Server extends AbstractServer
         }
 
         if (extension_loaded("pgsql")) {
-            $this->connection = new PgSql\Connection($this->db, $this->ui, $this, 'PgSQL');
+            $this->connection = new PgSql\Connection($this->db, $this->util, $this, 'PgSQL');
         }
         elseif (extension_loaded("pdo_pgsql")) {
-            $this->connection = new Pdo\Connection($this->db, $this->ui, $this, 'PDO_PgSQL');
+            $this->connection = new Pdo\Connection($this->db, $this->util, $this, 'PDO_PgSQL');
         }
 
         if($this->connection !== null) {
-            $this->driver = new Driver($this->db, $this->ui, $this, $this->connection);
+            $this->driver = new Driver($this->db, $this->util, $this, $this->connection);
         }
     }
 
@@ -53,10 +53,10 @@ class Server extends AbstractServer
         if ($this->min_version(9, 0)) {
             $this->connection->query("SET application_name = 'Adminer'");
             if ($this->min_version(9.2, 0)) {
-                $this->structured_types[$this->ui->lang('Strings')][] = "json";
+                $this->structured_types[$this->util->lang('Strings')][] = "json";
                 $this->types["json"] = 4294967295;
                 if ($this->min_version(9.4, 0)) {
-                    $this->structured_types[$this->ui->lang('Strings')][] = "jsonb";
+                    $this->structured_types[$this->util->lang('Strings')][] = "jsonb";
                     $this->types["jsonb"] = 4294967295;
                 }
             }
@@ -302,7 +302,7 @@ ORDER BY connamespace, conname") as $row) {
             $return = $match1 . preg_replace('~((?:[^&]|&[^;]*;){' .
                 strlen($match3) . '})(.*)~', '\1<b>\2</b>', $match2) . $match4;
         }
-        return $this->ui->nl_br($return);
+        return $this->util->nl_br($return);
     }
 
     public function create_database($db, $collation)
@@ -459,7 +459,7 @@ ORDER BY connamespace, conname") as $row) {
             return array("Statement" => "EXECUTE PROCEDURE ()");
         }
         if ($table === null) {
-            $table = $this->ui->input()->getTable();
+            $table = $this->util->input()->getTable();
         }
         $rows = $this->db->get_rows('SELECT t.trigger_name AS "Trigger", t.action_timing AS "Timing", ' .
             '(SELECT STRING_AGG(event_manipulation, \' OR \') FROM information_schema.triggers ' .
@@ -577,7 +577,7 @@ AND typelem = 0"
         foreach ($this->user_types() as $type) { //! get types from current_schemas('t')
             if (!isset($this->types[$type])) {
                 $this->types[$type] = 0;
-                $this->structured_types[$this->ui->lang('User types')][] = $type;
+                $this->structured_types[$this->util->lang('User types')][] = $type;
             }
         }
         return $return;
@@ -751,7 +751,7 @@ AND typelem = 0"
 
     public function kill_process($val)
     {
-        return $this->db->queries("SELECT pg_terminate_backend(" . $this->ui->number($val) . ")");
+        return $this->db->queries("SELECT pg_terminate_backend(" . $this->util->number($val) . ")");
     }
 
     public function connection_id()
@@ -769,12 +769,12 @@ AND typelem = 0"
         $types = [];
         $structured_types = [];
         foreach (array( //! arrays
-            $this->ui->lang('Numbers') => array("smallint" => 5, "integer" => 10, "bigint" => 19, "boolean" => 1, "numeric" => 0, "real" => 7, "double precision" => 16, "money" => 20),
-            $this->ui->lang('Date and time') => array("date" => 13, "time" => 17, "timestamp" => 20, "timestamptz" => 21, "interval" => 0),
-            $this->ui->lang('Strings') => array("character" => 0, "character varying" => 0, "text" => 0, "tsquery" => 0, "tsvector" => 0, "uuid" => 0, "xml" => 0),
-            $this->ui->lang('Binary') => array("bit" => 0, "bit varying" => 0, "bytea" => 0),
-            $this->ui->lang('Network') => array("cidr" => 43, "inet" => 43, "macaddr" => 17, "txid_snapshot" => 0),
-            $this->ui->lang('Geometry') => array("box" => 0, "circle" => 0, "line" => 0, "lseg" => 0, "path" => 0, "point" => 0, "polygon" => 0),
+            $this->util->lang('Numbers') => array("smallint" => 5, "integer" => 10, "bigint" => 19, "boolean" => 1, "numeric" => 0, "real" => 7, "double precision" => 16, "money" => 20),
+            $this->util->lang('Date and time') => array("date" => 13, "time" => 17, "timestamp" => 20, "timestamptz" => 21, "interval" => 0),
+            $this->util->lang('Strings') => array("character" => 0, "character varying" => 0, "text" => 0, "tsquery" => 0, "tsvector" => 0, "uuid" => 0, "xml" => 0),
+            $this->util->lang('Binary') => array("bit" => 0, "bit varying" => 0, "bytea" => 0),
+            $this->util->lang('Network') => array("cidr" => 43, "inet" => 43, "macaddr" => 17, "txid_snapshot" => 0),
+            $this->util->lang('Geometry') => array("box" => 0, "circle" => 0, "line" => 0, "lseg" => 0, "path" => 0, "point" => 0, "polygon" => 0),
         ) as $key => $val) { //! can be retrieved from pg_type
             $types += $val;
             $structured_types[$key] = array_keys($val);
