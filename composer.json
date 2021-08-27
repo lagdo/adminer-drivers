@@ -1,6 +1,6 @@
 {
     "name": "lagdo/jaxon-adminer-drivers",
-    "type": "application",
+    "type": "library",
     "description": "Database drivers for Jaxon Adminer",
     "authors": [
         {
